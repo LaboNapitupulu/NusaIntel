@@ -207,6 +207,11 @@ class Observation(TimestampMixin, Base):
             "period",
             name="uq_observations_natural_key",
         ),
+        UniqueConstraint(
+            "dataset_version_id",
+            "observation_key",
+            name="uq_observations_version_key",
+        ),
         {"schema": "silver"},
     )
 
@@ -221,9 +226,103 @@ class Observation(TimestampMixin, Base):
         UUID(as_uuid=True), ForeignKey("ops.dataset_versions.id"), nullable=False
     )
     period: Mapped[date] = mapped_column(Date, nullable=False)
+    observation_key: Mapped[str] = mapped_column(String(64), nullable=False)
     value: Mapped[Decimal | None] = mapped_column(Numeric(20, 6))
+    source_value: Mapped[str | None] = mapped_column(Text)
     value_status: Mapped[str] = mapped_column(String(32), nullable=False)
     source_note: Mapped[str | None] = mapped_column(Text)
     is_national_aggregate: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default="false"
     )
+
+
+class RawPayload(TimestampMixin, Base):
+    __tablename__ = "raw_payloads"
+    __table_args__ = {"schema": "bronze"}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    dataset_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ops.dataset_versions.id"),
+        unique=True,
+        nullable=False,
+    )
+    endpoint: Mapped[str] = mapped_column(Text, nullable=False)
+    safe_parameters: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    response_headers: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    http_status: Mapped[int] = mapped_column(Integer, nullable=False)
+    body_text: Mapped[str] = mapped_column(Text, nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    byte_count: Mapped[int] = mapped_column(BigInteger, nullable=False)
+
+
+class QuarantineRecord(TimestampMixin, Base):
+    __tablename__ = "quarantine_records"
+    __table_args__ = (
+        UniqueConstraint(
+            "dataset_version_id", "source_key", "reason_code", name="uq_quarantine_record"
+        ),
+        {"schema": "ops"},
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    dataset_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ops.dataset_versions.id"), nullable=False
+    )
+    pipeline_run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ops.pipeline_runs.id"), nullable=False
+    )
+    reason_code: Mapped[str] = mapped_column(String(128), nullable=False)
+    source_key: Mapped[str] = mapped_column(String(512), nullable=False)
+    safe_payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+
+
+class GoldRegionalObservation(TimestampMixin, Base):
+    __tablename__ = "regional_observations"
+    __table_args__ = (
+        UniqueConstraint(
+            "dataset_version_id", "observation_key", name="uq_gold_observation_version_key"
+        ),
+        {"schema": "gold"},
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    dataset_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ops.dataset_versions.id"), nullable=False
+    )
+    observation_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    region_code: Mapped[str] = mapped_column(
+        String(16), ForeignKey("silver.regions.code"), nullable=False
+    )
+    indicator_code: Mapped[str] = mapped_column(
+        String(128), ForeignKey("silver.indicators.code"), nullable=False
+    )
+    period: Mapped[date] = mapped_column(Date, nullable=False)
+    value: Mapped[Decimal | None] = mapped_column(Numeric(20, 6))
+    value_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    unit: Mapped[str] = mapped_column(String(64), nullable=False)
+    is_national_aggregate: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+
+class CoverageSummary(TimestampMixin, Base):
+    __tablename__ = "coverage_summaries"
+    __table_args__ = (
+        UniqueConstraint(
+            "dataset_version_id", "indicator_code", "period", name="uq_coverage_summary"
+        ),
+        {"schema": "gold"},
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    dataset_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ops.dataset_versions.id"), nullable=False
+    )
+    indicator_code: Mapped[str] = mapped_column(
+        String(128), ForeignKey("silver.indicators.code"), nullable=False
+    )
+    period: Mapped[date] = mapped_column(Date, nullable=False)
+    expected_regions: Mapped[int] = mapped_column(Integer, nullable=False)
+    observed_regions: Mapped[int] = mapped_column(Integer, nullable=False)
+    missing_regions: Mapped[int] = mapped_column(Integer, nullable=False)
+    coverage_percent: Mapped[Decimal] = mapped_column(Numeric(7, 4), nullable=False)

@@ -31,6 +31,7 @@ jobs:
     env:
       APP_ENV: test
       DATABASE_URL: postgresql+asyncpg://nusa_intel:nusa_intel_ci@localhost:5432/nusa_intel
+      RUN_DB_TESTS: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -43,9 +44,9 @@ jobs:
       - run: ruff check app tests migrations
       - run: ruff format --check app tests migrations
       - run: mypy app
-      - run: pytest
       - run: alembic upgrade head
       - run: alembic current
+      - run: pytest
 
   frontend:
     runs-on: ubuntu-latest

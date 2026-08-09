@@ -1,7 +1,7 @@
 # Source Inventory
 
-- Status: Phase 0 baseline
-- Last reviewed: 2026-08-08
+- Status: Phase 2 six-indicator benchmark complete
+- Last reviewed: 2026-08-09
 - Scope: Regional Opportunity Engine MVP
 
 ## 1. Primary source
@@ -19,7 +19,7 @@
 | Key configured during Phase 0 | Yes, local `.env` only; ignored by Git |
 | MVP domain | `0000` / BPS pusat, verified live |
 | Dynamic data endpoint | `https://webapi.bps.go.id/v1/api/list` |
-| Source status | Authenticated access and TPT data contract verified live |
+| Source status | Authenticated TPT contract ingested live through Bronze, Silver, and Gold |
 
 The official documentation states that users are identified using a key token and can obtain two to three tokens from the API portal. The API exposes domain, subject, variable, period, unit, dynamic data, static table, publication, and other models.
 
@@ -84,7 +84,7 @@ Security requirements:
 | Target periods | 2023, 2024, 2025 |
 | Unit | Percent |
 | Frequency note | Use the same reference period, targeted to August, across all years |
-| API variable IDs | TPT=`543`; TPAK pending |
+| API variable IDs | TPT=`543`; TPAK=`2396` |
 | Live TPT coverage | 113/117 cells (96.58%): 34 provinces + Indonesia in 2023; 38 provinces + Indonesia in 2024 and 2025 |
 | Risks | February/August observations must not be mixed; four new Papua provinces have no separate August 2023 value |
 
@@ -99,7 +99,7 @@ Security requirements:
 | Target periods | 2023, 2024, 2025 |
 | Unit | Percent |
 | Frequency note | Use March condition across all years for comparability |
-| API variable ID | Pending authenticated discovery |
+| API variable ID | `192`; derived variable `434` (total); March `turth=61` |
 | Risks | Urban/rural breakdown and total must not be confused |
 
 ### SRC-BPS-003 — PDRB per capita
@@ -111,7 +111,7 @@ Security requirements:
 | Geography | Province |
 | Target periods | 2023, 2024, 2025 |
 | Unit | Thousand rupiah |
-| API variable ID | Pending authenticated discovery |
+| API variable ID | `288`; derived variable `530` (current prices) |
 | Risks | Current-price values are not real growth and may be affected by price levels and extractive industries |
 
 ### SRC-BPS-004 — Economic growth
@@ -124,7 +124,7 @@ Security requirements:
 | Target periods | 2023, 2024, 2025 |
 | Unit | Percent |
 | Base year | 2010 |
-| API variable ID | Pending authenticated discovery |
+| API variable ID | `291` |
 | Risks | Preliminary/revised flags must be preserved |
 
 ### SRC-BPS-005 — Human development
@@ -137,8 +137,12 @@ Security requirements:
 | Geography | Province |
 | Target periods | 2023, 2024, 2025 |
 | Unit | Index points |
-| API variable ID | Pending authenticated discovery |
+| API variable ID | `494` (method-new province series) |
 | Risks | New-method IPM only; old-method series must be rejected |
+
+API variable `494` is the verified province-level method-new series. As of the
+2026-08-09 live discovery, it exposes period IDs `123` (2023) and `124` (2024)
+but not `125` (2025). NusaIntel therefore preserves 2025 as unavailable/missing.
 
 ## 3. Deferred official sources
 
@@ -180,5 +184,7 @@ Security requirements:
 - [x] `BPS_API_KEY` configured locally and ignored by Git.
 - [x] Live domain/period/subperiod discovery completed for TPT.
 - [x] Raw authenticated TPT API fixture captured without modification.
-- [ ] Live variable/period discovery completed for the other five indicators.
+- [x] Live variable/period discovery completed for all six indicators.
+- [x] Credential-safe live fixtures captured for all six indicators.
+- [x] Six-indicator coverage benchmark completed with deterministic checksums.
 - [ ] Official rate-limit or support guidance confirmed.

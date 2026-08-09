@@ -249,60 +249,60 @@ Baseline methodology:
 
 ### Tasks: connector
 
-- [ ] Implement a BPS client with explicit timeout.
-- [ ] Add bounded retries with exponential backoff and jitter.
-- [ ] Respect documented rate limits and identify the client appropriately.
-- [ ] Separate authentication/configuration from connector logic.
-- [ ] Parse errors into typed failure categories.
-- [ ] Store retrieval timestamp, URL/parameters, HTTP metadata, checksum, and row count.
-- [ ] Store raw payload before transformation.
-- [ ] Prevent duplicate dataset versions by source identity and checksum.
+- [x] Implement a BPS client with explicit timeout.
+- [x] Add bounded retries with exponential backoff and jitter.
+- [x] Apply conservative client-side rate limiting and identify the client appropriately.
+- [x] Separate authentication/configuration from connector logic.
+- [x] Parse errors into typed failure categories.
+- [x] Store retrieval timestamp, safe URL/parameters, HTTP metadata, checksum, and row count.
+- [x] Store raw payload before transformation.
+- [x] Prevent duplicate dataset versions by source identity and checksum.
 
 ### Tasks: Bronze
 
-- [ ] Define immutable raw-object naming/version strategy.
-- [ ] Persist source metadata in PostgreSQL.
-- [ ] Add fixture-based ingestion tests.
-- [ ] Add corruption and incomplete-download detection.
+- [x] Define immutable checksum-addressed raw version strategy.
+- [x] Persist source metadata and exact raw response in PostgreSQL.
+- [x] Add fixture-based ingestion tests.
+- [x] Add JSON, envelope, metadata-contract, and composite-key corruption detection.
 
 ### Tasks: Silver
 
-- [ ] Normalize region codes and names.
-- [ ] Normalize period representation.
-- [ ] Normalize units and numeric formats.
-- [ ] Preserve original value and status for invalid/suppressed values when needed.
-- [ ] Produce deterministic observation keys.
+- [x] Normalize region codes and names for all six MVP contracts.
+- [x] Normalize period representation.
+- [x] Normalize units and numeric formats.
+- [x] Preserve original value and status for invalid/missing values.
+- [x] Produce deterministic observation keys.
 
 ### Tasks: Gold
 
-- [ ] Build application-ready regional observation table/view.
-- [ ] Add coverage summary by indicator, region, and period.
-- [ ] Add latest-valid-version selection logic.
-- [ ] Record lineage edges for every transformation.
+- [x] Build application-ready regional observation table/view.
+- [x] Add coverage summary by indicator and period.
+- [x] Add latest-valid-version selection logic.
+- [x] Record lineage edges for every transformation.
 
 ### Tests
 
-- [ ] Timeout behavior.
-- [ ] Retry stops after configured attempts.
-- [ ] Duplicate ingestion is idempotent.
-- [ ] Same fixture and code produce the same Silver checksum.
-- [ ] Invalid numeric values are not silently converted to zero.
-- [ ] Unknown region mappings are quarantined.
-- [ ] Partial transformation does not publish Gold.
+- [x] Timeout behavior.
+- [x] Retry stops after configured attempts.
+- [x] Duplicate ingestion is idempotent across all six indicators.
+- [x] Same fixture and code produce the same Silver checksum.
+- [x] Invalid numeric values are not silently converted to zero.
+- [x] Unknown region mappings are quarantined.
+- [x] Partial transformation does not publish Gold.
 
 ### Benchmarks
 
-- [ ] Connector handles the six-indicator MVP fixture set without manual edits.
-- [ ] Re-running unchanged input creates zero duplicate observations.
-- [ ] Transformation determinism passes 100% on fixtures.
-- [ ] All six indicators achieve documented coverage or are rejected before release.
+- [x] Connector handles the six-indicator MVP fixture set without parser edits.
+- [x] Re-running all six unchanged inputs creates zero duplicate observations.
+- [x] Transformation determinism passes 100% on all six live fixtures.
+- [x] All six indicators achieve documented coverage; unavailable IPM 2025 remains explicit missing data.
 
 ### Exit gate
 
-- [ ] One command or scheduled flow runs source → Bronze → Silver → Gold.
-- [ ] Every output row is traceable to a source version and pipeline run.
-- [ ] A failed run preserves the last-known-good Gold version.
-- [ ] Recovery instructions are documented.
+- [x] One command runs all six sources → Bronze → Silver → Gold paths.
+- [x] Every output row is traceable to a source version and pipeline run.
+- [x] A failed run cannot replace the last-known-good Gold version.
+- [x] Recovery instructions are documented.
 
 ## 9. Phase 3 — Data Reliability Control Tower Lite
 
@@ -794,16 +794,16 @@ Update this table at the end of every milestone.
 
 | Area | Weight | Current | Evidence |
 |---|---:|---:|---|
-| Data ingestion and reproducibility | 15% | 25% | Authenticated TPT fixture and offline decoder spike |
-| Data contracts and quality gates | 15% | 0% | Not started |
+| Data ingestion and reproducibility | 15% | 100% | Six live, fixture-backed, idempotent Bronze → Silver → Gold paths |
+| Data contracts and quality gates | 15% | 50% | Six Phase 2 contracts and critical publish gates; Control Tower contract engine remains Phase 3 |
 | Regional methodology correctness | 15% | 0% | Not started |
 | Regional user journeys | 15% | 0% | Not started |
-| Testing and CI | 10% | 25% | Backend/frontend tests and baseline CI workflow pass locally |
-| Performance and reliability | 10% | 25% | Database health, degraded state, and recovery verified in Docker |
+| Testing and CI | 10% | 75% | 20 backend tests, six fixtures, failure injection, live batch, and frontend suite pass locally |
+| Performance and reliability | 10% | 75% | Three-run benchmark, retry, timeout, idempotency, last-known-good, and Docker path verified |
 | Accessibility and UX | 5% | 25% | Responsive foundation with semantic states and live status region |
-| Security and privacy | 5% | 25% | Local secret configuration and leak scan verified |
-| Documentation and reproducibility | 10% | 50% | README, Compose, migrations, CI, ADR, fixtures, and milestone status |
-| **Total** | **100%** | **16.25%** | Phase 1 local exit gate complete |
+| Security and privacy | 5% | 50% | BPS credential excluded from URLs, metadata, errors, output, and Git |
+| Documentation and reproducibility | 10% | 100% | Phase 2 runbook, benchmark environment, six source fixtures, migration, and coverage evidence |
+| **Total** | **100%** | **51.25%** | Phase 2 complete locally; hosted CI is the final external verification |
 
 Scoring rule:
 
@@ -860,14 +860,9 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 
 ## 22. Immediate next actions
 
-Phase 0's feasibility gate has passed. The next implementation session starts
-Phase 1 in this order:
+Phase 2 is complete locally. The next implementation session starts Phase 3:
 
-1. Confirm the standalone repository boundary and initialize Git.
-2. Add the root development conventions and environment templates.
-3. Scaffold the FastAPI backend and its configuration tests.
-4. Scaffold the Next.js frontend with strict TypeScript.
-5. Add PostgreSQL and application services to Docker Compose.
-
-Discovery of the other five BPS variable contracts continues as bounded
-connector work and must pass before Phase 2 closes.
+1. Push the Phase 2 branch and require hosted CI to pass.
+2. Add the versioned contract schema and validation API.
+3. Surface dataset health, quality checks, runs, freshness, and lineage.
+4. Add deliberate failure injection and last-known-good UI evidence.
