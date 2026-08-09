@@ -1,7 +1,7 @@
 # Phase 2 Status — Complete
 
 - Date: 2026-08-09
-- Status: Complete locally; hosted CI pending
+- Status: Complete; hosted CI passed on the pull request and merged `main`
 - Migration head: `20260809_0002`
 
 ## Delivered
@@ -84,5 +84,15 @@ Three sequential live connector-plus-normalization runs completed in `5.555`,
 `5.539`, and `5.576` seconds; median `5.555` seconds. All six normalized
 checksums remained identical across runs. See `docs/benchmark-environment.md`.
 
-Phase 2 has no remaining local implementation item. Hosted CI must pass before
-the branch is treated as externally verified.
+## Hosted verification
+
+- Pull request [#7](https://github.com/LaboNapitupulu/NusaIntel/pull/7)
+  passed backend, frontend, security, and Compose checks in GitHub Actions run
+  [`31288960900`](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31288960900)
+  for commit `d36c890`.
+- The merged `main` branch passed the same four jobs in run
+  [`31289068592`](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31289068592)
+  for merge commit `49962b1`.
+
+Phase 2 has no remaining implementation or verification item. Phase 3 can
+start from the verified `main` branch after repository dependency hygiene.

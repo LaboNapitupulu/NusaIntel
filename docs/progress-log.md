@@ -110,6 +110,8 @@
 - Live Docker batch published once and returned unchanged on the second run.
 - PostgreSQL audit confirmed six versions per layer, 702 Gold rows, and complete lineage.
 - Empty-database migration reached `20260809_0002` with 15 application tables.
+- Hosted PR CI run `31288960900` passed all four jobs for commit `d36c890`.
+- Merged `main` CI run `31289068592` passed all four jobs for merge commit `49962b1`.
 - `docs/phase-2-status.md`
 
 ### Risks/blockers
@@ -119,4 +121,5 @@
 
 ### Next step
 
-- Start Phase 3 Data Reliability Control Tower after hosted CI passes.
+- Start Phase 3 Data Reliability Control Tower from the verified `main` branch
+  after the dependency and branch cleanup is complete.
