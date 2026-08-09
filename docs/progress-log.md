@@ -60,6 +60,7 @@
 - Dependency audits: zero known Python vulnerabilities and zero npm vulnerabilities.
 - Docker frontend context reduced from more than 500 MB to less than 1 KB after service-level `.dockerignore` was added.
 - Clean clone: isolated Docker stack passed API, migration, and web probes, then temporary resources were removed.
+- Hosted CI: GitHub Actions run `31286045883` passed for commit `a839d97`.
 
 ### Quality evidence
 
@@ -76,7 +77,6 @@
 
 ### Risks/blockers
 
-- Hosted GitHub Actions cannot be observed until the repository is pushed to GitHub.
 - Phase 2 still needs production connector behavior, contracts, and ingestion idempotency.
 
 ### Next phase

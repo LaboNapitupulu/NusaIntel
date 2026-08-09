@@ -2,7 +2,7 @@
 
 - Started: 2026-08-09
 - Last updated: 2026-08-09
-- Status: Local exit gate passed; hosted CI evidence pending repository push
+- Status: Phase 1 exit gate passed locally and on hosted CI
 
 ## Delivered foundation
 
@@ -39,6 +39,7 @@
 | npm dependency audit | Pass; zero vulnerabilities |
 | API key leak scan | Pass; zero matches outside ignored `.env` |
 | Clean-clone Docker build/start | Pass on isolated ports `3200`, `8100`, and `55432` |
+| Hosted GitHub Actions CI | Pass; run `31286045883` for commit `a839d97` |
 
 ## Port decision
 
@@ -46,10 +47,10 @@ An unrelated existing service named `spendsense_frontend` owns host port `3000`.
 NusaIntel therefore publishes its web service at <http://localhost:3100> while
 retaining container port `3000`. The API remains at <http://localhost:8000>.
 
-## External evidence pending
+## Hosted evidence
 
 The initial secret-safe snapshot was created. A temporary clone built and
 started an isolated empty-database stack successfully; its containers, volume,
-and directory were removed afterward. Hosted GitHub Actions status is the only
-external evidence pending and can be collected after the repository is pushed
-to GitHub.
+and directory were removed afterward. GitHub Actions run
+<https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31286045883> completed
+successfully for the Phase 1 snapshot.
