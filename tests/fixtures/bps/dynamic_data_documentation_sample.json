@@ -1,0 +1,51 @@
+{
+  "status": "OK",
+  "data-availability": "available",
+  "var": [
+    {
+      "val": 145,
+      "label": "Persentase Rumah Tangga Menurut Provinsi dan Sumber Penerangan",
+      "unit": "Persen",
+      "subj": "Lingkungan Hidup",
+      "def": "",
+      "decimal": "",
+      "note": "Sumber: diolah dari hasil survei resmi BPS."
+    }
+  ],
+  "turvar": [
+    {
+      "val": 289,
+      "label": "Listrik PLN"
+    }
+  ],
+  "labelvervar": "Provinsi",
+  "vervar": [
+    {
+      "val": 9999,
+      "label": "INDONESIA"
+    },
+    {
+      "val": 11,
+      "label": "ACEH"
+    }
+  ],
+  "tahun": [
+    {
+      "val": 100,
+      "label": "2000"
+    }
+  ],
+  "turtahun": [
+    {
+      "val": 0,
+      "label": "Tahun"
+    }
+  ],
+  "metadata": {
+    "activity": null
+  },
+  "datacontent": {
+    "99991452891000": 83.68,
+    "111452891000": 82.41
+  }
+}
