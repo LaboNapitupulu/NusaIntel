@@ -4,7 +4,7 @@
 - Geography: Province
 - Target coverage: 38 provinces
 - Comparison window: 2023–2025
-- Status: Selected; TPT live API contract verified, five API IDs pending
+- Status: Six live API contracts verified and fixture-backed
 
 ## 1. Selection criteria
 
@@ -125,13 +125,18 @@ No method is selected as default until the actual dataset benchmark is documente
 | 2024/2025 current series evidence | Yes | Yes | Yes | Yes | Yes | Yes |
 | Unit identified | Yes | Yes | Yes | Yes | Yes | Yes |
 | Direction documented | Yes | Yes | Yes | Yes | Yes | Yes |
-| API variable ID verified | Yes (`543`) | No | No | No | No | No |
-| Live 2023–2025 coverage verified | Partial | No | No | No | No | No |
+| API variable ID verified | Yes (`543`) | Yes (`2396`) | Yes (`192`, total=`434`) | Yes (`288`, ADHB=`530`) | Yes (`291`) | Yes (`494`, method-new) |
+| Live 2023–2025 coverage verified | Yes | Yes | Yes | Yes | Yes | 2023–2024; 2025 unavailable in WebAPI |
 
 TPT live coverage is 113/117 expected geography-year cells (96.58%). August
 2023 has no separate values for Papua Barat Daya, Papua Selatan, Papua Tengah,
 and Papua Pegunungan; August 2024 and 2025 cover all 38 provinces. These cells
 remain missing until a documented historical-geography policy is adopted.
+
+TPAK and March-total poverty have the same historical geography pattern.
+PDRB per capita and PDRB growth cover all 38 provinces plus Indonesia for all
+three years. IPM variable `494` exposes 2023 and 2024 only; the contract creates
+explicit missing rows for 2025 rather than substituting another method/series.
 
 ## 7. Rejected/deferred indicators
 

@@ -7,9 +7,10 @@ surfaces:
 - Regional Opportunity Engine
 - RegulasiLens ID
 
-The current implementation is the Phase 1 platform foundation: FastAPI,
-Next.js, PostgreSQL, a lightweight worker, Alembic migrations, structured
-logging, and reproducible checks.
+The current implementation includes the Phase 1 platform foundation and the
+completed Phase 2 six-indicator BPS path. TPT, TPAK, poverty, PDRB per capita,
+PDRB growth, and HDI flow through immutable Bronze, contract-validated Silver,
+and publish-gated Gold with lineage.
 
 ## Prerequisites
 
@@ -17,7 +18,7 @@ logging, and reproducible checks.
 - Python 3.11 or newer
 - Node.js 20.9 or newer (Node.js 24 is used in CI)
 - Docker Desktop with Docker Compose
-- A BPS WebAPI key for later connector work
+- A BPS WebAPI key for live ingestion
 
 ## Quick start with Docker
 
@@ -98,6 +99,34 @@ After installing backend and frontend dependencies:
 
 Use `-SkipDocker` to run only static checks and tests.
 
+## Run the TPT pipeline
+
+After the stack is healthy, ingest the live BPS August TPT series:
+
+```powershell
+.\scripts\run_tpt_pipeline.ps1
+```
+
+For an offline run using the checked-in source fixture:
+
+```powershell
+.\scripts\run_tpt_pipeline.ps1 -Fixture
+```
+
+The command exits with `0` for a new publication or unchanged input, `2` when a
+critical quality gate rejects the input, and `1` for retrieval/configuration
+errors. Re-running identical source content returns `unchanged` and creates no
+duplicate observations.
+
+Recovery rules and validation queries are documented in
+`docs/phase-2-status.md`.
+
+Run all six contracted indicators:
+
+```powershell
+.\scripts\run_bps_pipeline.ps1
+```
+
 ## Configuration
 
 | Variable | Required | Purpose |
@@ -110,7 +139,7 @@ Use `-SkipDocker` to run only static checks and tests.
 | `WEB_PORT` | No | Host port for the web container; defaults to `3100` |
 | `API_PORT` | No | Host port for the API container; defaults to `8000` |
 | `DB_PORT` | No | Host port for local PostgreSQL; defaults to `5432` |
-| `BPS_API_KEY` | Phase 2 | Secret BPS WebAPI token; backend/worker only |
+| `BPS_API_KEY` | Live pipeline | Secret BPS WebAPI token; backend/worker only |
 
 Real secrets belong only in `.env` or a deployment secret manager. `.env` and
 runtime datasets are ignored by Git.

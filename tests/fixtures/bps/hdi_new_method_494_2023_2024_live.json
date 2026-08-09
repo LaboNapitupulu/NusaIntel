@@ -1,0 +1,284 @@
+{
+    "status": "OK",
+    "data-availability": "available",
+    "last_update": "2025-05-15 15:16:29",
+    "subject": [
+        {
+            "val": 563,
+            "label": "Kondisi Tempat Tinggal, Kemiskinan, dan Permasalahan Sosial Lintas Sektor"
+        }
+    ],
+    "var": [
+        {
+            "val": 494,
+            "label": "[Metode Baru] Indeks Pembangunan Manusia (IPM) menurut Provinsi",
+            "unit": "",
+            "subj": "Indeks Pembangunan Manusia",
+            "def": "",
+            "decimal": 2,
+            "note": "<p><br \/><\/p><p><br \/><\/p><p><br \/><\/p><p>Untuk penjelasan lebih lanjut mengenai IPM metode baru silahkan klik link di bawah ini\n<br \/><a href=\"https:\/\/searchengine.web.bps.go.id\/filemenu\/Booklet-IPM-Metode-Baru.pdf\">-Booklet IPM metode Baru<\/a>\n<br \/><a href=\"https:\/\/searchengine.web.bps.go.id\/filemenu\/Bahan-Sosialisasi-IPM-Metode-Baru.pdf\">-Bahan Sosialisasi IPM metode baru<\/a><br \/><\/p><p><br \/><\/p><p><br \/><\/p><p><br \/><\/p>"
+        }
+    ],
+    "turvar": [
+        {
+            "val": "0",
+            "label": "Tidak ada"
+        }
+    ],
+    "labelvervar": "38 Provinsi",
+    "vervar": [
+        {
+            "val": 1100,
+            "label": "ACEH"
+        },
+        {
+            "val": 1200,
+            "label": "SUMATERA UTARA"
+        },
+        {
+            "val": 1300,
+            "label": "SUMATERA BARAT"
+        },
+        {
+            "val": 1400,
+            "label": "RIAU"
+        },
+        {
+            "val": 1500,
+            "label": "JAMBI"
+        },
+        {
+            "val": 1600,
+            "label": "SUMATERA SELATAN"
+        },
+        {
+            "val": 1700,
+            "label": "BENGKULU"
+        },
+        {
+            "val": 1800,
+            "label": "LAMPUNG"
+        },
+        {
+            "val": 1900,
+            "label": "KEP. BANGKA BELITUNG"
+        },
+        {
+            "val": 2100,
+            "label": "KEP. RIAU"
+        },
+        {
+            "val": 3100,
+            "label": "DKI JAKARTA"
+        },
+        {
+            "val": 3200,
+            "label": "JAWA BARAT"
+        },
+        {
+            "val": 3300,
+            "label": "JAWA TENGAH"
+        },
+        {
+            "val": 3400,
+            "label": "DI YOGYAKARTA"
+        },
+        {
+            "val": 3500,
+            "label": "JAWA TIMUR"
+        },
+        {
+            "val": 3600,
+            "label": "BANTEN"
+        },
+        {
+            "val": 5100,
+            "label": "BALI"
+        },
+        {
+            "val": 5200,
+            "label": "NUSA TENGGARA BARAT"
+        },
+        {
+            "val": 5300,
+            "label": "NUSA TENGGARA TIMUR"
+        },
+        {
+            "val": 6100,
+            "label": "KALIMANTAN BARAT"
+        },
+        {
+            "val": 6200,
+            "label": "KALIMANTAN TENGAH"
+        },
+        {
+            "val": 6300,
+            "label": "KALIMANTAN SELATAN"
+        },
+        {
+            "val": 6400,
+            "label": "KALIMANTAN TIMUR"
+        },
+        {
+            "val": 6500,
+            "label": "KALIMANTAN UTARA"
+        },
+        {
+            "val": 7100,
+            "label": "SULAWESI UTARA"
+        },
+        {
+            "val": 7200,
+            "label": "SULAWESI TENGAH"
+        },
+        {
+            "val": 7300,
+            "label": "SULAWESI SELATAN"
+        },
+        {
+            "val": 7400,
+            "label": "SULAWESI TENGGARA"
+        },
+        {
+            "val": 7500,
+            "label": "GORONTALO"
+        },
+        {
+            "val": 7600,
+            "label": "SULAWESI BARAT"
+        },
+        {
+            "val": 8100,
+            "label": "MALUKU"
+        },
+        {
+            "val": 8200,
+            "label": "MALUKU UTARA"
+        },
+        {
+            "val": 9100,
+            "label": "PAPUA BARAT"
+        },
+        {
+            "val": 9200,
+            "label": "PAPUA BARAT DAYA"
+        },
+        {
+            "val": 9400,
+            "label": "PAPUA"
+        },
+        {
+            "val": 9500,
+            "label": "PAPUA SELATAN"
+        },
+        {
+            "val": 9600,
+            "label": "PAPUA TENGAH"
+        },
+        {
+            "val": 9700,
+            "label": "PAPUA PEGUNUNGAN"
+        },
+        {
+            "val": 9999,
+            "label": "INDONESIA"
+        }
+    ],
+    "tahun": [
+        {
+            "val": 123,
+            "label": "2023"
+        },
+        {
+            "val": 124,
+            "label": "2024"
+        }
+    ],
+    "turtahun": [
+        {
+            "val": 0,
+            "label": "Tahun"
+        }
+    ],
+    "datacontent": {
+        "310049401230": 82.46,
+        "130049401240": 74.49,
+        "650049401230": 72.49,
+        "750049401230": 70.45,
+        "610049401230": 69.41,
+        "970049401230": 52.45,
+        "160049401230": 71.62,
+        "350049401240": 74.09,
+        "820049401240": 71.03,
+        "530049401240": 67.39,
+        "140049401240": 74.79,
+        "710049401230": 74.36,
+        "640049401240": 78.83,
+        "210049401230": 77.11,
+        "760049401230": 67.55,
+        "730049401240": 74.05,
+        "970049401240": 53.42,
+        "330049401240": 73.88,
+        "720049401230": 70.95,
+        "520049401240": 70.93,
+        "320049401230": 73.74,
+        "950049401240": 67.9,
+        "999949401240": 74.2,
+        "640049401230": 78.2,
+        "190049401230": 72.85,
+        "320049401240": 74.43,
+        "650049401240": 73.02,
+        "760049401240": 68.2,
+        "960049401230": 58.93,
+        "999949401230": 73.55,
+        "510049401230": 77.1,
+        "530049401230": 66.68,
+        "910049401230": 66.16,
+        "190049401240": 73.33,
+        "160049401240": 72.3,
+        "170049401240": 73.39,
+        "810049401230": 70.94,
+        "810049401240": 71.57,
+        "130049401230": 73.75,
+        "510049401240": 77.76,
+        "180049401230": 71.15,
+        "610049401240": 70.13,
+        "180049401240": 71.81,
+        "940049401240": 73,
+        "350049401230": 73.38,
+        "960049401240": 59.75,
+        "710049401240": 75.03,
+        "910049401240": 67.02,
+        "120049401230": 73.37,
+        "140049401230": 74.04,
+        "150049401240": 73.43,
+        "820049401230": 70.21,
+        "170049401230": 72.78,
+        "940049401230": 72.41,
+        "740049401230": 72.79,
+        "520049401230": 70.2,
+        "110049401240": 74.03,
+        "330049401230": 73.39,
+        "730049401230": 73.46,
+        "620049401230": 72.2,
+        "340049401240": 81.55,
+        "920049401240": 68.63,
+        "110049401230": 73.4,
+        "120049401240": 74.02,
+        "150049401230": 72.77,
+        "360049401240": 74.48,
+        "950049401230": 67.27,
+        "620049401240": 72.73,
+        "630049401240": 73.03,
+        "340049401230": 81.07,
+        "310049401240": 83.08,
+        "920049401230": 68.05,
+        "210049401240": 77.97,
+        "720049401240": 71.56,
+        "360049401230": 73.87,
+        "750049401240": 71.23,
+        "740049401240": 73.48,
+        "630049401230": 72.5
+    },
+    "related": []
+}
