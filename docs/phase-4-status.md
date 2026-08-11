@@ -1,6 +1,6 @@
 # Phase 4 status — Regional Opportunity Engine core
 
-- Status: Implementation complete; hosted CI pending
+- Status: Complete; PR ready to merge
 - Date: 2026-08-11
 - Branch: `codex/phase-4-opportunity-engine`
 - Release target: `0.3`
@@ -47,10 +47,16 @@ a version-bound evidence package.
 ## Verification
 
 - Backend Ruff, format, strict Mypy pass; 48 unit/API tests pass locally.
-- PostgreSQL integration: covered by the hosted CI database job; local Docker rerun requires
-  a fresh explicit execution approval.
+- PostgreSQL integration passes in the hosted CI database job; local Docker/browser rerun
+  remains optional and requires a fresh explicit execution approval.
 - Frontend ESLint, TypeScript, six component tests, and production build pass locally.
-- Compose config/build, security audits, and all database integration tests: hosted CI gate.
+- Hosted CI run [31457229496](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31457229496)
+  passes backend/PostgreSQL, frontend, Compose build, and security jobs.
+
+## Pull request
+
+- [PR #12](https://github.com/LaboNapitupulu/NusaIntel/pull/12)
+- Hosted implementation commit: `dbd2fd353f8dfe62f5eb4af0094bd8b97268766d`
 
 ## Limitations
 

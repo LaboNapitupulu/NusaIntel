@@ -199,11 +199,15 @@
 
 ### Risks/blockers
 
-- Hosted PostgreSQL integration, Compose build, security audits, and pull-request checks are
-  still required before merge.
-- Local Docker/browser verification requires a fresh explicit execution approval after the
-  desktop approval mechanism rejected the earlier Docker run.
+- Local Docker/browser verification remains optional and requires a fresh explicit execution
+  approval after the desktop approval mechanism rejected the earlier Docker run.
+
+### Hosted evidence
+
+- PR [#12](https://github.com/LaboNapitupulu/NusaIntel/pull/12) is ready to merge.
+- Hosted run [31457229496](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31457229496)
+  passes backend/PostgreSQL, frontend, Compose build, and security jobs for commit `dbd2fd3`.
 
 ### Next step
 
-- Push the Phase 4 branch, open a pull request, and require all hosted CI jobs to pass.
+- Merge PR #12 when explicitly approved, then start Phase 5 from verified `main`.

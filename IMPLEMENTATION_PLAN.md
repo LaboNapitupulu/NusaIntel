@@ -798,12 +798,12 @@ Update this table at the end of every milestone.
 | Data contracts and quality gates | 15% | 100% | Versioned contracts cover all 12 Silver/Gold datasets; critical gate, exceptions, drift, and incidents tested |
 | Regional methodology correctness | 15% | 100% | Version-bound normalization, direction, coverage, contribution, tie, and sensitivity rules pass hand-calculated tests |
 | Regional user journeys | 15% | 75% | Comparison, scoring, ineligible state, table alternative, share, and export work locally; hosted/browser gate pending |
-| Testing and CI | 10% | 75% | 48 local backend/API tests and six frontend tests pass; hosted PostgreSQL/Compose/security gate pending |
+| Testing and CI | 10% | 100% | 48 local backend/API and six frontend tests pass; hosted PostgreSQL, frontend, Compose, and security jobs pass |
 | Performance and reliability | 10% | 100% | Six-contract run 0.7787 s, API p95 76.36 ms, 30/30 dry-runs, last-known-good verified |
 | Accessibility and UX | 5% | 75% | Responsive semantic UI, keyboard-native controls, live status, loading/empty/error/ineligible states, and table alternatives |
 | Security and privacy | 5% | 75% | Credential controls remain; scenario URLs store configuration without identity and untrusted state is shape-validated |
 | Documentation and reproducibility | 10% | 100% | ADRs, methodology, phase status, immutable versions, export evidence, fixtures, and benchmarks are documented |
-| **Total** | **100%** | **91.25%** | Phase 4 is complete locally; hosted CI and database-backed browser verification remain |
+| **Total** | **100%** | **93.75%** | Phase 4 implementation and hosted CI are complete; PR #12 is ready to merge |
 
 Scoring rule:
 
@@ -860,9 +860,9 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 
 ## 22. Immediate next actions
 
-Phase 4 is complete locally. The next release actions are:
+Phase 4 implementation and hosted CI are complete. The next release actions are:
 
-1. Push `codex/phase-4-opportunity-engine` and open a pull request.
-2. Require hosted backend, frontend, PostgreSQL integration, Compose, and security jobs to pass.
-3. Perform populated desktop/mobile browser QA when local Docker execution is explicitly approved.
-4. Merge Phase 4 only after the release evidence is recorded.
+1. Merge PR #12 when explicitly approved.
+2. Sync verified `main` and record the merged-main CI run.
+3. Optionally perform populated desktop/mobile browser QA when local Docker execution is explicitly approved.
+4. Start Phase 5 regional analytics, map, and reporting.
