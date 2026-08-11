@@ -4,7 +4,7 @@ import hashlib
 import json
 import os
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from time import perf_counter
 
@@ -24,6 +24,8 @@ from app.db.models import (
     SchemaDriftEvent,
 )
 from app.db.session import create_database_engine, create_session_factory
+from app.opportunity.schemas import ComparisonRequest, SensitivityRequest
+from app.opportunity.service import OpportunityService
 from app.pipeline.contracts import CONTRACTS, TPT_CONTRACT, IndicatorContract
 from app.pipeline.service import PipelineService
 from app.pipeline.types import RetrievedPayload
@@ -163,6 +165,7 @@ async def test_all_mvp_contracts_and_control_tower_benchmarks() -> None:
     session_factory = create_session_factory(engine)
     pipeline = PipelineService(session_factory)
     tower = ControlTowerService(session_factory)
+    opportunity = OpportunityService(session_factory)
     identity = uuid.uuid4().hex
 
     started = perf_counter()
@@ -186,6 +189,32 @@ async def test_all_mvp_contracts_and_control_tower_benchmarks() -> None:
         catalog = await tower.list_datasets()
         api_latencies.append(perf_counter() - api_started)
     api_p95_seconds = sorted(api_latencies)[28]
+
+    scenario = SensitivityRequest.model_validate(
+        {
+            "region_codes": ["1100", "1200", "1300"],
+            "year": 2024,
+            "normalization": "min_max",
+            "coverage_threshold": "1",
+            "perturbation": "0.10",
+            "indicators": [
+                {"code": "tpt", "weight": "40", "direction": "lower"},
+                {"code": "poverty_rate", "weight": "30", "direction": "lower"},
+                {"code": "hdi", "weight": "30", "direction": "higher"},
+            ],
+        }
+    )
+    comparison = await opportunity.compare(
+        ComparisonRequest(
+            region_codes=scenario.region_codes,
+            indicator_codes=[item.code for item in scenario.indicators],
+            year=scenario.year,
+            normalization=scenario.normalization,
+        )
+    )
+    indicator_catalog = await opportunity.indicator_catalog()
+    score = await opportunity.score(scenario)
+    exported = await opportunity.export_report(scenario)
 
     async with session_factory() as session:
         governed_datasets = int(
@@ -242,3 +271,13 @@ async def test_all_mvp_contracts_and_control_tower_benchmarks() -> None:
     assert all(outcome.status == "unchanged" for outcome in dry_run_outcomes)
     assert api_p95_seconds < 0.5
     assert len(catalog) == 18
+    assert len(indicator_catalog) == 6
+    assert all(item["source_url"] and item["periods"] for item in indicator_catalog)
+    assert {item["reference_period"] for item in comparison["regions"][0]["values"]} == {
+        date(2024, 3, 1),
+        date(2024, 8, 1),
+        date(2024, 12, 1),
+    }
+    assert all(row["eligible"] for row in score["results"])
+    assert exported["dataset_versions"] == score["dataset_versions"]
+    assert exported["configuration"]["year"] == 2024

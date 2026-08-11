@@ -374,44 +374,44 @@ Baseline methodology:
 
 ### Tasks: indicator catalog
 
-- [ ] Add definitions, units, favorable direction, source, and periods.
-- [ ] Expose coverage and quality status.
-- [ ] Prevent comparison across incompatible definitions or units.
+- [x] Add definitions, units, favorable direction, source, and periods.
+- [x] Expose coverage and quality status.
+- [x] Prevent comparison across incompatible definitions or units.
 
 ### Tasks: comparison
 
-- [ ] Region and period selectors.
-- [ ] Compare 2–5 regions.
-- [ ] Raw values, normalized values, trends, and distribution views.
-- [ ] Data table alternative for every chart.
-- [ ] Source and methodology drawer.
+- [x] Region and period selectors.
+- [x] Compare 2–5 regions.
+- [x] Raw values, normalized values, trends, and distribution views.
+- [x] Data table alternative for every chart.
+- [x] Source and methodology drawer.
 
 ### Tasks: scoring
 
-- [ ] Implement min-max normalization.
-- [ ] Implement percentile/rank normalization.
-- [ ] Implement favorable/unfavorable direction explicitly.
-- [ ] Validate weights sum to 100% within an accepted tolerance.
-- [ ] Enforce missing-data coverage threshold.
-- [ ] Return contribution per indicator.
-- [ ] Persist/share configuration without storing user identity.
+- [x] Implement min-max normalization.
+- [x] Implement percentile/rank normalization.
+- [x] Implement favorable/unfavorable direction explicitly.
+- [x] Validate weights sum to 100% within an accepted tolerance.
+- [x] Enforce missing-data coverage threshold.
+- [x] Return contribution per indicator.
+- [x] Persist/share configuration without storing user identity.
 
 ### Tasks: sensitivity
 
-- [ ] Perturb selected weights within a configurable range.
-- [ ] Re-normalize total weights.
-- [ ] Report rank stability and largest movers.
-- [ ] Explain that sensitivity is not confidence or causal inference.
+- [x] Perturb selected weights within a configurable range.
+- [x] Re-normalize total weights.
+- [x] Report rank stability and largest movers.
+- [x] Explain that sensitivity is not confidence or causal inference.
 
 ### Tests
 
-- [ ] Known fixture produces hand-calculated score.
-- [ ] Weight validation rejects negative or invalid totals.
-- [ ] Unfavorable indicator direction is correct.
-- [ ] Missing value never becomes zero silently.
-- [ ] Same version and configuration produce identical score.
-- [ ] Incompatible indicators cannot be combined.
-- [ ] Changing one weight changes only expected contributions.
+- [x] Known fixture produces hand-calculated score.
+- [x] Weight validation rejects negative or invalid totals.
+- [x] Unfavorable indicator direction is correct.
+- [x] Missing value never becomes zero silently.
+- [x] Same version and configuration produce identical score.
+- [x] Incompatible indicators cannot be combined.
+- [x] Changing one weight changes only expected contributions.
 
 ### Benchmarks
 
@@ -425,10 +425,10 @@ Baseline methodology:
 
 ### Exit gate
 
-- [ ] A reviewer can reproduce one score manually from displayed data.
-- [ ] Every ranking has contribution and methodology details.
-- [ ] UI refuses to rank regions below the configured coverage threshold.
-- [ ] Export contains dataset version and score configuration.
+- [x] A reviewer can reproduce one score manually from displayed data.
+- [x] Every ranking has contribution and methodology details.
+- [x] UI refuses to rank regions below the configured coverage threshold.
+- [x] Export contains dataset version and score configuration.
 
 ## 11. Phase 5 — Regional analytics, map, and reporting
 
@@ -796,14 +796,14 @@ Update this table at the end of every milestone.
 |---|---:|---:|---|
 | Data ingestion and reproducibility | 15% | 100% | Six live, fixture-backed, idempotent Bronze → Silver → Gold paths |
 | Data contracts and quality gates | 15% | 100% | Versioned contracts cover all 12 Silver/Gold datasets; critical gate, exceptions, drift, and incidents tested |
-| Regional methodology correctness | 15% | 0% | Not started |
-| Regional user journeys | 15% | 0% | Not started |
-| Testing and CI | 10% | 75% | 29 local backend/API tests, two PostgreSQL tests, four frontend tests; hosted Phase 3 CI pending |
+| Regional methodology correctness | 15% | 100% | Version-bound normalization, direction, coverage, contribution, tie, and sensitivity rules pass hand-calculated tests |
+| Regional user journeys | 15% | 75% | Comparison, scoring, ineligible state, table alternative, share, and export work locally; hosted/browser gate pending |
+| Testing and CI | 10% | 75% | 47 local backend/API tests and six frontend tests pass; hosted PostgreSQL/Compose/security gate pending |
 | Performance and reliability | 10% | 100% | Six-contract run 0.7787 s, API p95 76.36 ms, 30/30 dry-runs, last-known-good verified |
-| Accessibility and UX | 5% | 75% | Responsive Control Tower, semantic sections/status, keyboard controls, loading/empty/error states |
-| Security and privacy | 5% | 50% | BPS credential excluded from URLs, metadata, errors, output, and Git |
-| Documentation and reproducibility | 10% | 100% | Contract schema, ADR, ERD, Phase 3 runbook, migration, fixtures, and benchmark evidence |
-| **Total** | **100%** | **63.75%** | Phase 3 complete locally; hosted CI is the final external verification |
+| Accessibility and UX | 5% | 75% | Responsive semantic UI, keyboard-native controls, live status, loading/empty/error/ineligible states, and table alternatives |
+| Security and privacy | 5% | 75% | Credential controls remain; scenario URLs store configuration without identity and untrusted state is shape-validated |
+| Documentation and reproducibility | 10% | 100% | ADRs, methodology, phase status, immutable versions, export evidence, fixtures, and benchmarks are documented |
+| **Total** | **100%** | **91.25%** | Phase 4 is complete locally; hosted CI and database-backed browser verification remain |
 
 Scoring rule:
 
@@ -860,9 +860,9 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 
 ## 22. Immediate next actions
 
-Phase 3 is complete locally. The next implementation session starts Phase 4:
+Phase 4 is complete locally. The next release actions are:
 
-1. Push the Phase 3 branch and require hosted CI to pass.
-2. Add the indicator catalog and compatibility rules.
-3. Implement transparent regional comparison and normalization.
-4. Add scoring contributions, coverage gates, and reproducible configuration.
+1. Push `codex/phase-4-opportunity-engine` and open a pull request.
+2. Require hosted backend, frontend, PostgreSQL integration, Compose, and security jobs to pass.
+3. Perform populated desktop/mobile browser QA when local Docker execution is explicitly approved.
+4. Merge Phase 4 only after the release evidence is recorded.
