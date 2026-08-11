@@ -123,3 +123,44 @@
 
 - Start Phase 3 Data Reliability Control Tower from the verified `main` branch
   after the dependency and branch cleanup is complete.
+
+## Phase 3 — 2026-08-11
+
+### Outcome delivered
+
+- Added portable, strict, versioned dataset contracts and a generic quality engine.
+- Added contract-linked quality results, exceptions, schema drift, and auditable incidents.
+- Added the Control Tower catalog/detail/quality/runs/lineage/incidents API surface.
+- Added a responsive Control Tower dashboard with explicit last-known-good evidence.
+
+### Benchmarks
+
+- Silver/Gold contract coverage: 12/12 (100%).
+- Six-contract execution: 0.7787 seconds versus < 60 seconds.
+- Dataset-health API p95: 76.36 ms versus < 500 ms over 30 calls.
+- Dry-run success: 30/30 (100%) versus ≥ 95%.
+- Critical failures reaching Gold: zero.
+
+### Quality evidence
+
+- Backend: Ruff, formatting, and strict Mypy pass; 29 unit/API tests pass.
+- Isolated PostgreSQL: two integration/benchmark tests pass.
+- Frontend: ESLint, TypeScript, four tests, and production build pass.
+- Empty database migration reaches `20260811_0003`.
+- `docs/phase-3-status.md`
+
+### Decisions
+
+- ADR 0002 selects strict JSON contracts with allow-listed custom operators.
+- Every quality result references the immutable contract version used.
+- Exceptions require reason, owner, and expiry; historical failures are never rewritten.
+
+### Risks/blockers
+
+- Hosted Phase 3 CI remains required before merging.
+- The benchmark reflects the 18-dataset MVP catalog; pagination and query limits remain
+  mandatory as the catalog grows.
+
+### Next phase
+
+- Start Phase 4 Regional Opportunity Engine after hosted CI and merge.

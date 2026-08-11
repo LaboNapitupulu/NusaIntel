@@ -11,42 +11,42 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.control_tower.contracts import DatasetContractSchema, build_indicator_contract
+from app.control_tower.engine import (
+    detect_schema_drift,
+    evaluate_contract,
+    infer_schema,
+    publishable_with_exceptions,
+)
 from app.db.models import (
     CoverageSummary,
     DataContract,
     Dataset,
     DatasetVersion,
     GoldRegionalObservation,
+    Incident,
     Indicator,
     LineageEdge,
     Observation,
     PipelineRun,
     QualityCheckResult,
+    QualityException,
     QuarantineRecord,
     RawPayload,
     Region,
+    SchemaDriftEvent,
     Source,
 )
 from app.pipeline.contracts import IndicatorContract
 from app.pipeline.normalize import normalize_payload
 from app.pipeline.quality import evaluate_quality
-from app.pipeline.types import PipelineOutcome, RetrievedPayload
+from app.pipeline.types import PipelineOutcome, QualityReport, RetrievedPayload
 
 TRANSFORMATION_VERSION = "bps-medallion-v1"
 
 
-def _contract_specification(contract: IndicatorContract) -> dict[str, Any]:
-    return {
-        "code": contract.code,
-        "favorable_direction": contract.favorable_direction,
-        "periods": [asdict(period) for period in contract.periods],
-        "regions": [asdict(region) for region in contract.regions],
-        "unit": contract.unit,
-        "variable_id": contract.bps_variable_id,
-        "derived_variable_id": contract.bps_derived_variable_id,
-        "derived_period_id": contract.bps_derived_period_id,
-        "send_derived_variable_parameter": contract.send_derived_variable_parameter,
-    }
+def _contract_specification(dataset_code: str, layer: str) -> dict[str, Any]:
+    return build_indicator_contract(dataset_code, layer=layer).model_dump(mode="json")
 
 
 def _json_checksum(value: dict[str, Any]) -> str:
@@ -69,13 +69,36 @@ class PipelineService:
             return existing
 
         batch = normalize_payload(retrieved, contract)
-        report = evaluate_quality(batch, contract)
+        indicator_report = evaluate_quality(batch, contract)
         now = datetime.now(UTC)
         run_id = uuid.uuid4()
+        source_reference_at = max(row.period for row in batch.observations)
+        source_reference_datetime = datetime.combine(source_reference_at, datetime.min.time(), UTC)
 
         async with self._session_factory() as session, session.begin():
             datasets = await self._ensure_catalog(session, contract)
             await self._ensure_dimensions(session, contract)
+            contract_row = await self._active_contract(session, datasets["silver"].id)
+            contract_schema = DatasetContractSchema.model_validate(contract_row.specification)
+            previous_row_count = await session.scalar(
+                select(DatasetVersion.row_count)
+                .where(
+                    DatasetVersion.dataset_id == datasets["gold"].id,
+                    DatasetVersion.status == "published",
+                )
+                .order_by(DatasetVersion.processed_at.desc())
+                .limit(1)
+            )
+            contract_report = evaluate_contract(
+                batch.observations,
+                contract_schema,
+                retrieved_at=retrieved.retrieved_at,
+                previous_row_count=previous_row_count,
+                now=now,
+            )
+            report = QualityReport(checks=indicator_report.checks + contract_report.checks)
+            active_exceptions = await self._active_exceptions(session, datasets["silver"].id, now)
+            publishable = publishable_with_exceptions(report, set(active_exceptions))
             silver_version = await self._get_or_create_version(
                 session,
                 dataset_id=datasets["silver"].id,
@@ -83,8 +106,9 @@ class PipelineService:
                 checksum=batch.checksum,
                 retrieved_at=retrieved.retrieved_at,
                 row_count=len(batch.observations),
-                status="validated" if report.publishable else "rejected",
+                status="validated" if publishable else "rejected",
                 processed_at=now,
+                source_reference_at=source_reference_datetime,
             )
             run = PipelineRun(
                 id=run_id,
@@ -122,16 +146,35 @@ class PipelineService:
                 )
 
             for check in report.checks:
+                exception = active_exceptions.get(check.code)
+                result_status = "passed" if check.passed else "failed"
+                if not check.passed and exception is not None:
+                    result_status = "waived"
                 session.add(
                     QualityCheckResult(
                         dataset_version_id=silver_version.id,
                         pipeline_run_id=run.id,
+                        data_contract_id=contract_row.id,
+                        quality_exception_id=exception.id if exception is not None else None,
                         check_code=check.code,
                         severity=check.severity,
-                        status="passed" if check.passed else "failed",
+                        status=result_status,
                         expected=check.expected,
                         observed=check.observed,
                         safe_sample=list(check.safe_sample) or None,
+                    )
+                )
+
+            observed_schema = infer_schema([asdict(row) for row in batch.observations])
+            for drift in detect_schema_drift(contract_schema, observed_schema):
+                session.add(
+                    SchemaDriftEvent(
+                        dataset_version_id=silver_version.id,
+                        data_contract_id=contract_row.id,
+                        change_type=drift.change_type,
+                        column_name=drift.column_name,
+                        expected=drift.expected,
+                        observed=drift.observed,
                     )
                 )
 
@@ -154,10 +197,26 @@ class PipelineService:
                         )
                     )
 
-            if not report.publishable:
+            if not publishable:
                 run.status = "failed"
                 run.finished_at = now
                 run.error_category = "quality_gate"
+                for check in report.checks:
+                    if (
+                        not check.passed
+                        and check.severity == "critical"
+                        and check.code not in active_exceptions
+                    ):
+                        session.add(
+                            Incident(
+                                dataset_id=datasets["silver"].id,
+                                pipeline_run_id=run.id,
+                                check_code=check.code,
+                                severity=check.severity,
+                                status="open",
+                                title=f"Critical quality failure: {check.code}",
+                            )
+                        )
                 return PipelineOutcome(
                     status="rejected",
                     run_id=str(run.id),
@@ -180,6 +239,7 @@ class PipelineService:
                 row_count=len(batch.observations),
                 status="published",
                 processed_at=now,
+                source_reference_at=source_reference_datetime,
             )
             has_gold_rows = await session.scalar(
                 select(GoldRegionalObservation.id)
@@ -368,24 +428,49 @@ class PipelineService:
                 await session.flush()
             datasets[layer] = dataset
 
-        specification = _contract_specification(contract)
-        contract_row = await session.scalar(
-            select(DataContract).where(
-                DataContract.dataset_id == datasets["silver"].id,
-                DataContract.version == 1,
-            )
-        )
-        if contract_row is None:
-            session.add(
-                DataContract(
-                    dataset_id=datasets["silver"].id,
-                    version=1,
-                    specification=specification,
-                    checksum=_json_checksum(specification),
-                    effective_at=datetime.now(UTC),
+        for layer in ("silver", "gold"):
+            specification = _contract_specification(datasets[layer].code, layer)
+            contract_row = await session.scalar(
+                select(DataContract).where(
+                    DataContract.dataset_id == datasets[layer].id,
+                    DataContract.version == 2,
                 )
             )
+            if contract_row is None:
+                session.add(
+                    DataContract(
+                        dataset_id=datasets[layer].id,
+                        version=2,
+                        specification=specification,
+                        checksum=_json_checksum(specification),
+                        effective_at=datetime.now(UTC),
+                    )
+                )
+        await session.flush()
         return datasets
+
+    async def _active_contract(self, session: AsyncSession, dataset_id: uuid.UUID) -> DataContract:
+        contract = await session.scalar(
+            select(DataContract)
+            .where(DataContract.dataset_id == dataset_id)
+            .order_by(DataContract.version.desc())
+            .limit(1)
+        )
+        if contract is None:
+            raise RuntimeError("dataset contract was not initialized")
+        return contract
+
+    async def _active_exceptions(
+        self, session: AsyncSession, dataset_id: uuid.UUID, now: datetime
+    ) -> dict[str, QualityException]:
+        rows = await session.scalars(
+            select(QualityException).where(
+                QualityException.dataset_id == dataset_id,
+                QualityException.active.is_(True),
+                QualityException.expires_at > now,
+            )
+        )
+        return {row.check_code: row for row in rows}
 
     async def _ensure_dimensions(
         self,
@@ -442,6 +527,7 @@ class PipelineService:
         row_count: int,
         status: str,
         processed_at: datetime | None = None,
+        source_reference_at: datetime | None = None,
     ) -> DatasetVersion:
         version = await session.scalar(
             select(DatasetVersion).where(
@@ -456,7 +542,7 @@ class PipelineService:
                 source_identity=source_identity,
                 checksum=checksum,
                 code_commit=None,
-                source_reference_at=None,
+                source_reference_at=source_reference_at,
                 retrieved_at=retrieved_at,
                 processed_at=processed_at,
                 row_count=row_count,

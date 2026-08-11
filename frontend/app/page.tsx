@@ -1,3 +1,4 @@
+import { ControlTower } from "@/components/control-tower";
 import { SystemStatus } from "@/components/system-status";
 
 const foundations = [
@@ -27,7 +28,10 @@ export default function Home() {
             <span className="brand-mark">NI</span>
             <span>NusaIntel</span>
           </a>
-          <span className="phase-label">Foundation / Phase 1</span>
+          <div className="nav-links">
+            <a href="#control-tower">Control Tower</a>
+            <span className="phase-label">Release 0.2 / Phase 3</span>
+          </div>
         </nav>
 
         <div className="hero-grid" id="top">
@@ -58,6 +62,8 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      <ControlTower />
 
       <footer>
         <span>NusaIntel © 2026</span>
