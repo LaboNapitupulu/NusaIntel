@@ -264,7 +264,11 @@
 - Clean-stack smoke passes from an empty isolated PostgreSQL volume and removes its own
   containers, network, and volume afterward.
 - Full release verification, `pip-audit`, and `npm audit` pass locally.
+- Draft PR [#14](https://github.com/LaboNapitupulu/NusaIntel/pull/14) opened; hosted run
+  [31470460318](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31470460318)
+  passes backend/PostgreSQL, frontend/Playwright, Compose, and security.
 
 ### Next step
 
-- Open a draft Phase 6 PR for hosted CI, then finish portfolio and release evidence.
+- Finish portfolio/resource evidence, then promote PR #14 from draft when all release gates
+  are closed.

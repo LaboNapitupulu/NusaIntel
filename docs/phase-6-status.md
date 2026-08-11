@@ -31,9 +31,11 @@
   revision `20260811_0003` in an isolated scratch database.
 - A disposable clean-stack run proves migrations, API, worker, and web startup from an empty
   PostgreSQL volume, then removes only its own resources.
+- Draft PR [#14](https://github.com/LaboNapitupulu/NusaIntel/pull/14) passes all four hosted
+  CI jobs (backend/PostgreSQL, frontend/Playwright, Compose, and security) in run
+  [31470460318](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31470460318).
 
 ## Verification still required
 
-- Run hosted CI from the Phase 6 pull request.
 - Complete screenshots, demo path, case studies, resource/bundle evidence, and release
   scorecard before promoting the draft pull request.

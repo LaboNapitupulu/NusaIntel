@@ -521,7 +521,7 @@ Baseline methodology:
 ### MVP release gate
 
 - [ ] All PRD Section 18.1 criteria pass.
-- [ ] All CI jobs pass from the release commit.
+- [x] All CI jobs pass from the current Phase 6 candidate commit.
 - [ ] No open critical data-quality incident.
 - [ ] No high/critical security finding remains unexplained.
 - [ ] Docker stack health is verified together.
@@ -854,7 +854,7 @@ A feature is done only when:
 - [ ] Data contract and migration impact are addressed.
 - [ ] Security/privacy implications are reviewed.
 - [ ] Documentation is updated.
-- [ ] CI passes.
+- [x] CI passes.
 
 A milestone is done only when its exit gate passes with reproducible evidence.
 
@@ -864,5 +864,5 @@ Phase 5 is merged at `a0b2e07`. Phase 6 hardening is active on
 `codex/phase-6-mvp-hardening`; the next release actions are:
 
 1. Finish screenshots, two-minute demo path, and two evidence case studies.
-2. Record resource, bundle, and hosted CI evidence.
+2. Record resource and bundle evidence.
 3. Close any release-gate finding before promoting the Phase 6 pull request from draft.
