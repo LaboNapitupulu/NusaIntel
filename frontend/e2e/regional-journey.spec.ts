@@ -180,6 +180,12 @@ test("regional report is usable, responsive, and has no serious accessibility vi
   const viewport = await page.evaluate(() => ({ body: document.body.scrollWidth, viewport: window.innerWidth }));
   expect(viewport.body).toBeLessThanOrEqual(viewport.viewport);
 
+  const tileMap = await page.locator(".tile-map").evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+  }));
+  expect(tileMap.scrollWidth).toBeLessThanOrEqual(tileMap.clientWidth);
+
   const accessibility = await new AxeBuilder({ page }).include("#regional-analytics").analyze();
   expect(accessibility.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
 });
