@@ -46,7 +46,7 @@ a version-bound evidence package.
 
 ## Verification
 
-- Backend Ruff, format, strict Mypy pass; 47 unit/API tests pass locally.
+- Backend Ruff, format, strict Mypy pass; 48 unit/API tests pass locally.
 - PostgreSQL integration: covered by the hosted CI database job; local Docker rerun requires
   a fresh explicit execution approval.
 - Frontend ESLint, TypeScript, six component tests, and production build pass locally.

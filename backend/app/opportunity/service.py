@@ -171,7 +171,9 @@ class OpportunityService:
         }
 
     async def export_report(self, request: SensitivityRequest) -> dict[str, Any]:
-        score = await self.score(ScoreRequest.model_validate(request.model_dump()))
+        score = await self.score(
+            ScoreRequest.model_validate(request.model_dump(exclude={"perturbation"}))
+        )
         sensitivity = await self.sensitivity(request)
         return {
             "report_type": "regional-opportunity-scenario",

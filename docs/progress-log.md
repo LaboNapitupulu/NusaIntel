@@ -192,7 +192,7 @@
 
 ### Quality evidence
 
-- Backend: Ruff, formatting, strict Mypy pass; 47 unit/API tests pass and two database tests
+- Backend: Ruff, formatting, strict Mypy pass; 48 unit/API tests pass and two database tests
   are available for the hosted PostgreSQL job.
 - Frontend: ESLint, TypeScript, six component tests, and production build pass.
 - ADR 0003, `docs/methodology.md`, and `docs/phase-4-status.md` capture decisions and gates.

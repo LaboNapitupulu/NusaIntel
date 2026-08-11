@@ -798,7 +798,7 @@ Update this table at the end of every milestone.
 | Data contracts and quality gates | 15% | 100% | Versioned contracts cover all 12 Silver/Gold datasets; critical gate, exceptions, drift, and incidents tested |
 | Regional methodology correctness | 15% | 100% | Version-bound normalization, direction, coverage, contribution, tie, and sensitivity rules pass hand-calculated tests |
 | Regional user journeys | 15% | 75% | Comparison, scoring, ineligible state, table alternative, share, and export work locally; hosted/browser gate pending |
-| Testing and CI | 10% | 75% | 47 local backend/API tests and six frontend tests pass; hosted PostgreSQL/Compose/security gate pending |
+| Testing and CI | 10% | 75% | 48 local backend/API tests and six frontend tests pass; hosted PostgreSQL/Compose/security gate pending |
 | Performance and reliability | 10% | 100% | Six-contract run 0.7787 s, API p95 76.36 ms, 30/30 dry-runs, last-known-good verified |
 | Accessibility and UX | 5% | 75% | Responsive semantic UI, keyboard-native controls, live status, loading/empty/error/ineligible states, and table alternatives |
 | Security and privacy | 5% | 75% | Credential controls remain; scenario URLs store configuration without identity and untrusted state is shape-validated |

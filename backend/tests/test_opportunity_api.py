@@ -7,6 +7,8 @@ from httpx import ASGITransport, AsyncClient
 
 from app.config import Settings
 from app.main import create_app
+from app.opportunity.schemas import ScoreRequest, SensitivityRequest
+from app.opportunity.service import OpportunityService
 
 
 async def healthy_probe() -> None:
@@ -34,6 +36,23 @@ class StubOpportunityService:
             "generated_at": "2026-08-11T00:00:00Z",
             "configuration": payload.model_dump(mode="json"),
             "dataset_versions": {"hdi": {"version_id": "version-1"}},
+        }
+
+
+class ExportHarness(OpportunityService):
+    def __init__(self) -> None:
+        self.received_score_request: ScoreRequest | None = None
+
+    async def score(self, request: ScoreRequest) -> dict[str, Any]:
+        self.received_score_request = request
+        return {"dataset_versions": {}, "sources": {}, "results": []}
+
+    async def sensitivity(self, request: SensitivityRequest) -> dict[str, Any]:
+        return {
+            "perturbation": request.perturbation,
+            "scenario_count": 0,
+            "stability": [],
+            "disclaimer": "not confidence",
         }
 
 
@@ -119,3 +138,29 @@ async def test_api_rejects_invalid_region_count_weight_and_unknown_fields(
     assert invalid_regions.status_code == 422
     assert negative_weight.status_code == 422
     assert extra_field.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_export_builds_score_request_without_sensitivity_only_fields() -> None:
+    service = ExportHarness()
+    request = SensitivityRequest.model_validate(
+        {
+            "region_codes": ["1100", "1200"],
+            "year": 2024,
+            "coverage_threshold": "1",
+            "perturbation": "0.10",
+            "indicators": [{"code": "hdi", "weight": "100", "direction": "higher"}],
+        }
+    )
+
+    exported = await service.export_report(request)
+
+    assert service.received_score_request is not None
+    assert service.received_score_request.model_fields_set == {
+        "region_codes",
+        "year",
+        "coverage_threshold",
+        "normalization",
+        "indicators",
+    }
+    assert exported["configuration"]["perturbation"] == "0.10"
