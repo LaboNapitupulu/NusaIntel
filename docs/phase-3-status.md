@@ -1,6 +1,6 @@
 # Phase 3 status — Data Reliability Control Tower Lite
 
-- Status: Complete; PR ready to merge
+- Status: Complete and merged
 - Date: 2026-08-11
 - Branch: `codex/phase-3-control-tower`
 - Release target: `0.2`
@@ -99,4 +99,5 @@ six checked-in BPS fixtures, Windows host described in `docs/benchmark-environme
 - Pull request: [#11](https://github.com/LaboNapitupulu/NusaIntel/pull/11).
 - Hosted pull-request CI: [run 31454614843](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31454614843),
   with backend, frontend, Compose, and security jobs passing.
-- Record the merged-main run ID after PR #11 is merged.
+- PR #11 was merged as commit `df07d0a2461876bf47f99d0136563297bd7928aa`.
+- Record the merged-main run ID when the post-merge workflow completes.

@@ -1,0 +1,820 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+type Normalization = "min_max" | "percentile";
+type Direction = "higher" | "lower";
+type ViewState = "loading" | "ready" | "empty" | "error";
+
+interface Indicator {
+  code: string;
+  name: string;
+  definition: string;
+  unit: string;
+  favorable_direction: Direction;
+  source_url: string;
+  reference_period_rule: string;
+  quality_status: "healthy" | "warning" | "critical";
+  dataset_version_id: string | null;
+  periods: Array<{ period: string; coverage_percent: number }>;
+}
+
+interface Region {
+  code: string;
+  name: string;
+}
+
+interface WeightState {
+  code: string;
+  weight: number;
+  direction: Direction;
+}
+
+interface ComparisonResponse {
+  year: number;
+  normalization: Normalization;
+  methodology_version: string;
+  regions: Array<{
+    region_code: string;
+    region_name: string;
+    values: Array<{
+      indicator_code: string;
+      raw_value: number | null;
+      normalized_value: number | null;
+      unit: string;
+      reference_period: string;
+      missing: boolean;
+    }>;
+  }>;
+  trends: Array<{
+    indicator_code: string;
+    region_code: string;
+    region_name: string;
+    period: string;
+    value: number | null;
+    unit: string;
+  }>;
+  distributions: Record<
+    string,
+    { count: number; minimum: number | null; median: number | null; maximum: number | null }
+  >;
+  dataset_versions: Record<
+    string,
+    { version_id: string; checksum: string; analysis_reference_period: string }
+  >;
+  sources: Record<string, { name: string; url: string; attribution: string }>;
+}
+
+interface Contribution {
+  indicator_code: string;
+  raw_value: number | null;
+  normalized_value: number | null;
+  configured_weight: number;
+  effective_weight: number | null;
+  contribution: number | null;
+  direction: Direction;
+  missing: boolean;
+}
+
+interface ScoreRow {
+  region_code: string;
+  region_name: string;
+  coverage: number;
+  eligible: boolean;
+  score: number | null;
+  rank: number | null;
+  contributions: Contribution[];
+}
+
+interface ScoreResponse {
+  methodology_version: string;
+  results: ScoreRow[];
+  dataset_versions: ComparisonResponse["dataset_versions"];
+}
+
+interface SensitivityResponse {
+  scenario_count: number;
+  perturbation: number;
+  disclaimer: string;
+  stability: Array<{
+    region_code: string;
+    region_name: string;
+    base_rank: number | null;
+    min_rank: number | null;
+    max_rank: number | null;
+    max_absolute_shift: number | null;
+    unchanged_percent: number | null;
+  }>;
+}
+
+interface ScenarioState {
+  regionCodes: string[];
+  weights: WeightState[];
+  year: number;
+  normalization: Normalization;
+  coverageThreshold: number;
+  perturbation: number;
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+const preferredIndicators = ["tpt", "poverty_rate", "hdi"];
+
+async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, { cache: "no-store", ...init });
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(payload?.detail ?? `Request failed: ${response.status}`);
+  }
+  return (await response.json()) as T;
+}
+
+function equalWeights(codes: string[], indicators: Indicator[]): WeightState[] {
+  if (!codes.length) return [];
+  const base = Math.floor((100 / codes.length) * 100) / 100;
+  let remainder = Math.round((100 - base * codes.length) * 100) / 100;
+  return codes.map((code, index) => {
+    const addition = index === 0 ? remainder : 0;
+    remainder = 0;
+    return {
+      code,
+      weight: Math.round((base + addition) * 100) / 100,
+      direction:
+        indicators.find((indicator) => indicator.code === code)?.favorable_direction ?? "higher",
+    };
+  });
+}
+
+function commonYears(weights: WeightState[], indicators: Indicator[]): number[] {
+  const selected = weights
+    .map((weight) => indicators.find((indicator) => indicator.code === weight.code))
+    .filter((indicator): indicator is Indicator => Boolean(indicator));
+  if (!selected.length) return [];
+  const first = selected[0].periods
+    .filter((period) => Number(period.coverage_percent) > 0)
+    .map((period) => Number(period.period.slice(0, 4)));
+  return first
+    .filter((year) =>
+      selected.every((indicator) =>
+        indicator.periods.some(
+          (candidate) =>
+            Number(candidate.period.slice(0, 4)) === year &&
+            Number(candidate.coverage_percent) > 0,
+        ),
+      ),
+    )
+    .filter((year, index, years) => years.indexOf(year) === index)
+    .sort((left, right) => right - left);
+}
+
+function scorePayload(scenario: ScenarioState) {
+  return {
+    region_codes: scenario.regionCodes,
+    indicators: scenario.weights,
+    year: scenario.year,
+    normalization: scenario.normalization,
+    coverage_threshold: scenario.coverageThreshold,
+  };
+}
+
+function formatNumber(value: number | null, digits = 2): string {
+  if (value === null || Number.isNaN(value)) return "Tidak tersedia";
+  return new Intl.NumberFormat("id-ID", { maximumFractionDigits: digits }).format(value);
+}
+
+function encodeScenario(scenario: ScenarioState): string {
+  return btoa(JSON.stringify(scenario));
+}
+
+function decodeScenario(value: string | null): ScenarioState | null {
+  if (!value) return null;
+  try {
+    const candidate = JSON.parse(atob(value)) as Partial<ScenarioState>;
+    const validWeights =
+      Array.isArray(candidate.weights) &&
+      candidate.weights.length >= 1 &&
+      candidate.weights.length <= 6 &&
+      candidate.weights.every(
+        (item) =>
+          typeof item?.code === "string" &&
+          typeof item.weight === "number" &&
+          Number.isFinite(item.weight) &&
+          (item.direction === "higher" || item.direction === "lower"),
+      );
+    const validRegions =
+      Array.isArray(candidate.regionCodes) &&
+      candidate.regionCodes.length >= 2 &&
+      candidate.regionCodes.length <= 5 &&
+      candidate.regionCodes.every((code) => typeof code === "string");
+    if (
+      !validWeights ||
+      !validRegions ||
+      !Number.isInteger(candidate.year) ||
+      (candidate.normalization !== "min_max" && candidate.normalization !== "percentile") ||
+      typeof candidate.coverageThreshold !== "number" ||
+      candidate.coverageThreshold < 0 ||
+      candidate.coverageThreshold > 1 ||
+      typeof candidate.perturbation !== "number" ||
+      candidate.perturbation <= 0 ||
+      candidate.perturbation > 0.5
+    ) {
+      return null;
+    }
+    return candidate as ScenarioState;
+  } catch {
+    return null;
+  }
+}
+
+export function OpportunityEngine() {
+  const [state, setState] = useState<ViewState>("loading");
+  const [indicators, setIndicators] = useState<Indicator[]>([]);
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [scenario, setScenario] = useState<ScenarioState>({
+    regionCodes: [],
+    weights: [],
+    year: 0,
+    normalization: "min_max",
+    coverageThreshold: 1,
+    perturbation: 0.1,
+  });
+  const [comparison, setComparison] = useState<ComparisonResponse | null>(null);
+  const [score, setScore] = useState<ScoreResponse | null>(null);
+  const [sensitivity, setSensitivity] = useState<SensitivityResponse | null>(null);
+  const [running, setRunning] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const initialize = useCallback(async () => {
+    setState("loading");
+    try {
+      const [indicatorPayload, regionPayload] = await Promise.all([
+        fetchJson<{ items: Indicator[] }>("/api/v1/opportunity/indicators"),
+        fetchJson<{ items: Region[] }>("/api/v1/opportunity/regions"),
+      ]);
+      setIndicators(indicatorPayload.items);
+      setRegions(regionPayload.items);
+      if (!indicatorPayload.items.length || regionPayload.items.length < 2) {
+        setState("empty");
+        return;
+      }
+      const shared = decodeScenario(new URLSearchParams(window.location.search).get("scenario"));
+      const availableCodes = new Set(indicatorPayload.items.map((item) => item.code));
+      const availableRegions = new Set(regionPayload.items.map((item) => item.code));
+      if (
+        shared &&
+        shared.weights.every((item) => availableCodes.has(item.code)) &&
+        shared.regionCodes.every((code) => availableRegions.has(code))
+      ) {
+        setScenario(shared);
+      } else {
+        const codes = preferredIndicators.filter((code) => availableCodes.has(code));
+        const fallbackCodes = codes.length ? codes : indicatorPayload.items.slice(0, 3).map((item) => item.code);
+        const nextWeights = equalWeights(fallbackCodes, indicatorPayload.items);
+        setScenario({
+          regionCodes: regionPayload.items.slice(0, 3).map((item) => item.code),
+          weights: nextWeights,
+          year: commonYears(nextWeights, indicatorPayload.items)[0] ?? 0,
+          normalization: "min_max",
+          coverageThreshold: 1,
+          perturbation: 0.1,
+        });
+      }
+      setState("ready");
+    } catch {
+      setState("error");
+    }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void Promise.all([
+      fetchJson<{ items: Indicator[] }>("/api/v1/opportunity/indicators"),
+      fetchJson<{ items: Region[] }>("/api/v1/opportunity/regions"),
+    ])
+      .then(([indicatorPayload, regionPayload]) => {
+        if (!active) return;
+        setIndicators(indicatorPayload.items);
+        setRegions(regionPayload.items);
+        if (!indicatorPayload.items.length || regionPayload.items.length < 2) {
+          setState("empty");
+          return;
+        }
+        const shared = decodeScenario(
+          new URLSearchParams(window.location.search).get("scenario"),
+        );
+        const availableCodes = new Set(indicatorPayload.items.map((item) => item.code));
+        const availableRegions = new Set(regionPayload.items.map((item) => item.code));
+        if (
+          shared &&
+          shared.weights.every((item) => availableCodes.has(item.code)) &&
+          shared.regionCodes.every((code) => availableRegions.has(code))
+        ) {
+          setScenario(shared);
+        } else {
+          const codes = preferredIndicators.filter((code) => availableCodes.has(code));
+          const fallbackCodes = codes.length
+            ? codes
+            : indicatorPayload.items.slice(0, 3).map((item) => item.code);
+          const nextWeights = equalWeights(fallbackCodes, indicatorPayload.items);
+          setScenario({
+            regionCodes: regionPayload.items.slice(0, 3).map((item) => item.code),
+            weights: nextWeights,
+            year: commonYears(nextWeights, indicatorPayload.items)[0] ?? 0,
+            normalization: "min_max",
+            coverageThreshold: 1,
+            perturbation: 0.1,
+          });
+        }
+        setState("ready");
+      })
+      .catch(() => {
+        if (active) setState("error");
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const years = useMemo(
+    () => commonYears(scenario.weights, indicators),
+    [scenario.weights, indicators],
+  );
+  const activeYear = years.includes(scenario.year) ? scenario.year : (years[0] ?? 0);
+  const activeScenario = useMemo(
+    () => ({ ...scenario, year: activeYear }),
+    [activeYear, scenario],
+  );
+  const weightTotal = scenario.weights.reduce((total, item) => total + item.weight, 0);
+  const configurationValid =
+    scenario.regionCodes.length >= 2 &&
+    scenario.regionCodes.length <= 5 &&
+    scenario.weights.length > 0 &&
+    Math.abs(weightTotal - 100) <= 0.01 &&
+    activeYear > 0;
+
+  const runAnalysis = useCallback(async () => {
+    if (!configurationValid) return;
+    setRunning(true);
+    setMessage(null);
+    try {
+      const payload = scorePayload(activeScenario);
+      const [nextComparison, nextScore, nextSensitivity] = await Promise.all([
+        fetchJson<ComparisonResponse>("/api/v1/opportunity/compare", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            region_codes: activeScenario.regionCodes,
+            indicator_codes: activeScenario.weights.map((item) => item.code),
+            year: activeScenario.year,
+            normalization: activeScenario.normalization,
+          }),
+        }),
+        fetchJson<ScoreResponse>("/api/v1/opportunity/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }),
+        fetchJson<SensitivityResponse>("/api/v1/opportunity/sensitivity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...payload, perturbation: activeScenario.perturbation }),
+        }),
+      ]);
+      setComparison(nextComparison);
+      setScore(nextScore);
+      setSensitivity(nextSensitivity);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Analisis gagal dijalankan.");
+    } finally {
+      setRunning(false);
+    }
+  }, [activeScenario, configurationValid]);
+
+  function toggleRegion(code: string) {
+    setScenario((current) => {
+      const selected = current.regionCodes.includes(code);
+      if (!selected && current.regionCodes.length === 5) return current;
+      return {
+        ...current,
+        regionCodes: selected
+          ? current.regionCodes.filter((item) => item !== code)
+          : [...current.regionCodes, code],
+      };
+    });
+  }
+
+  function toggleIndicator(code: string) {
+    setScenario((current) => {
+      const selected = current.weights.some((item) => item.code === code);
+      if (!selected && current.weights.length === 6) return current;
+      const codes = selected
+        ? current.weights.filter((item) => item.code !== code).map((item) => item.code)
+        : [...current.weights.map((item) => item.code), code];
+      const nextWeights = equalWeights(codes, indicators);
+      const nextYears = commonYears(nextWeights, indicators);
+      return {
+        ...current,
+        weights: nextWeights,
+        year: nextYears.includes(current.year) ? current.year : (nextYears[0] ?? 0),
+      };
+    });
+  }
+
+  async function shareScenario() {
+    const parameters = new URLSearchParams(window.location.search);
+    parameters.set("scenario", encodeScenario(activeScenario));
+    const url = `${window.location.pathname}?${parameters.toString()}#opportunity`;
+    window.history.replaceState(null, "", url);
+    try {
+      await navigator.clipboard?.writeText(window.location.href);
+      setMessage("Tautan skenario disalin. Tidak ada identitas pengguna yang disimpan.");
+    } catch {
+      setMessage("Skenario sudah tersimpan pada URL halaman ini.");
+    }
+  }
+
+  async function exportReport() {
+    try {
+      const report = await fetchJson<Record<string, unknown>>("/api/v1/opportunity/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...scorePayload(activeScenario),
+          perturbation: activeScenario.perturbation,
+        }),
+      });
+      const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `nusa-intel-scenario-${activeScenario.year}.json`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      setMessage("Laporan diekspor beserta konfigurasi dan dataset version.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Export gagal.");
+    }
+  }
+
+  if (state === "loading") {
+    return <section className="opportunity-shell opportunity-state">Memuat Opportunity Engine…</section>;
+  }
+  if (state === "error") {
+    return (
+      <section className="opportunity-shell opportunity-state">
+        <p>Katalog regional belum dapat dimuat.</p>
+        <button type="button" onClick={() => void initialize()}>
+          Coba lagi
+        </button>
+      </section>
+    );
+  }
+  if (state === "empty") {
+    return (
+      <section className="opportunity-shell opportunity-state">
+        Jalankan pipeline BPS hingga Gold sebelum membuat skenario.
+      </section>
+    );
+  }
+
+  return (
+    <section className="opportunity-shell" id="opportunity" aria-labelledby="opportunity-title">
+      <header className="opportunity-header">
+        <div>
+          <p className="kicker">Release 0.3 / Regional Opportunity Engine</p>
+          <h2 id="opportunity-title">Bandingkan wilayah tanpa menyembunyikan asumsi.</h2>
+          <p>
+            Skor adalah skenario Anda—bukan fakta objektif. Setiap hasil membawa nilai mentah,
+            normalisasi, kontribusi, kualitas, sumber, dan versi dataset.
+          </p>
+        </div>
+        <div className="scenario-actions">
+          <button type="button" className="secondary-button" onClick={() => void shareScenario()}>
+            Salin skenario
+          </button>
+          <button type="button" className="secondary-button" onClick={() => void exportReport()} disabled={!score}>
+            Unduh laporan JSON
+          </button>
+        </div>
+      </header>
+
+      <div className="opportunity-layout">
+        <aside className="scenario-panel" aria-label="Konfigurasi skenario">
+          <fieldset>
+            <legend>1. Pilih 2–5 provinsi</legend>
+            <div className="selector-list region-selector-list">
+              {regions.map((region) => (
+                <label key={region.code}>
+                  <input
+                    type="checkbox"
+                    checked={scenario.regionCodes.includes(region.code)}
+                    onChange={() => toggleRegion(region.code)}
+                    disabled={!scenario.regionCodes.includes(region.code) && scenario.regionCodes.length >= 5}
+                  />
+                  <span>{region.name}</span>
+                </label>
+              ))}
+            </div>
+            <small>{scenario.regionCodes.length}/5 dipilih</small>
+          </fieldset>
+
+          <fieldset>
+            <legend>2. Pilih indikator</legend>
+            <div className="selector-list">
+              {indicators.map((indicator) => (
+                <label key={indicator.code}>
+                  <input
+                    type="checkbox"
+                    checked={scenario.weights.some((item) => item.code === indicator.code)}
+                    onChange={() => toggleIndicator(indicator.code)}
+                    disabled={!scenario.weights.some((item) => item.code === indicator.code) && scenario.weights.length >= 6}
+                  />
+                  <span>
+                    {indicator.name}
+                    <em data-health={indicator.quality_status}>{indicator.quality_status}</em>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>3. Periode dan metode</legend>
+            <label className="field-label">
+              Tahun analisis comparable
+              <select
+                value={activeYear}
+                onChange={(event) =>
+                  setScenario((current) => ({ ...current, year: Number(event.target.value) }))
+                }
+              >
+                {years.map((year) => (
+                  <option value={year} key={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field-label">
+              Normalisasi
+              <select
+                value={scenario.normalization}
+                onChange={(event) =>
+                  setScenario((current) => ({
+                    ...current,
+                    normalization: event.target.value as Normalization,
+                  }))
+                }
+              >
+                <option value="min_max">Min–max</option>
+                <option value="percentile">Percentile rank</option>
+              </select>
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>4. Bobot dan arah</legend>
+            <div className="weight-list">
+              {scenario.weights.map((item) => {
+                const indicator = indicators.find((candidate) => candidate.code === item.code);
+                return (
+                  <div className="weight-row" key={item.code}>
+                    <strong>{indicator?.name ?? item.code}</strong>
+                    <label>
+                      Bobot (%)
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={item.weight}
+                        onChange={(event) =>
+                          setScenario((current) => ({
+                            ...current,
+                            weights: current.weights.map((weight) =>
+                              weight.code === item.code
+                                ? { ...weight, weight: Number(event.target.value) }
+                                : weight,
+                            ),
+                          }))
+                        }
+                      />
+                    </label>
+                    <label>
+                      Arah favorable
+                      <select
+                        value={item.direction}
+                        onChange={(event) =>
+                          setScenario((current) => ({
+                            ...current,
+                            weights: current.weights.map((weight) =>
+                              weight.code === item.code
+                                ? { ...weight, direction: event.target.value as Direction }
+                                : weight,
+                            ),
+                          }))
+                        }
+                      >
+                        <option value="higher">Lebih tinggi</option>
+                        <option value="lower">Lebih rendah</option>
+                      </select>
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
+            <p className={Math.abs(weightTotal - 100) <= 0.01 ? "weight-valid" : "weight-invalid"}>
+              Total bobot: {formatNumber(weightTotal)}%
+            </p>
+            <label className="field-label">
+              Coverage minimum ({Math.round(scenario.coverageThreshold * 100)}%)
+              <input
+                type="range"
+                min="0.5"
+                max="1"
+                step="0.05"
+                value={scenario.coverageThreshold}
+                onChange={(event) =>
+                  setScenario((current) => ({
+                    ...current,
+                    coverageThreshold: Number(event.target.value),
+                  }))
+                }
+              />
+            </label>
+            <label className="field-label">
+              Gangguan bobot sensitivitas ({Math.round(scenario.perturbation * 100)}%)
+              <input
+                type="range"
+                min="0.05"
+                max="0.3"
+                step="0.05"
+                value={scenario.perturbation}
+                onChange={(event) =>
+                  setScenario((current) => ({
+                    ...current,
+                    perturbation: Number(event.target.value),
+                  }))
+                }
+              />
+            </label>
+          </fieldset>
+
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => void runAnalysis()}
+            disabled={!configurationValid || running}
+          >
+            {running ? "Menghitung…" : "Hitung skenario"}
+          </button>
+          {!configurationValid && (
+            <p className="form-warning">Pilih 2–5 provinsi, periode valid, dan total bobot 100%.</p>
+          )}
+          {message && <p className="scenario-message" role="status">{message}</p>}
+        </aside>
+
+        <div className="opportunity-results" aria-live="polite">
+          {!score || !comparison || !sensitivity ? (
+            <div className="result-placeholder">Konfigurasikan skenario untuk melihat hasil.</div>
+          ) : (
+            <>
+              <section className="ranking-panel" aria-labelledby="ranking-title">
+                <div className="result-heading">
+                  <div>
+                    <p className="kicker">Ranking skenario</p>
+                    <h3 id="ranking-title">Kontribusi terlihat, coverage ditegakkan.</h3>
+                  </div>
+                  <span>{comparison.methodology_version}</span>
+                </div>
+                <div className="ranking-grid">
+                  {score.results.map((row) => (
+                    <article className="ranking-card" key={row.region_code} data-eligible={row.eligible}>
+                      <span className="rank-mark">{row.rank ? `#${row.rank}` : "Tidak diranking"}</span>
+                      <h4>{row.region_name}</h4>
+                      <strong>{row.score === null ? "—" : formatNumber(row.score)}</strong>
+                      <small>Coverage {Math.round(row.coverage * 100)}%</small>
+                    </article>
+                  ))}
+                </div>
+                <div className="table-scroll">
+                  <table>
+                    <caption>Kontribusi indikator untuk reproduksi skor</caption>
+                    <thead>
+                      <tr>
+                        <th>Wilayah</th>
+                        <th>Indikator</th>
+                        <th>Nilai mentah</th>
+                        <th>Normalisasi</th>
+                        <th>Bobot efektif</th>
+                        <th>Kontribusi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {score.results.flatMap((row) =>
+                        row.contributions.map((item) => (
+                          <tr key={`${row.region_code}-${item.indicator_code}`}>
+                            <td>{row.region_name}</td>
+                            <td>{indicators.find((indicator) => indicator.code === item.indicator_code)?.name ?? item.indicator_code}</td>
+                            <td>{formatNumber(item.raw_value)}</td>
+                            <td>{formatNumber(item.normalized_value, 4)}</td>
+                            <td>{item.effective_weight === null ? "—" : `${formatNumber(item.effective_weight)}%`}</td>
+                            <td>{formatNumber(item.contribution, 4)}</td>
+                          </tr>
+                        )),
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section className="comparison-panel" aria-labelledby="comparison-title">
+                <div className="result-heading">
+                  <div>
+                    <p className="kicker">Raw + normalized</p>
+                    <h3 id="comparison-title">Perbandingan pada periode yang sama.</h3>
+                  </div>
+                  <span>{scenario.normalization === "min_max" ? "Min–max" : "Percentile rank"}</span>
+                </div>
+                {scenario.weights.map((weight) => {
+                  const indicator = indicators.find((item) => item.code === weight.code);
+                  const summary = comparison.distributions[weight.code];
+                  return (
+                    <article className="distribution-card" key={weight.code}>
+                      <div>
+                        <h4>{indicator?.name ?? weight.code}</h4>
+                        <p>{indicator?.unit} · favorable {weight.direction === "higher" ? "lebih tinggi" : "lebih rendah"}</p>
+                      </div>
+                      <div className="distribution-summary">
+                        <span>Min {formatNumber(summary?.minimum ?? null)}</span>
+                        <span>Median {formatNumber(summary?.median ?? null)}</span>
+                        <span>Maks {formatNumber(summary?.maximum ?? null)}</span>
+                      </div>
+                      <div className="distribution-bars" role="img" aria-label={`Distribusi ternormalisasi ${indicator?.name}`}>
+                        {comparison.regions.map((region) => {
+                          const value = region.values.find((item) => item.indicator_code === weight.code);
+                          return (
+                            <div key={region.region_code}>
+                              <span>{region.region_name}</span>
+                              <i style={{ width: `${Math.max(0, (value?.normalized_value ?? 0) * 100)}%` }} />
+                              <b>{formatNumber(value?.raw_value ?? null)}</b>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </article>
+                  );
+                })}
+                <div className="table-scroll">
+                  <table>
+                    <caption>Alternatif data tabel untuk distribusi</caption>
+                    <thead><tr><th>Wilayah</th><th>Indikator</th><th>Periode referensi</th><th>Nilai</th><th>Normalisasi</th><th>Unit</th></tr></thead>
+                    <tbody>
+                      {comparison.regions.flatMap((region) =>
+                        region.values.map((item) => (
+                          <tr key={`${region.region_code}-${item.indicator_code}`}>
+                            <td>{region.region_name}</td><td>{item.indicator_code}</td><td>{item.reference_period}</td>
+                            <td>{formatNumber(item.raw_value)}</td><td>{formatNumber(item.normalized_value, 4)}</td><td>{item.unit}</td>
+                          </tr>
+                        )),
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section className="trend-panel" aria-labelledby="trend-title">
+                <div className="result-heading"><div><p className="kicker">Trend</p><h3 id="trend-title">Riwayat nilai tanpa mencampur unit.</h3></div></div>
+                <div className="table-scroll">
+                  <table>
+                    <caption>Tren historis untuk wilayah terpilih</caption>
+                    <thead><tr><th>Indikator</th><th>Wilayah</th><th>Periode</th><th>Nilai</th><th>Unit</th></tr></thead>
+                    <tbody>{comparison.trends.map((row) => <tr key={`${row.indicator_code}-${row.region_code}-${row.period}`}><td>{row.indicator_code}</td><td>{row.region_name}</td><td>{row.period}</td><td>{formatNumber(row.value)}</td><td>{row.unit}</td></tr>)}</tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section className="sensitivity-panel" aria-labelledby="sensitivity-title">
+                <div className="result-heading"><div><p className="kicker">Sensitivity</p><h3 id="sensitivity-title">Apakah ranking stabil ketika bobot bergeser?</h3></div><span>{sensitivity.scenario_count} skenario</span></div>
+                <div className="stability-grid">
+                  {sensitivity.stability.map((row) => <article key={row.region_code}><h4>{row.region_name}</h4><strong>{formatNumber(row.unchanged_percent, 0)}%</strong><span>peringkat tetap</span><small>Rentang #{row.min_rank ?? "—"}–#{row.max_rank ?? "—"} · pergeseran maks {row.max_absolute_shift ?? "—"}</small></article>)}
+                </div>
+                <p className="method-warning">{sensitivity.disclaimer}</p>
+              </section>
+
+              <details className="methodology-drawer">
+                <summary>Sumber, versi data, dan metodologi</summary>
+                <p>Skor = jumlah normalisasi × bobot efektif. Missing value tidak pernah menjadi nol; bobot tersedia hanya dinormalisasi ulang bila coverage masih memenuhi threshold.</p>
+                <ul>
+                  {scenario.weights.map((weight) => {
+                    const indicator = indicators.find((item) => item.code === weight.code);
+                    const version = comparison.dataset_versions[weight.code];
+                    return <li key={weight.code}><strong>{indicator?.name}</strong> — {indicator?.definition} <a href={indicator?.source_url} target="_blank" rel="noreferrer">Sumber resmi</a><br /><code>reference {version?.analysis_reference_period} · version {version?.version_id}</code></li>;
+                  })}
+                </ul>
+              </details>
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}

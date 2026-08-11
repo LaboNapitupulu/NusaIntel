@@ -157,10 +157,57 @@
 
 ### Risks/blockers
 
-- Hosted Phase 3 CI remains required before merging.
 - The benchmark reflects the 18-dataset MVP catalog; pagination and query limits remain
   mandatory as the catalog grows.
 
+### Merge evidence
+
+- PR [#11](https://github.com/LaboNapitupulu/NusaIntel/pull/11) merged after all four hosted
+  checks passed.
+- Merge commit: `df07d0a2461876bf47f99d0136563297bd7928aa`.
+
 ### Next phase
 
-- Start Phase 4 Regional Opportunity Engine after hosted CI and merge.
+- Start Phase 4 Regional Opportunity Engine from the verified merge commit.
+
+## Phase 4 — 2026-08-11
+
+### Outcome delivered
+
+- Added a source/version-aware indicator and province catalog for the Opportunity Engine.
+- Added deterministic min-max and percentile normalization, direction handling, coverage
+  gates, contributions, tied ranking, and sensitivity scenarios.
+- Added comparison, score, sensitivity, and export APIs over immutable Gold observations.
+- Added a responsive configuration and evidence UI with a table alternative for charts,
+  ineligible states, methodology drawer, URL sharing, and JSON export.
+- Preserved each indicator's official reference month inside a common analysis year.
+
+### Benchmarks
+
+- Reproducibility: 100%.
+- All 38-region scoring p95: 1.267 ms versus < 500 ms.
+- Hidden zero imputation: 0.
+- Indicator metadata: 6/6 complete.
+- Opportunity scoring engine line coverage: 95%.
+
+### Quality evidence
+
+- Backend: Ruff, formatting, strict Mypy pass; 48 unit/API tests pass and two database tests
+  are available for the hosted PostgreSQL job.
+- Frontend: ESLint, TypeScript, six component tests, and production build pass.
+- ADR 0003, `docs/methodology.md`, and `docs/phase-4-status.md` capture decisions and gates.
+
+### Risks/blockers
+
+- Local Docker/browser verification remains optional and requires a fresh explicit execution
+  approval after the desktop approval mechanism rejected the earlier Docker run.
+
+### Hosted evidence
+
+- PR [#12](https://github.com/LaboNapitupulu/NusaIntel/pull/12) is ready to merge.
+- Hosted run [31457229496](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31457229496)
+  passes backend/PostgreSQL, frontend, Compose build, and security jobs for commit `dbd2fd3`.
+
+### Next step
+
+- Merge PR #12 when explicitly approved, then start Phase 5 from verified `main`.

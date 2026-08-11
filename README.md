@@ -8,7 +8,8 @@ surfaces:
 - RegulasiLens ID
 
 The current implementation includes the platform foundation, the completed six-indicator
-BPS path, and the Phase 3 Data Reliability Control Tower Lite. TPT, TPAK, poverty, PDRB per
+BPS path, the Data Reliability Control Tower Lite, and the Phase 4 Regional Opportunity
+Engine core. TPT, TPAK, poverty, PDRB per
 capita, PDRB growth, and HDI flow through immutable Bronze, contract-validated Silver, and
 publish-gated Gold with lineage. Dataset health, freshness, quality history, schema drift,
 incidents, and last-known-good state are exposed through the API and web dashboard.
@@ -146,6 +147,25 @@ Primary endpoints:
 
 The portable contract schema and versioning rules are in `contracts/`. Phase 3 acceptance
 and benchmark evidence is recorded in `docs/phase-3-status.md`.
+
+## Regional Opportunity Engine
+
+Run the six-indicator pipeline, then open <http://localhost:3100/#opportunity>.
+Select two to five provinces and a common analysis year, configure weights and direction,
+then calculate the scenario. Indicator-specific reference periods remain visible even when
+their official months differ.
+
+Primary endpoints:
+
+- `GET /api/v1/opportunity/indicators` and `GET /api/v1/opportunity/regions`
+- `POST /api/v1/opportunity/compare`
+- `POST /api/v1/opportunity/score`
+- `POST /api/v1/opportunity/sensitivity`
+- `POST /api/v1/opportunity/export`
+
+The scoring method, missing-data behavior, and reproduction steps are documented in
+`docs/methodology.md`. Phase 4 acceptance and benchmark evidence is recorded in
+`docs/phase-4-status.md`.
 
 ## Configuration
 
