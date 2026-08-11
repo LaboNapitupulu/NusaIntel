@@ -1,6 +1,6 @@
 # Phase 5 status — Regional analytics, map, and reporting
 
-- Status: Implementation complete; hosted PostgreSQL/CI verification pending
+- Status: Complete; PR ready to merge
 - Date: 2026-08-11
 - Branch: `codex/phase-5-regional-analytics`
 - Release target: `0.4`
@@ -31,19 +31,22 @@ units, reference periods, official source URLs, and explicit limitations.
 | Similarity deterministic | Pass | Reordered fixture produces byte-equivalent results |
 | Cluster evidence visible | Pass | Every candidate reports silhouette, stability, and minimum size |
 | Weak clustering withheld | Pass | Constant fixture returns no assignment or description |
-| Export context complete | Pass locally/unit; DB CI pending | Unit/source/version assertions added to PostgreSQL integration |
+| Export context complete | Pass | Hosted PostgreSQL integration verifies unit/source/version context |
 | Non-visual map equivalent | Pass | Map and 38-row table share the same response values |
 | Normative labels absent | Pass | Engine and UI tests reject prohibited wording |
 | Responsive implementation | Pass in CSS/build; browser smoke deferred | 360 px breakpoints and production build pass |
 
 ## Verification
 
-- Backend: Ruff/format/strict Mypy pass; 57 tests pass and 2 PostgreSQL tests are skipped
-  locally pending the hosted database job.
+- Backend: Ruff/format/strict Mypy pass; 57 tests pass locally and both PostgreSQL tests pass
+  in hosted CI.
 - Frontend: ESLint, TypeScript, 8 component tests, and Next.js production build pass.
 - Production build includes the static home route and dynamic `/regions/[code]` route.
 - Database integration now benchmarks five full reports and asserts 38 map values,
   deterministic similarity, cluster evidence, and citation context.
+- Hosted run [31465223016](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31465223016)
+  passes backend/PostgreSQL, frontend, Compose build, and security jobs. The full-report p95
+  remains below the enforced 500 ms threshold.
 
 ## Boundary-source decision
 
@@ -53,9 +56,10 @@ metadata. Phase 5 therefore redistributes neither source. The product uses an ex
 schematic, self-authored tile representation until a compatible licensed 38-province source
 is approved. See ADR 0004.
 
-## Remaining completion evidence
+## Pull request
 
-- Run the isolated PostgreSQL benchmark and all hosted CI jobs on the pull request.
-- Record hosted latency and merge evidence here after CI succeeds.
-- Optional live browser/Docker smoke remains outside the local verification performed in
-  this branch.
+- [PR #13](https://github.com/LaboNapitupulu/NusaIntel/pull/13)
+- Implementation commit: `44212bb10ca7794fef0faf2506ddb7cba2734213`
+
+Optional populated live browser/Docker smoke remains outside this branch's verification and
+can be added during Phase 6 hardening.

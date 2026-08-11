@@ -235,5 +235,7 @@
 
 ### Next step
 
-- Commit and push `codex/phase-5-regional-analytics`, open its pull request, and record the
-  PostgreSQL benchmark plus hosted CI evidence before merge.
+- PR [#13](https://github.com/LaboNapitupulu/NusaIntel/pull/13) is ready to merge. Hosted run
+  [31465223016](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31465223016)
+  passes backend/PostgreSQL, frontend, Compose, and security; the full-report benchmark
+  remains below its enforced 500 ms p95 threshold.

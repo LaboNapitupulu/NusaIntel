@@ -797,13 +797,13 @@ Update this table at the end of every milestone.
 | Data ingestion and reproducibility | 15% | 100% | Six live, fixture-backed, idempotent Bronze → Silver → Gold paths |
 | Data contracts and quality gates | 15% | 100% | Versioned contracts cover all 12 Silver/Gold datasets; critical gate, exceptions, drift, and incidents tested |
 | Regional methodology correctness | 15% | 100% | Version-bound normalization, direction, coverage, contribution, tie, and sensitivity rules pass hand-calculated tests |
-| Regional user journeys | 15% | 75% | Comparison/scoring plus similarity, evidence-gated clustering, 38-province tile/table, detail, print, and JSON report pass locally; hosted DB gate pending |
-| Testing and CI | 10% | 75% | 57 local backend/API and eight frontend tests pass; Phase 5 hosted PostgreSQL/CI jobs pending |
-| Performance and reliability | 10% | 75% | Existing pipeline/API benchmarks pass; five-run full analytics-report p95 benchmark added for hosted PostgreSQL |
+| Regional user journeys | 15% | 100% | Comparison/scoring plus similarity, evidence-gated clustering, 38-province tile/table, detail, print, and JSON report pass hosted DB integration |
+| Testing and CI | 10% | 100% | 57 local backend/API and eight frontend tests pass; hosted PostgreSQL, frontend, Compose, and security jobs pass |
+| Performance and reliability | 10% | 100% | Five-run full analytics report remains below the enforced 500 ms p95 threshold in hosted PostgreSQL CI |
 | Accessibility and UX | 5% | 75% | Responsive 360 px CSS, keyboard-native tile buttons, no-data legend, semantic tables, and print layout; populated browser smoke pending |
-| Security and privacy | 5% | 75% | Credential controls remain; scenario URLs store configuration without identity and untrusted state is shape-validated |
+| Security and privacy | 5% | 100% | Credential controls remain, exports contain public evidence only, untrusted input is strictly validated, and hosted security job passes |
 | Documentation and reproducibility | 10% | 100% | ADRs, methodology, phase status, immutable versions, export evidence, fixtures, and benchmarks are documented |
-| **Total** | **100%** | **88.75%** | Phase 5 implementation and local gates pass; hosted PostgreSQL/CI and merge evidence remain |
+| **Total** | **100%** | **98.75%** | Phase 5 implementation and hosted CI pass; optional populated browser smoke moves to Phase 6 hardening |
 
 Scoring rule:
 
@@ -860,10 +860,9 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 
 ## 22. Immediate next actions
 
-Phase 5 implementation and local verification are complete. The next release actions are:
+Phase 5 implementation and hosted verification are complete. The next release actions are:
 
-1. Commit and push `codex/phase-5-regional-analytics`.
-2. Open the Phase 5 pull request and run all hosted CI jobs.
-3. Record the isolated PostgreSQL analytics benchmark and resolve any CI finding.
-4. Merge only after the hosted gates settle; optionally add populated desktop/mobile browser
-   QA when local Docker execution is explicitly approved.
+1. Merge PR #13 after its final documentation-only CI rerun settles.
+2. Sync verified `main` and record the merged-main CI run.
+3. Start Phase 6 hardening, including populated desktop/mobile browser QA, accessibility
+   scan, dependency audit, and clean-clone verification.
