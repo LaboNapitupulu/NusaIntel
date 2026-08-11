@@ -1,6 +1,6 @@
 # Phase 4 status — Regional Opportunity Engine core
 
-- Status: Complete; PR ready to merge
+- Status: Complete; merged
 - Date: 2026-08-11
 - Branch: `codex/phase-4-opportunity-engine`
 - Release target: `0.3`
@@ -57,6 +57,7 @@ a version-bound evidence package.
 
 - [PR #12](https://github.com/LaboNapitupulu/NusaIntel/pull/12)
 - Hosted implementation commit: `dbd2fd353f8dfe62f5eb4af0094bd8b97268766d`
+- Merge commit: `248bc93b7f342a480c933f5f1dc35a4a047720c2`
 
 ## Limitations
 

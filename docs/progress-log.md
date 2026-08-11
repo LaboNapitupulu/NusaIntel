@@ -211,3 +211,29 @@
 ### Next step
 
 - Merge PR #12 when explicitly approved, then start Phase 5 from verified `main`.
+
+## Phase 5 — 2026-08-11
+
+### Outcome delivered
+
+- Added deterministic, version-bound complete-case preprocessing and similar-region search.
+- Added candidate-`k` clustering with silhouette/stability evidence and fail-closed withholding.
+- Added a keyboard-operable schematic tile choropleth for all 38 BPS provinces plus an
+  equivalent data table and explicit non-boundary disclaimer.
+- Added regional detail pages and printable/JSON reports with units, sources, reference
+  periods, dataset versions, methodology, exclusions, and limitations.
+
+### Quality evidence
+
+- Backend Ruff/format/strict Mypy pass; 57 local tests pass and 2 isolated PostgreSQL tests
+  await hosted CI.
+- Frontend ESLint, TypeScript, 8 tests, and production build pass.
+- Engine tests prove row-order invariance, deterministic versioning, cluster evidence,
+  neutral descriptions, and withholding of degenerate structure.
+- ADR 0004 documents why Phase 5 uses a self-authored schematic map instead of
+  redistributing mismatched or license-ambiguous boundary data.
+
+### Next step
+
+- Commit and push `codex/phase-5-regional-analytics`, open its pull request, and record the
+  PostgreSQL benchmark plus hosted CI evidence before merge.
