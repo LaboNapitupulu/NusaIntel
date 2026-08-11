@@ -1,5 +1,6 @@
 import { ControlTower } from "@/components/control-tower";
 import { OpportunityEngine } from "@/components/opportunity-engine";
+import { RegionalAnalytics } from "@/components/regional-analytics";
 import { SystemStatus } from "@/components/system-status";
 
 const foundations = [
@@ -32,7 +33,8 @@ export default function Home() {
           <div className="nav-links">
             <a href="#control-tower">Control Tower</a>
             <a href="#opportunity">Opportunity Engine</a>
-            <span className="phase-label">Release 0.3 / Phase 4</span>
+            <a href="#regional-analytics">Regional Analytics</a>
+            <span className="phase-label">Release 0.4 / Phase 5</span>
           </div>
         </nav>
 
@@ -68,6 +70,8 @@ export default function Home() {
       <ControlTower />
 
       <OpportunityEngine />
+
+      <RegionalAnalytics />
 
       <footer>
         <span>NusaIntel © 2026</span>

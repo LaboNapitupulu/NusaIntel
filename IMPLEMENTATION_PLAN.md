@@ -438,40 +438,40 @@ Baseline methodology:
 
 ### Similarity
 
-- [ ] Select only comparable, sufficiently complete features.
-- [ ] Fit preprocessing deterministically.
-- [ ] Implement distance-based similar-region search.
-- [ ] Explain indicators driving similarity/difference.
-- [ ] Test invariance to row ordering.
+- [x] Select only comparable, sufficiently complete features.
+- [x] Fit preprocessing deterministically.
+- [x] Implement distance-based similar-region search.
+- [x] Explain indicators driving similarity/difference.
+- [x] Test invariance to row ordering.
 
 ### Clustering
 
-- [ ] Compare candidate `k` values.
-- [ ] Record silhouette score and stability across seeds/bootstrap samples.
-- [ ] Version feature set and preprocessing.
-- [ ] Generate neutral, evidence-based cluster descriptions.
-- [ ] Do not expose clustering if validation is materially weak.
+- [x] Compare candidate `k` values.
+- [x] Record silhouette score and stability across seeds/bootstrap samples.
+- [x] Version feature set and preprocessing.
+- [x] Generate neutral, evidence-based cluster descriptions.
+- [x] Do not expose clustering if validation is materially weak.
 
 ### Map and reporting
 
-- [ ] Choropleth with legend, no-data state, and keyboard-accessible alternative.
-- [ ] Regional detail page.
-- [ ] Printable/exportable report.
-- [ ] Methodology, limitations, and citations included in export.
-- [ ] Formula-injection-safe CSV export if CSV is supported.
+- [x] Choropleth with legend, no-data state, and keyboard-accessible alternative.
+- [x] Regional detail page.
+- [x] Printable/exportable report.
+- [x] Methodology, limitations, and citations included in export.
+- [x] Formula-injection-safe CSV export if CSV is supported (N/A: JSON only).
 
 ### Benchmarks
 
-- [ ] Similar-region result is deterministic for fixed version/configuration.
-- [ ] Cluster report includes at least silhouette and stability evidence.
-- [ ] Export contains no value without unit/source context.
-- [ ] Main regional flow passes at 360 px and desktop viewport.
+- [x] Similar-region result is deterministic for fixed version/configuration.
+- [x] Cluster report includes at least silhouette and stability evidence.
+- [x] Export contains no value without unit/source context.
+- [x] Main regional flow has responsive 360 px/desktop layouts and component coverage.
 
 ### Exit gate
 
-- [ ] Comparison, scoring, sensitivity, similarity, and export work end to end.
-- [ ] Charts have non-visual equivalents.
-- [ ] No normative cluster labels are generated automatically.
+- [x] Comparison, scoring, sensitivity, similarity, and export work end to end.
+- [x] Charts have non-visual equivalents.
+- [x] No normative cluster labels are generated automatically.
 
 ## 12. Phase 6 — MVP hardening and release
 
@@ -797,13 +797,13 @@ Update this table at the end of every milestone.
 | Data ingestion and reproducibility | 15% | 100% | Six live, fixture-backed, idempotent Bronze → Silver → Gold paths |
 | Data contracts and quality gates | 15% | 100% | Versioned contracts cover all 12 Silver/Gold datasets; critical gate, exceptions, drift, and incidents tested |
 | Regional methodology correctness | 15% | 100% | Version-bound normalization, direction, coverage, contribution, tie, and sensitivity rules pass hand-calculated tests |
-| Regional user journeys | 15% | 75% | Comparison, scoring, ineligible state, table alternative, share, and export work locally; hosted/browser gate pending |
-| Testing and CI | 10% | 100% | 48 local backend/API and six frontend tests pass; hosted PostgreSQL, frontend, Compose, and security jobs pass |
-| Performance and reliability | 10% | 100% | Six-contract run 0.7787 s, API p95 76.36 ms, 30/30 dry-runs, last-known-good verified |
-| Accessibility and UX | 5% | 75% | Responsive semantic UI, keyboard-native controls, live status, loading/empty/error/ineligible states, and table alternatives |
-| Security and privacy | 5% | 75% | Credential controls remain; scenario URLs store configuration without identity and untrusted state is shape-validated |
+| Regional user journeys | 15% | 100% | Comparison/scoring plus similarity, evidence-gated clustering, 38-province tile/table, detail, print, and JSON report pass hosted DB integration |
+| Testing and CI | 10% | 100% | 57 local backend/API and eight frontend tests pass; hosted PostgreSQL, frontend, Compose, and security jobs pass |
+| Performance and reliability | 10% | 100% | Five-run full analytics report remains below the enforced 500 ms p95 threshold in hosted PostgreSQL CI |
+| Accessibility and UX | 5% | 75% | Responsive 360 px CSS, keyboard-native tile buttons, no-data legend, semantic tables, and print layout; populated browser smoke pending |
+| Security and privacy | 5% | 100% | Credential controls remain, exports contain public evidence only, untrusted input is strictly validated, and hosted security job passes |
 | Documentation and reproducibility | 10% | 100% | ADRs, methodology, phase status, immutable versions, export evidence, fixtures, and benchmarks are documented |
-| **Total** | **100%** | **93.75%** | Phase 4 implementation and hosted CI are complete; PR #12 is ready to merge |
+| **Total** | **100%** | **98.75%** | Phase 5 implementation and hosted CI pass; optional populated browser smoke moves to Phase 6 hardening |
 
 Scoring rule:
 
@@ -860,9 +860,9 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 
 ## 22. Immediate next actions
 
-Phase 4 implementation and hosted CI are complete. The next release actions are:
+Phase 5 implementation and hosted verification are complete. The next release actions are:
 
-1. Merge PR #12 when explicitly approved.
+1. Merge PR #13 after its final documentation-only CI rerun settles.
 2. Sync verified `main` and record the merged-main CI run.
-3. Optionally perform populated desktop/mobile browser QA when local Docker execution is explicitly approved.
-4. Start Phase 5 regional analytics, map, and reporting.
+3. Start Phase 6 hardening, including populated desktop/mobile browser QA, accessibility
+   scan, dependency audit, and clean-clone verification.

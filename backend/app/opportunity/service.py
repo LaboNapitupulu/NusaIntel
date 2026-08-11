@@ -69,7 +69,7 @@ class OpportunityService:
             return [{"code": row.code, "name": row.name} for row in rows]
 
     async def compare(self, request: ComparisonRequest) -> dict[str, Any]:
-        context = await self._load_context(request.indicator_codes, request.year)
+        context = await self.load_context(request.indicator_codes, request.year)
         weights = [
             IndicatorWeight(
                 code=code,
@@ -125,7 +125,7 @@ class OpportunityService:
 
     async def score(self, request: ScoreRequest) -> dict[str, Any]:
         weights = self._weights(request)
-        context = await self._load_context([item.code for item in weights], request.year)
+        context = await self.load_context([item.code for item in weights], request.year)
         validate_compatibility(context.specifications, context.observed_units, weights)
         self._validate_regions(request.region_codes, context.region_names)
         result = score_regions(
@@ -147,7 +147,7 @@ class OpportunityService:
 
     async def sensitivity(self, request: SensitivityRequest) -> dict[str, Any]:
         weights = self._weights(request)
-        context = await self._load_context([item.code for item in weights], request.year)
+        context = await self.load_context([item.code for item in weights], request.year)
         validate_compatibility(context.specifications, context.observed_units, weights)
         self._validate_regions(request.region_codes, context.region_names)
         result = sensitivity_analysis(
@@ -264,7 +264,7 @@ class OpportunityService:
             "dataset_checksum": version.checksum if version else None,
         }
 
-    async def _load_context(self, indicator_codes: list[str], year: int) -> OpportunityContext:
+    async def load_context(self, indicator_codes: list[str], year: int) -> OpportunityContext:
         async with self._session_factory() as session:
             indicators = list(
                 await session.scalars(select(Indicator).where(Indicator.code.in_(indicator_codes)))

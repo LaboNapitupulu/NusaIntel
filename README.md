@@ -8,8 +8,8 @@ surfaces:
 - RegulasiLens ID
 
 The current implementation includes the platform foundation, the completed six-indicator
-BPS path, the Data Reliability Control Tower Lite, and the Phase 4 Regional Opportunity
-Engine core. TPT, TPAK, poverty, PDRB per
+BPS path, the Data Reliability Control Tower Lite, the Regional Opportunity Engine, and
+Phase 5 regional analytics/reporting. TPT, TPAK, poverty, PDRB per
 capita, PDRB growth, and HDI flow through immutable Bronze, contract-validated Silver, and
 publish-gated Gold with lineage. Dataset health, freshness, quality history, schema drift,
 incidents, and last-known-good state are exposed through the API and web dashboard.
@@ -166,6 +166,26 @@ Primary endpoints:
 The scoring method, missing-data behavior, and reproduction steps are documented in
 `docs/methodology.md`. Phase 4 acceptance and benchmark evidence is recorded in
 `docs/phase-4-status.md`.
+
+## Regional Analytics
+
+Run the six-indicator pipeline, then open <http://localhost:3100/#regional-analytics>.
+Choose two to six comparable indicators, a province, and a common year. The report provides
+similar regions with driver explanations, evidence-gated clusters, a schematic tile map,
+an equivalent table, source/version citations, a regional detail page, JSON download, and
+print layout.
+
+Primary endpoints:
+
+- `POST /api/v1/opportunity/analytics/similarity`
+- `POST /api/v1/opportunity/analytics/clusters`
+- `POST /api/v1/opportunity/analytics/report`
+- `GET /api/v1/opportunity/regions/{region_code}?year=2024`
+
+The tile map is explicitly schematic and contains no third-party administrative boundary
+geometry. The deterministic preprocessing, similarity formula, validation thresholds, and
+limitations are documented in `docs/regional-analytics-methodology.md`; the source/licensing
+decision is in ADR 0004 and Phase 5 evidence is in `docs/phase-5-status.md`.
 
 ## Configuration
 

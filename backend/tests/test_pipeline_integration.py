@@ -29,6 +29,8 @@ from app.opportunity.service import OpportunityService
 from app.pipeline.contracts import CONTRACTS, TPT_CONTRACT, IndicatorContract
 from app.pipeline.service import PipelineService
 from app.pipeline.types import RetrievedPayload
+from app.regional_analytics.schemas import AnalyticsReportRequest
+from app.regional_analytics.service import RegionalAnalyticsService
 
 FIXTURE_PATH = (
     Path(__file__).parents[2] / "tests" / "fixtures" / "bps" / "tpt_august_543_2023_2025_live.json"
@@ -166,6 +168,7 @@ async def test_all_mvp_contracts_and_control_tower_benchmarks() -> None:
     pipeline = PipelineService(session_factory)
     tower = ControlTowerService(session_factory)
     opportunity = OpportunityService(session_factory)
+    analytics = RegionalAnalyticsService(session_factory)
     identity = uuid.uuid4().hex
 
     started = perf_counter()
@@ -215,6 +218,23 @@ async def test_all_mvp_contracts_and_control_tower_benchmarks() -> None:
     indicator_catalog = await opportunity.indicator_catalog()
     score = await opportunity.score(scenario)
     exported = await opportunity.export_report(scenario)
+    analytics_request = AnalyticsReportRequest.model_validate(
+        {
+            "indicator_codes": ["tpt", "poverty_rate", "hdi"],
+            "year": 2024,
+            "target_region_code": "1100",
+            "minimum_feature_coverage": "0.95",
+            "limit": 5,
+        }
+    )
+    analytics_latencies: list[float] = []
+    analytics_reports = []
+    for _ in range(5):
+        analytics_started = perf_counter()
+        analytics_reports.append(await analytics.report(analytics_request))
+        analytics_latencies.append(perf_counter() - analytics_started)
+    analytics_p95_seconds = sorted(analytics_latencies)[-1]
+    analytics_report = analytics_reports[0]
 
     async with session_factory() as session:
         governed_datasets = int(
@@ -255,6 +275,7 @@ async def test_all_mvp_contracts_and_control_tower_benchmarks() -> None:
                 "contract_execution_seconds": round(contract_execution_seconds, 4),
                 "dry_run_success_rate": 1.0,
                 "health_api_p95_ms": round(api_p95_seconds * 1000, 2),
+                "regional_analytics_p95_ms": round(analytics_p95_seconds * 1000, 2),
                 "governed_datasets": governed_datasets,
                 "governed_contracts": governed_contracts,
             },
@@ -281,3 +302,13 @@ async def test_all_mvp_contracts_and_control_tower_benchmarks() -> None:
     assert all(row["eligible"] for row in score["results"])
     assert exported["dataset_versions"] == score["dataset_versions"]
     assert exported["configuration"]["year"] == 2024
+    assert analytics_p95_seconds < 0.5
+    assert len(analytics_report["map"]["values"]) == 38
+    assert len(analytics_report["similarity"]["results"]) == 5
+    assert analytics_report["clustering"]["candidate_evidence"]
+    assert all(
+        citation["unit"] and citation["source"]["url"] for citation in analytics_report["citations"]
+    )
+    assert [report["similarity"]["results"] for report in analytics_reports].count(
+        analytics_report["similarity"]["results"]
+    ) == len(analytics_reports)

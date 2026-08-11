@@ -39,6 +39,32 @@ class StubOpportunityService:
         }
 
 
+class StubRegionalAnalyticsService:
+    async def similarity(self, payload: Any) -> dict[str, Any]:
+        return {
+            "target_region_code": payload.target_region_code,
+            "feature_set_version": "feature-v1",
+            "results": [{"region_code": "1200", "drivers": []}],
+        }
+
+    async def clusters(self, payload: Any) -> dict[str, Any]:
+        return {
+            "feature_set_version": "feature-v1",
+            "publishable": True,
+            "candidate_evidence": [{"k": payload.candidate_k[0]}],
+        }
+
+    async def report(self, payload: Any) -> dict[str, Any]:
+        return {
+            "report_type": "regional-analytics-report",
+            "configuration": payload.model_dump(mode="json"),
+            "citations": [{"indicator_code": code} for code in payload.indicator_codes],
+        }
+
+    async def region_detail(self, region_code: str, year: int) -> dict[str, Any]:
+        return {"region_code": region_code, "year": year, "indicators": []}
+
+
 class ExportHarness(OpportunityService):
     def __init__(self) -> None:
         self.received_score_request: ScoreRequest | None = None
@@ -60,6 +86,7 @@ class ExportHarness(OpportunityService):
 def opportunity_app() -> Any:
     app = create_app(Settings(app_env="test"), database_probe=healthy_probe)
     app.state.opportunity_service = StubOpportunityService()
+    app.state.regional_analytics_service = StubRegionalAnalyticsService()
     return app
 
 
@@ -164,3 +191,61 @@ async def test_export_builds_score_request_without_sensitivity_only_fields() -> 
         "indicators",
     }
     assert exported["configuration"]["perturbation"] == "0.10"
+
+
+@pytest.mark.asyncio
+async def test_regional_analytics_and_detail_endpoints(opportunity_app: Any) -> None:
+    base = {
+        "indicator_codes": ["tpt", "poverty_rate", "hdi"],
+        "year": 2024,
+        "minimum_feature_coverage": "0.95",
+    }
+    async with AsyncClient(
+        transport=ASGITransport(app=opportunity_app), base_url="http://test"
+    ) as client:
+        similarity = await client.post(
+            "/api/v1/opportunity/analytics/similarity",
+            json={**base, "target_region_code": "1100", "limit": 5},
+        )
+        clusters = await client.post("/api/v1/opportunity/analytics/clusters", json=base)
+        report = await client.post(
+            "/api/v1/opportunity/analytics/report",
+            json={**base, "target_region_code": "1100", "limit": 5},
+        )
+        detail = await client.get("/api/v1/opportunity/regions/1100?year=2024")
+
+    assert similarity.status_code == 200
+    assert similarity.json()["target_region_code"] == "1100"
+    assert clusters.status_code == 200
+    assert clusters.json()["publishable"] is True
+    assert report.status_code == 200
+    assert len(report.json()["citations"]) == 3
+    assert detail.json() == {"region_code": "1100", "year": 2024, "indicators": []}
+
+
+@pytest.mark.asyncio
+async def test_regional_analytics_rejects_duplicate_features_and_extra_fields(
+    opportunity_app: Any,
+) -> None:
+    async with AsyncClient(
+        transport=ASGITransport(app=opportunity_app), base_url="http://test"
+    ) as client:
+        duplicate = await client.post(
+            "/api/v1/opportunity/analytics/similarity",
+            json={
+                "indicator_codes": ["hdi", "hdi"],
+                "year": 2024,
+                "target_region_code": "1100",
+            },
+        )
+        extra = await client.post(
+            "/api/v1/opportunity/analytics/clusters",
+            json={
+                "indicator_codes": ["hdi", "tpt"],
+                "year": 2024,
+                "normative_label": "terbaik",
+            },
+        )
+
+    assert duplicate.status_code == 422
+    assert extra.status_code == 422
