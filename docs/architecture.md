@@ -34,6 +34,10 @@ Compose waits for PostgreSQL health, completes migrations, then starts API/worke
 for API health. The frontend standalone image and backend image both run as minimal runtime
 stages; the frontend runs as an unprivileged user.
 
+The worker can run one configured indicator immediately and at a bounded interval. It is
+off by default, requires a BPS key when enabled, and holds a PostgreSQL advisory lock across
+fetch and publication so multiple worker replicas fail closed to `skipped_locked`.
+
 ## Governed data flow
 
 ```mermaid

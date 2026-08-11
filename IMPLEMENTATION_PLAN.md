@@ -494,9 +494,9 @@ Baseline methodology:
 
 - [x] Create reproducible benchmark script/configuration.
 - [x] Record p50/p95 API metrics.
-- [ ] Profile slow queries and add justified indexes.
-- [ ] Validate frontend bundle and primary page loading.
-- [ ] Confirm pipeline resource usage on benchmark environment.
+- [x] Profile release queries; no new index is justified at the 702-row MVP scale.
+- [x] Validate frontend bundle and primary page loading.
+- [x] Confirm pipeline resource usage on benchmark environment.
 
 ### Documentation
 
@@ -513,19 +513,19 @@ Baseline methodology:
 
 - [x] Synthetic or public-only demo.
 - [x] Architecture diagram.
-- [ ] Two-minute demo path.
-- [ ] Case study: one detected data-quality incident.
-- [ ] Case study: one ranking changes after sensitivity analysis.
+- [x] Two-minute demo path.
+- [x] Case study: one detected data-quality incident.
+- [x] Case study: one ranking changes after sensitivity analysis.
 - [x] Explicit limitations and next steps.
 
 ### MVP release gate
 
 - [ ] All PRD Section 18.1 criteria pass.
 - [x] All CI jobs pass from the current Phase 6 candidate commit.
-- [ ] No open critical data-quality incident.
+- [x] No open critical data-quality incident.
 - [ ] No high/critical security finding remains unexplained.
-- [ ] Docker stack health is verified together.
-- [ ] Clean-clone setup is verified by following only README.
+- [x] Docker stack health is verified together.
+- [x] Clean-clone setup is verified by following only README.
 
 ## 13. Phase 7 — RegulasiLens corpus foundation
 
@@ -798,7 +798,7 @@ Update this table at the end of every milestone.
 | Data contracts and quality gates | 15% | 100% | Versioned contracts cover all 12 Silver/Gold datasets; critical gate, exceptions, drift, and incidents tested |
 | Regional methodology correctness | 15% | 100% | Version-bound normalization, direction, coverage, contribution, tie, and sensitivity rules pass hand-calculated tests |
 | Regional user journeys | 15% | 100% | Comparison/scoring plus similarity, evidence-gated clustering, 38-province tile/table, detail, print, and JSON report pass hosted DB integration |
-| Testing and CI | 10% | 100% | 57 local backend/API and eight frontend tests pass; hosted PostgreSQL, frontend, Compose, and security jobs pass |
+| Testing and CI | 10% | 100% | 62 local backend/API and eight frontend tests pass; hosted PostgreSQL, frontend, Compose, and security jobs pass |
 | Performance and reliability | 10% | 100% | Five-run full analytics report remains below the enforced 500 ms p95 threshold in hosted PostgreSQL CI |
 | Accessibility and UX | 5% | 75% | Responsive 360 px CSS, keyboard-native tile buttons, no-data legend, semantic tables, and print layout; populated browser smoke pending |
 | Security and privacy | 5% | 100% | Credential controls remain, exports contain public evidence only, untrusted input is strictly validated, and hosted security job passes |
@@ -863,6 +863,6 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 Phase 5 is merged at `a0b2e07`. Phase 6 hardening is active on
 `codex/phase-6-mvp-hardening`; the next release actions are:
 
-1. Finish screenshots, two-minute demo path, and two evidence case studies.
-2. Record resource and bundle evidence.
-3. Close any release-gate finding before promoting the Phase 6 pull request from draft.
+1. Rotate the BPS key exposed during local scheduler smoke.
+2. Capture and add the three README screenshots from `docs/demo-guide.md`.
+3. Pass hosted CI on the updated candidate, then promote the Phase 6 pull request from draft.

@@ -151,6 +151,19 @@ Run all six contracted indicators:
 .\scripts\run_bps_pipeline.ps1
 ```
 
+The worker also supports one lightweight scheduled connector. It is disabled by default;
+to run TPT immediately at worker start and then once per day, set:
+
+```dotenv
+BPS_SCHEDULE_ENABLED=true
+BPS_SCHEDULE_INDICATOR=tpt
+BPS_SCHEDULE_INTERVAL_SECONDS=86400
+```
+
+The interval is bounded to 5 minutes–7 days. A PostgreSQL advisory lock prevents concurrent
+workers from fetching/publishing the same scheduled cycle. Keep scheduling disabled until a
+valid BPS key is installed and the deployment owner has selected the intended cadence.
+
 ## Control Tower
 
 Run the six-indicator pipeline at least once, then open <http://localhost:3100/#control-tower>.
@@ -210,7 +223,9 @@ decision is in ADR 0004 and Phase 5 evidence is in `docs/phase-5-status.md`.
 
 Release architecture, physical data definitions, operations, security, and benchmark
 evidence are maintained in `docs/architecture.md`, `docs/data-dictionary.md`,
-`docs/runbook.md`, `docs/privacy-and-security.md`, and `docs/benchmark-report.md`.
+`docs/runbook.md`, `docs/privacy-and-security.md`, and `docs/benchmark-report.md`. The
+two-minute walkthrough, evidence cases, and release gate are in `docs/demo-guide.md`,
+`docs/case-studies.md`, and `docs/release-scorecard.md`.
 
 ## Configuration
 
@@ -225,6 +240,9 @@ evidence are maintained in `docs/architecture.md`, `docs/data-dictionary.md`,
 | `API_PORT` | No | Host port for the API container; defaults to `8000` |
 | `DB_PORT` | No | Host port for local PostgreSQL; defaults to `5432` |
 | `BPS_API_KEY` | Live pipeline | Secret BPS WebAPI token; backend/worker only |
+| `BPS_SCHEDULE_ENABLED` | No | Enable the worker's immediate + interval BPS run; default `false` |
+| `BPS_SCHEDULE_INDICATOR` | Scheduled pipeline | One of the six contracted codes; default `tpt` |
+| `BPS_SCHEDULE_INTERVAL_SECONDS` | Scheduled pipeline | Cadence from 300–604800 seconds; default `86400` |
 
 Real secrets belong only in `.env` or a deployment secret manager. `.env` and
 runtime datasets are ignored by Git.

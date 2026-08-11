@@ -22,7 +22,7 @@
 
 ## Verification completed locally
 
-- The full release script passes backend lint/format/type checks, 57 tests plus two skipped
+- The full release script passes backend lint/format/type checks, 63 tests plus two skipped
   database tests, 88.83% critical branch coverage, frontend lint/type/component tests,
   production build, four Playwright cases, axe scan, and Compose configuration validation.
 - `pip-audit` and `npm audit` report no known dependency vulnerabilities.
@@ -34,8 +34,18 @@
 - Draft PR [#14](https://github.com/LaboNapitupulu/NusaIntel/pull/14) passes all four hosted
   CI jobs (backend/PostgreSQL, frontend/Playwright, Compose, and security) in run
   [31470460318](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31470460318).
+- First-load JavaScript stays below the 200 KiB gzip internal budget; homepage warm HTTP p95
+  is 62.37 ms and profiled release queries execute below 4 ms at MVP scale.
+- A six-contract live run completes in 8.657 seconds with a 133.1 MiB peak worker footprint.
+- The scheduled TPT connector completed idempotently under a PostgreSQL advisory lock.
+- The isolated quality case rejects a nonnumeric candidate with two critical incidents and
+  preserves 117 last-known-good Gold rows; the sensitivity case records a Bali/DKI rank flip.
+- HTTP transport request logging is suppressed and regression-tested after a local scheduler
+  smoke exposed a credential-bearing URL.
 
 ## Verification still required
 
-- Complete screenshots, demo path, case studies, resource/bundle evidence, and release
-  scorecard before promoting the draft pull request.
+- Regenerate the BPS API key that appeared in local scheduler-smoke output.
+- Add three manually captured README screenshots; controlled browser access to localhost is
+  blocked, while automated desktop/360 px layout and accessibility tests already pass.
+- Re-run hosted CI for the final Phase 6 head before promoting the draft pull request.

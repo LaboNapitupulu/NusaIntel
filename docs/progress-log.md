@@ -272,3 +272,18 @@
 
 - Finish portfolio/resource evidence, then promote PR #14 from draft when all release gates
   are closed.
+
+### Second hardening tranche
+
+- Added a disabled-by-default TPT scheduler with a bounded cadence and PostgreSQL advisory
+  lock; an actual scheduled run completed as `unchanged`.
+- Suppressed `httpx`/`httpcore` request logging after scheduler smoke revealed that the BPS
+  query credential could appear in local logs; the second smoke emitted only safe fields.
+- Added reproducible route-bundle, live-pipeline resource, and SQL query profiling.
+- Added an isolated fail-closed quality incident case and a public-data rank-sensitivity case.
+- Added the two-minute demo guide and PRD release scorecard.
+
+### Remaining release actions
+
+- Rotate the exposed BPS key, capture README screenshots manually, and pass hosted CI on the
+  final candidate head.

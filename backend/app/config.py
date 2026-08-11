@@ -26,11 +26,25 @@ class Settings(BaseSettings):
     bps_retry_base_seconds: float = Field(default=0.75, ge=0, le=30)
     bps_min_interval_seconds: float = Field(default=1.0, ge=0, le=60)
     bps_user_agent: str = "NusaIntel/0.2 (+https://github.com/LaboNapitupulu/NusaIntel)"
+    bps_schedule_enabled: bool = False
+    bps_schedule_indicator: Literal[
+        "grdp_growth_constant_2010",
+        "grdp_per_capita_current",
+        "hdi",
+        "poverty_rate",
+        "tpak",
+        "tpt",
+    ] = "tpt"
+    bps_schedule_interval_seconds: int = Field(default=86400, ge=300, le=604800)
 
     @model_validator(mode="after")
     def validate_production_configuration(self) -> Self:
         if self.app_env == "production" and not self.database_url:
             raise ValueError("DATABASE_URL is required when APP_ENV=production")
+        if self.bps_schedule_enabled and (
+            self.bps_api_key is None or not self.bps_api_key.get_secret_value().strip()
+        ):
+            raise ValueError("BPS_API_KEY is required when BPS scheduling is enabled")
         return self
 
     @property

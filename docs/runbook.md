@@ -24,6 +24,17 @@ does not delete the PostgreSQL volume.
 Before diagnosing a missing analytical result, confirm the requested indicator/year has a
 published Gold version and inspect Control Tower quality, incidents, and reference period.
 
+## Scheduled connector
+
+Set `BPS_SCHEDULE_ENABLED=true`, one `BPS_SCHEDULE_INDICATOR`, and an interval between 300
+and 604800 seconds. The worker runs once on startup and then maintains the configured
+start-to-start cadence. Verify a safe structured `scheduled_pipeline` log containing status,
+indicator, pipeline status, and run ID. Request URLs and credentials must never appear.
+
+The PostgreSQL advisory lock makes concurrent workers return `skipped_locked` before any
+fetch. Disable scheduling before key rotation, incident investigation, or a planned BPS
+maintenance window; the last-known-good Gold version remains available.
+
 ## Incident response
 
 1. Record request/correlation ID, dataset, candidate version, and failed check.
@@ -34,6 +45,8 @@ published Gold version and inspect Control Tower quality, incidents, and referen
 5. A temporary exception must include a reason, owner, and expiry and cannot waive an
    unrelated check.
 6. Re-run the same immutable fixture or approved source response and confirm idempotency.
+7. If a request URL containing `key=` ever appears in logs, disable scheduling, rotate the
+   BPS key, preserve only redacted evidence, and treat the old credential as compromised.
 
 ## Backup and restore
 

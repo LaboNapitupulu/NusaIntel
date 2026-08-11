@@ -24,6 +24,7 @@ fixtures, reports, screenshots, or Git history.
 | Denial by expensive analytics | Max 6 features, 10 results/seeds, 5 candidate k values, fixed 38-region universe |
 | Misleading output | Null-preserving logic, version/source context, validation withholding, limitations |
 | Database loss | Named volume, custom-format backup, isolated restore smoke, forward migration policy |
+| Duplicate scheduled ingestion | Disabled-by-default scheduler, bounded cadence, PostgreSQL advisory lock |
 
 ## Browser and API policy
 
@@ -31,6 +32,8 @@ fixtures, reports, screenshots, or Git history.
   prefix.
 - Responses contain public aggregates and provenance, not internal connection strings or
   stack traces.
+- `httpx` and `httpcore` request logging is forced to WARNING because the BPS credential is
+  a query parameter; scheduled logs contain only safe status, indicator, and run IDs.
 - The MVP has no authorization boundary because all product data is public and read-only;
   incident mutation endpoints are deployment-admin functionality and must be protected by
   an upstream access layer before public internet exposure.
@@ -49,3 +52,5 @@ retention and secure deletion are deployment-owner responsibilities.
 CI runs Gitleaks over full history, Python and npm dependency audits, strict typing/linting,
 unit/integration tests, Compose build, E2E at desktop/360px, and automated accessibility
 checks. Findings rated high/critical block release unless documented with owner and expiry.
+Rotate any credential that has appeared in a terminal, container, CI, screenshot, or chat
+log even after the logging defect is fixed.
