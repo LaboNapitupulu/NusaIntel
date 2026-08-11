@@ -5,9 +5,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.api.router import api_router
 from app.config import Settings, get_settings
+from app.control_tower.service import ControlTowerService
 from app.db.session import (
     DatabaseProbe,
     create_database_engine,
@@ -21,13 +23,15 @@ from app.middleware import RequestContextMiddleware
 def create_app(
     settings: Settings | None = None,
     database_probe: DatabaseProbe | None = None,
+    session_factory: async_sessionmaker[AsyncSession] | None = None,
 ) -> FastAPI:
     active_settings = settings or get_settings()
     configure_logging(active_settings.log_level)
     engine = None
     if database_probe is None:
         engine = create_database_engine(active_settings.resolved_database_url)
-        database_probe = create_database_probe(create_session_factory(engine))
+        session_factory = create_session_factory(engine)
+        database_probe = create_database_probe(session_factory)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -37,13 +41,16 @@ def create_app(
 
     application = FastAPI(
         title=active_settings.app_name,
-        version="0.1.0",
+        version="0.2.0",
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
         lifespan=lifespan,
     )
     application.state.settings = active_settings
     application.state.database_probe = database_probe
+    application.state.control_tower_service = (
+        ControlTowerService(session_factory) if session_factory is not None else None
+    )
     application.add_middleware(RequestContextMiddleware)
     application.add_middleware(
         CORSMiddleware,

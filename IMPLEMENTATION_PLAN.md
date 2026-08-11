@@ -312,42 +312,42 @@ Baseline methodology:
 
 ### Tasks: contracts
 
-- [ ] Define versioned YAML or JSON contract schema.
-- [ ] Validate contract syntax before pipeline execution.
-- [ ] Support column/type/nullability rules.
-- [ ] Support primary/composite uniqueness.
-- [ ] Support min/max, accepted values, and custom checks.
-- [ ] Support freshness and row-count change thresholds.
-- [ ] Store contract version used by each quality run.
+- [x] Define versioned YAML or JSON contract schema.
+- [x] Validate contract syntax before pipeline execution.
+- [x] Support column/type/nullability rules.
+- [x] Support primary/composite uniqueness.
+- [x] Support min/max, accepted values, and custom checks.
+- [x] Support freshness and row-count change thresholds.
+- [x] Store contract version used by each quality run.
 
 ### Tasks: quality engine
 
-- [ ] Implement severity levels: info, warning, critical.
-- [ ] Store expected and observed values.
-- [ ] Limit and sanitize failing-row samples.
-- [ ] Detect schema additions, removals, and type changes.
-- [ ] Block Gold publication on critical failure.
-- [ ] Allow exception only with reason, owner, and expiry.
+- [x] Implement severity levels: info, warning, critical.
+- [x] Store expected and observed values.
+- [x] Limit and sanitize failing-row samples.
+- [x] Detect schema additions, removals, and type changes.
+- [x] Block Gold publication on critical failure.
+- [x] Allow exception only with reason, owner, and expiry.
 
 ### Tasks: Control Tower API/UI
 
-- [ ] Dataset catalog page.
-- [ ] Dataset detail and current health.
-- [ ] Pipeline-run history.
-- [ ] Quality-check history and filters.
-- [ ] Freshness status.
-- [ ] Schema-diff viewer.
-- [ ] Basic lineage graph/list.
-- [ ] Incident status and resolution note.
+- [x] Dataset catalog page.
+- [x] Dataset detail and current health.
+- [x] Pipeline-run history.
+- [x] Quality-check history and filters.
+- [x] Freshness status.
+- [x] Schema-diff viewer.
+- [x] Basic lineage graph/list.
+- [x] Incident status and resolution note.
 
 ### Tests
 
-- [ ] Critical contract failure blocks publish.
-- [ ] Warning does not block but remains visible.
-- [ ] Expired exception no longer bypasses the gate.
-- [ ] Freshness distinguishes reference period from retrieval time.
-- [ ] Schema change creates a drift event.
-- [ ] Lineage has no orphan Gold dataset.
+- [x] Critical contract failure blocks publish.
+- [x] Warning does not block but remains visible.
+- [x] Expired exception no longer bypasses the gate.
+- [x] Freshness distinguishes reference period from retrieval time.
+- [x] Schema change creates a drift event.
+- [x] Lineage has no orphan Gold dataset.
 
 ### Benchmarks
 
@@ -361,10 +361,10 @@ Baseline methodology:
 
 ### Exit gate
 
-- [ ] A deliberately corrupted fixture is blocked from Gold.
-- [ ] The UI clearly explains why it failed.
-- [ ] Last-known-good data remains served.
-- [ ] Incident resolution is recorded and auditable.
+- [x] A deliberately corrupted fixture is blocked from Gold.
+- [x] The UI clearly explains why it failed.
+- [x] Last-known-good data remains served.
+- [x] Incident resolution is recorded and auditable.
 
 ## 10. Phase 4 — Regional Opportunity Engine core
 
@@ -795,15 +795,15 @@ Update this table at the end of every milestone.
 | Area | Weight | Current | Evidence |
 |---|---:|---:|---|
 | Data ingestion and reproducibility | 15% | 100% | Six live, fixture-backed, idempotent Bronze → Silver → Gold paths |
-| Data contracts and quality gates | 15% | 50% | Six Phase 2 contracts and critical publish gates; Control Tower contract engine remains Phase 3 |
+| Data contracts and quality gates | 15% | 100% | Versioned contracts cover all 12 Silver/Gold datasets; critical gate, exceptions, drift, and incidents tested |
 | Regional methodology correctness | 15% | 0% | Not started |
 | Regional user journeys | 15% | 0% | Not started |
-| Testing and CI | 10% | 75% | 20 backend tests, six fixtures, failure injection, live batch, and frontend suite pass locally |
-| Performance and reliability | 10% | 75% | Three-run benchmark, retry, timeout, idempotency, last-known-good, and Docker path verified |
-| Accessibility and UX | 5% | 25% | Responsive foundation with semantic states and live status region |
+| Testing and CI | 10% | 75% | 29 local backend/API tests, two PostgreSQL tests, four frontend tests; hosted Phase 3 CI pending |
+| Performance and reliability | 10% | 100% | Six-contract run 0.7787 s, API p95 76.36 ms, 30/30 dry-runs, last-known-good verified |
+| Accessibility and UX | 5% | 75% | Responsive Control Tower, semantic sections/status, keyboard controls, loading/empty/error states |
 | Security and privacy | 5% | 50% | BPS credential excluded from URLs, metadata, errors, output, and Git |
-| Documentation and reproducibility | 10% | 100% | Phase 2 runbook, benchmark environment, six source fixtures, migration, and coverage evidence |
-| **Total** | **100%** | **51.25%** | Phase 2 complete locally; hosted CI is the final external verification |
+| Documentation and reproducibility | 10% | 100% | Contract schema, ADR, ERD, Phase 3 runbook, migration, fixtures, and benchmark evidence |
+| **Total** | **100%** | **63.75%** | Phase 3 complete locally; hosted CI is the final external verification |
 
 Scoring rule:
 
@@ -860,9 +860,9 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 
 ## 22. Immediate next actions
 
-Phase 2 is complete locally. The next implementation session starts Phase 3:
+Phase 3 is complete locally. The next implementation session starts Phase 4:
 
-1. Push the Phase 2 branch and require hosted CI to pass.
-2. Add the versioned contract schema and validation API.
-3. Surface dataset health, quality checks, runs, freshness, and lineage.
-4. Add deliberate failure injection and last-known-good UI evidence.
+1. Push the Phase 3 branch and require hosted CI to pass.
+2. Add the indicator catalog and compatibility rules.
+3. Implement transparent regional comparison and normalization.
+4. Add scoring contributions, coverage gates, and reproducible configuration.

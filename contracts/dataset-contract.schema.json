@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nusaintel.id/schemas/dataset-contract-1.0.json",
+  "title": "NusaIntel Dataset Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "dataset_code",
+    "contract_version",
+    "columns",
+    "freshness",
+    "row_count"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "dataset_code": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "contract_version": { "type": "integer", "minimum": 1 },
+    "columns": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/column" }
+    },
+    "uniqueness": {
+      "type": "array",
+      "default": [],
+      "items": { "$ref": "#/$defs/uniqueness" }
+    },
+    "values": {
+      "type": "array",
+      "default": [],
+      "items": { "$ref": "#/$defs/value" }
+    },
+    "custom_checks": {
+      "type": "array",
+      "default": [],
+      "items": { "$ref": "#/$defs/custom" }
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["retrieval_max_age_seconds"],
+      "properties": {
+        "retrieval_max_age_seconds": { "type": "integer", "minimum": 1 },
+        "severity": { "$ref": "#/$defs/severity", "default": "critical" }
+      }
+    },
+    "row_count": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maximum_change_percent"],
+      "properties": {
+        "maximum_change_percent": { "type": "number", "minimum": 0 },
+        "severity": { "$ref": "#/$defs/severity", "default": "warning" }
+      }
+    },
+    "metadata": { "type": "object", "default": {} }
+  },
+  "$defs": {
+    "severity": { "enum": ["info", "warning", "critical"] },
+    "column": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "type": { "enum": ["string", "integer", "number", "boolean", "date", "datetime"] },
+        "nullable": { "type": "boolean", "default": false }
+      }
+    },
+    "uniqueness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["columns"],
+      "properties": {
+        "columns": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "severity": { "$ref": "#/$defs/severity", "default": "critical" }
+      }
+    },
+    "value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["column"],
+      "properties": {
+        "column": { "type": "string" },
+        "minimum": { "type": ["number", "null"] },
+        "maximum": { "type": ["number", "null"] },
+        "accepted_values": { "type": ["array", "null"] },
+        "severity": { "$ref": "#/$defs/severity", "default": "critical" }
+      },
+      "anyOf": [
+        { "required": ["minimum"] },
+        { "required": ["maximum"] },
+        { "required": ["accepted_values"] }
+      ]
+    },
+    "custom": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "operator", "threshold"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[a-z][a-z0-9_]{2,127}$" },
+        "operator": { "enum": ["non_null_ratio_gte", "row_count_gte", "row_count_lte"] },
+        "column": { "type": ["string", "null"] },
+        "threshold": { "type": "number" },
+        "severity": { "$ref": "#/$defs/severity", "default": "warning" }
+      }
+    }
+  }
+}

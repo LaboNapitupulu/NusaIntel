@@ -7,10 +7,11 @@ surfaces:
 - Regional Opportunity Engine
 - RegulasiLens ID
 
-The current implementation includes the Phase 1 platform foundation and the
-completed Phase 2 six-indicator BPS path. TPT, TPAK, poverty, PDRB per capita,
-PDRB growth, and HDI flow through immutable Bronze, contract-validated Silver,
-and publish-gated Gold with lineage.
+The current implementation includes the platform foundation, the completed six-indicator
+BPS path, and the Phase 3 Data Reliability Control Tower Lite. TPT, TPAK, poverty, PDRB per
+capita, PDRB growth, and HDI flow through immutable Bronze, contract-validated Silver, and
+publish-gated Gold with lineage. Dataset health, freshness, quality history, schema drift,
+incidents, and last-known-good state are exposed through the API and web dashboard.
 
 ## Prerequisites
 
@@ -35,6 +36,7 @@ and publish-gated Gold with lineage.
    - Web: <http://localhost:3100>
    - API docs: <http://localhost:8000/api/docs>
    - Health: <http://localhost:8000/api/v1/health>
+   - Dataset catalog: <http://localhost:8000/api/v1/datasets>
 
 The `migrate` service upgrades an empty database before the API and worker
 start. The API health endpoint returns HTTP 503 with a `degraded` payload when
@@ -127,6 +129,24 @@ Run all six contracted indicators:
 .\scripts\run_bps_pipeline.ps1
 ```
 
+## Control Tower
+
+Run the six-indicator pipeline at least once, then open <http://localhost:3100/#control-tower>.
+The Control Tower distinguishes source reference period from retrieval/processing time and
+keeps the last-known-good version visible when a critical check blocks a new publication.
+
+Primary endpoints:
+
+- `POST /api/v1/contracts/validate`
+- `GET /api/v1/datasets` and `GET /api/v1/datasets/{id}`
+- `GET /api/v1/datasets/{id}/quality`
+- `GET /api/v1/pipeline-runs`
+- `GET /api/v1/lineage/{dataset_id}`
+- `GET /api/v1/incidents` and `PATCH /api/v1/incidents/{id}`
+
+The portable contract schema and versioning rules are in `contracts/`. Phase 3 acceptance
+and benchmark evidence is recorded in `docs/phase-3-status.md`.
+
 ## Configuration
 
 | Variable | Required | Purpose |
@@ -148,6 +168,7 @@ runtime datasets are ignored by Git.
 
 ```text
 backend/       FastAPI API, worker, SQLAlchemy models, Alembic, tests
+contracts/     Portable JSON contract schema and versioning guidance
 frontend/      Next.js application and component tests
 docs/          Product, architecture, source, and progress evidence
 scripts/       Local configuration and verification helpers

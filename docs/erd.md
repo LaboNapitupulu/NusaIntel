@@ -1,18 +1,25 @@
-# Initial Entity Relationship Diagram
+# Entity Relationship Diagram
 
-- Status: Phase 0 logical model
-- Date: 2026-08-08
+- Status: Phase 3 logical and physical model
+- Updated: 2026-08-11
 
 ```mermaid
 erDiagram
     SOURCE ||--o{ DATASET : owns
     DATASET ||--o{ DATASET_VERSION : versions
     DATASET ||--o{ DATA_CONTRACT : governed_by
+    DATASET ||--o{ QUALITY_EXCEPTION : permits
+    DATASET ||--o{ INCIDENT : owns
     DATASET_VERSION ||--o{ PIPELINE_RUN : processed_by
     DATASET_VERSION ||--o{ QUALITY_CHECK_RESULT : evaluated_by
     DATASET_VERSION ||--o{ LINEAGE_EDGE : upstream
     DATASET_VERSION ||--o{ LINEAGE_EDGE : downstream
     PIPELINE_RUN ||--o{ QUALITY_CHECK_RESULT : produces
+    PIPELINE_RUN ||--o{ INCIDENT : triggers
+    DATA_CONTRACT ||--o{ QUALITY_CHECK_RESULT : evaluates_with
+    DATA_CONTRACT ||--o{ SCHEMA_DRIFT_EVENT : detects_with
+    QUALITY_EXCEPTION ||--o{ QUALITY_CHECK_RESULT : waives
+    DATASET_VERSION ||--o{ SCHEMA_DRIFT_EVENT : exhibits
     REGION ||--o{ OBSERVATION : has
     INDICATOR ||--o{ OBSERVATION : measures
     DATASET_VERSION ||--o{ OBSERVATION : supplies
@@ -80,12 +87,46 @@ erDiagram
         uuid id PK
         uuid dataset_version_id FK
         uuid pipeline_run_id FK
+        uuid data_contract_id FK
+        uuid quality_exception_id FK
         string check_code
         string severity
         string status
         jsonb expected
         jsonb observed
         jsonb safe_sample
+    }
+
+    QUALITY_EXCEPTION {
+        uuid id PK
+        uuid dataset_id FK
+        string check_code
+        string reason
+        string owner
+        timestamp expires_at
+        boolean active
+    }
+
+    SCHEMA_DRIFT_EVENT {
+        uuid id PK
+        uuid dataset_version_id FK
+        uuid data_contract_id FK
+        string change_type
+        string column_name
+        jsonb expected
+        jsonb observed
+    }
+
+    INCIDENT {
+        uuid id PK
+        uuid dataset_id FK
+        uuid pipeline_run_id FK
+        string check_code
+        string severity
+        string status
+        string title
+        string resolution_note
+        timestamp resolved_at
     }
 
     LINEAGE_EDGE {
@@ -165,7 +206,7 @@ erDiagram
 
 | Entity group | PostgreSQL schema |
 |---|---|
-| Source, Dataset, DatasetVersion, PipelineRun, Contract, Checks, Lineage | `ops` |
+| Source, Dataset, DatasetVersion, PipelineRun, Contract, Checks, Exceptions, Drift, Incidents, Lineage | `ops` |
 | Unchanged BPS response payload | `bronze` |
 | Region, Indicator, normalized Observation | `silver` |
 | Scoring configuration, score run/results, coverage marts | `gold` |
@@ -177,4 +218,5 @@ erDiagram
 - National aggregate is retained but excluded from province ranking.
 - Provisional, revised, unavailable, zero, and missing values must remain distinguishable through `value_status` and notes.
 - `ScoreRun` freezes dataset versions and code commit so results can be reproduced.
-- The model will be refined into physical SQLAlchemy models during Phase 1.
+- Every quality result points to the exact contract version used by its pipeline run.
+- Exceptions are time-bounded and auditable; incident resolution never rewrites check history.

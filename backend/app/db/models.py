@@ -132,12 +132,79 @@ class QualityCheckResult(TimestampMixin, Base):
     pipeline_run_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("ops.pipeline_runs.id"), nullable=False
     )
+    data_contract_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ops.data_contracts.id")
+    )
+    quality_exception_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ops.quality_exceptions.id")
+    )
     check_code: Mapped[str] = mapped_column(String(128), nullable=False)
     severity: Mapped[str] = mapped_column(String(16), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False)
     expected: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     observed: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     safe_sample: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
+
+
+class QualityException(TimestampMixin, Base):
+    __tablename__ = "quality_exceptions"
+    __table_args__ = (
+        CheckConstraint("expires_at > created_at", name="quality_exception_expiry_after_creation"),
+        {"schema": "ops"},
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    dataset_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ops.datasets.id"), nullable=False
+    )
+    check_code: Mapped[str] = mapped_column(String(128), nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    owner: Mapped[str] = mapped_column(String(255), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
+
+
+class SchemaDriftEvent(TimestampMixin, Base):
+    __tablename__ = "schema_drift_events"
+    __table_args__ = {"schema": "ops"}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    dataset_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ops.dataset_versions.id"), nullable=False
+    )
+    data_contract_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ops.data_contracts.id"), nullable=False
+    )
+    change_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    column_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    expected: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    observed: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+
+
+class Incident(TimestampMixin, Base):
+    __tablename__ = "incidents"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('open', 'acknowledged', 'resolved', 'ignored-with-reason')",
+            name="incident_valid_status",
+        ),
+        UniqueConstraint("pipeline_run_id", "check_code", name="uq_incident_run_check"),
+        {"schema": "ops"},
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    dataset_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ops.datasets.id"), nullable=False
+    )
+    pipeline_run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ops.pipeline_runs.id"), nullable=False
+    )
+    check_code: Mapped[str] = mapped_column(String(128), nullable=False)
+    severity: Mapped[str] = mapped_column(String(16), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, server_default="open")
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    resolution_note: Mapped[str | None] = mapped_column(Text)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class LineageEdge(TimestampMixin, Base):
