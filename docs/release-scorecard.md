@@ -29,7 +29,7 @@
 | Comparison/scoring/explanation/sensitivity | Pass | API, UI, export, deterministic tests, sensitivity case study |
 | Methodology/source metadata visible | Pass | UI, reports, exports, methodology docs |
 | Compose services healthy together | Pass | PostgreSQL, migrations, API, worker, web |
-| CI quality/security jobs | Pending head rerun | prior PR #14 head passed; rerun required after this tranche |
+| CI quality/security jobs | Pass | PR #14 run `31496748997` passed on implementation commit `8b6ecdb` |
 | Safe public demo | Pass | checked-in/public BPS fixtures and published aggregate statistics only |
 | Release documentation | Conditional | architecture, dictionary, limitations complete; README screenshots pending |
 
