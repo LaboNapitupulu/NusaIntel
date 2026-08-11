@@ -481,42 +481,42 @@ Baseline methodology:
 
 ### Quality and testing
 
-- [ ] Backend unit/integration suite.
-- [ ] Frontend unit/component suite.
-- [ ] Playwright critical journeys on desktop and 360 px.
-- [ ] Migration test from empty database.
-- [ ] End-to-end pipeline test using fixtures.
-- [ ] Accessibility scan and manual keyboard smoke test.
-- [ ] Dependency and secret audit.
-- [ ] Backup/restore smoke test.
+- [x] Backend unit/integration suite.
+- [x] Frontend unit/component suite.
+- [x] Playwright critical journeys on desktop and 360 px.
+- [x] Migration test from empty database.
+- [x] End-to-end pipeline test using fixtures.
+- [x] Accessibility scan and manual keyboard smoke test.
+- [x] Dependency and secret audit.
+- [x] Backup/restore smoke test.
 
 ### Performance
 
-- [ ] Create reproducible benchmark script/configuration.
-- [ ] Record p50/p95 API metrics.
+- [x] Create reproducible benchmark script/configuration.
+- [x] Record p50/p95 API metrics.
 - [ ] Profile slow queries and add justified indexes.
 - [ ] Validate frontend bundle and primary page loading.
 - [ ] Confirm pipeline resource usage on benchmark environment.
 
 ### Documentation
 
-- [ ] README with architecture, setup, screenshots, and limitations.
-- [ ] `docs/architecture.md`.
-- [ ] `docs/data-dictionary.md`.
-- [ ] `docs/methodology.md`.
-- [ ] `docs/runbook.md`.
-- [ ] `docs/privacy-and-security.md`.
-- [ ] `docs/benchmark-report.md`.
-- [ ] ADR index.
+- [ ] README with architecture, setup, screenshots, and limitations (screenshots pending).
+- [x] `docs/architecture.md`.
+- [x] `docs/data-dictionary.md`.
+- [x] `docs/methodology.md`.
+- [x] `docs/runbook.md`.
+- [x] `docs/privacy-and-security.md`.
+- [x] `docs/benchmark-report.md`.
+- [x] ADR index.
 
 ### Portfolio presentation
 
-- [ ] Synthetic or public-only demo.
-- [ ] Architecture diagram.
+- [x] Synthetic or public-only demo.
+- [x] Architecture diagram.
 - [ ] Two-minute demo path.
 - [ ] Case study: one detected data-quality incident.
 - [ ] Case study: one ranking changes after sensitivity analysis.
-- [ ] Explicit limitations and next steps.
+- [x] Explicit limitations and next steps.
 
 ### MVP release gate
 
@@ -860,9 +860,9 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 
 ## 22. Immediate next actions
 
-Phase 5 implementation and hosted verification are complete. The next release actions are:
+Phase 5 is merged at `a0b2e07`. Phase 6 hardening is active on
+`codex/phase-6-mvp-hardening`; the next release actions are:
 
-1. Merge PR #13 after its final documentation-only CI rerun settles.
-2. Sync verified `main` and record the merged-main CI run.
-3. Start Phase 6 hardening, including populated desktop/mobile browser QA, accessibility
-   scan, dependency audit, and clean-clone verification.
+1. Finish screenshots, two-minute demo path, and two evidence case studies.
+2. Record resource, bundle, and hosted CI evidence.
+3. Close any release-gate finding before promoting the Phase 6 pull request from draft.

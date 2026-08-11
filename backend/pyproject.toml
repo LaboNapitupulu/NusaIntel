@@ -24,8 +24,18 @@ dev = [
   "pip-audit>=2.9,<3",
   "pytest==9.1.1",
   "pytest-asyncio==1.4.0",
+  "pytest-cov>=7,<8",
   "ruff==0.16.2",
 ]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]

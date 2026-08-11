@@ -27,6 +27,7 @@ test-results/
 *.tsbuildinfo
 
 # Runtime data
+artifacts/
 storage/
 data/raw/
 data/bronze/
@@ -44,3 +45,4 @@ Thumbs.db
 
 # Local tooling
 .docker/
+debug.log

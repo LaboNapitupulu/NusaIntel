@@ -9,7 +9,7 @@ surfaces:
 
 The current implementation includes the platform foundation, the completed six-indicator
 BPS path, the Data Reliability Control Tower Lite, the Regional Opportunity Engine, and
-Phase 5 regional analytics/reporting. TPT, TPAK, poverty, PDRB per
+regional analytics/reporting. Phase 6 MVP hardening is in progress. TPT, TPAK, poverty, PDRB per
 capita, PDRB growth, and HDI flow through immutable Bronze, contract-validated Silver, and
 publish-gated Gold with lineage. Dataset health, freshness, quality history, schema drift,
 incidents, and last-known-good state are exposed through the API and web dashboard.
@@ -102,6 +102,27 @@ After installing backend and frontend dependencies:
 
 Use `-SkipDocker` to run only static checks and tests.
 
+For the Phase 6 release gate, including critical-engine branch coverage, production build,
+desktop/360px Playwright journeys, axe accessibility scan, security audits, and Compose
+configuration validation:
+
+```powershell
+.\scripts\verify_release.ps1
+```
+
+Use `-SkipSecurityAudit` when package registries are unavailable and `-FullStack` to also
+build/start/wait for every Compose service. With a healthy stack, verify database recovery
+without touching the primary database:
+
+```powershell
+.\scripts\backup_restore_smoke.ps1 -RestoreSmoke
+.\scripts\clean_stack_smoke.ps1
+```
+
+The clean-stack smoke uses isolated ports and a disposable Compose project to prove that
+migrations, API, worker, and web start from an empty database. It removes only its own
+scratch containers, network, and volume after verification.
+
 ## Run the TPT pipeline
 
 After the stack is healthy, ingest the live BPS August TPT series:
@@ -186,6 +207,10 @@ The tile map is explicitly schematic and contains no third-party administrative 
 geometry. The deterministic preprocessing, similarity formula, validation thresholds, and
 limitations are documented in `docs/regional-analytics-methodology.md`; the source/licensing
 decision is in ADR 0004 and Phase 5 evidence is in `docs/phase-5-status.md`.
+
+Release architecture, physical data definitions, operations, security, and benchmark
+evidence are maintained in `docs/architecture.md`, `docs/data-dictionary.md`,
+`docs/runbook.md`, `docs/privacy-and-security.md`, and `docs/benchmark-report.md`.
 
 ## Configuration
 
