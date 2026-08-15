@@ -864,5 +864,5 @@ Phase 5 is merged at `a0b2e07`. Phase 6 hardening is active on
 `codex/phase-6-mvp-hardening`; the next release actions are:
 
 1. Rotate the BPS key exposed during local scheduler smoke.
-2. Capture and add the three README screenshots from `docs/demo-guide.md`.
+2. Capture and add the remaining Opportunity Engine screenshot from `docs/demo-guide.md`.
 3. Pass hosted CI on the updated candidate, then promote the Phase 6 pull request from draft.

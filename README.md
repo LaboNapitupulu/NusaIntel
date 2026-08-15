@@ -170,6 +170,8 @@ Run the six-indicator pipeline at least once, then open <http://localhost:3100/#
 The Control Tower distinguishes source reference period from retrieval/processing time and
 keeps the last-known-good version visible when a critical check blocks a new publication.
 
+![Control Tower showing populated quality checks and lineage](docs/assets/control-tower-desktop.jpg)
+
 Primary endpoints:
 
 - `POST /api/v1/contracts/validate`
@@ -208,6 +210,8 @@ Choose two to six comparable indicators, a province, and a common year. The repo
 similar regions with driver explanations, evidence-gated clusters, a schematic tile map,
 an equivalent table, source/version citations, a regional detail page, JSON download, and
 print layout.
+
+![Regional Analytics configuration on a mobile viewport](docs/assets/regional-analytics-mobile.jpg)
 
 Primary endpoints:
 

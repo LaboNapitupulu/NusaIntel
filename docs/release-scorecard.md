@@ -2,7 +2,7 @@
 
 - Candidate branch: `codex/phase-6-mvp-hardening`
 - Evaluated: 2026-08-11
-- Status: conditional — technical gates pass; BPS key rotation and README screenshots remain
+- Status: conditional — technical gates pass; BPS key rotation and one README screenshot remain
 
 ## PRD Section 4.3
 
@@ -29,9 +29,9 @@
 | Comparison/scoring/explanation/sensitivity | Pass | API, UI, export, deterministic tests, sensitivity case study |
 | Methodology/source metadata visible | Pass | UI, reports, exports, methodology docs |
 | Compose services healthy together | Pass | PostgreSQL, migrations, API, worker, web |
-| CI quality/security jobs | Pass | PR #14 run `31496748997` passed on implementation commit `8b6ecdb` |
+| CI quality/security jobs | Pass | PR #14 run `31507843039` passed on UI implementation commit `0c97143` |
 | Safe public demo | Pass | checked-in/public BPS fixtures and published aggregate statistics only |
-| Release documentation | Conditional | architecture, dictionary, limitations complete; README screenshots pending |
+| Release documentation | Conditional | architecture, dictionary, limitations complete; Opportunity screenshot pending |
 
 ## Security disposition
 

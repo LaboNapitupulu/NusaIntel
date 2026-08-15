@@ -46,6 +46,7 @@
 ## Verification still required
 
 - Regenerate the BPS API key that appeared in local scheduler-smoke output.
-- Add three manually captured README screenshots; controlled browser access to localhost is
-  blocked, while automated desktop/360 px layout and accessibility tests already pass.
+- Capture the remaining Opportunity Engine result screenshot. Control Tower desktop and
+  Regional Analytics mobile assets are now checked into `docs/assets/`; controlled browser
+  access to localhost was blocked when attempting the final capture.
 - Re-run hosted CI for the final Phase 6 head before promoting the draft pull request.
