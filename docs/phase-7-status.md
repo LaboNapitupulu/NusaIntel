@@ -22,6 +22,9 @@
   sections/133 Pasal boundaries, PP 71/2019 yields 438/197, and Permenkominfo 20/2016 yields
   136/39; all parsed sections retain source anchors. Counts include explanatory sections and
   are not treated as a manual accuracy benchmark.
+- Draft PR [#15](https://github.com/LaboNapitupulu/NusaIntel/pull/15) passes backend/PostgreSQL,
+  frontend/Playwright, Compose, and security in hosted run
+  [31901770812](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31901770812).
 
 ## Remaining Phase 7 work
 

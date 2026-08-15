@@ -306,3 +306,6 @@
   checksum-pinned three-document JDIH BPK manifest.
 - Added fail-closed retrieval primitives and a deterministic, source-anchored structural
   parser with unit tests. Database persistence and Control Tower integration are next.
+- Opened draft PR [#15](https://github.com/LaboNapitupulu/NusaIntel/pull/15); hosted run
+  [31901770812](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31901770812) passes
+  all four CI jobs on the initial implementation commit.
