@@ -289,5 +289,5 @@
   scheduler disabled by default; the replacement secret was neither displayed nor committed.
 - Added the populated Control Tower desktop, Opportunity Engine desktop, and Regional
   Analytics mobile screenshots to the README and closed the documentation gate.
-- The final remaining action is hosted CI on the documentation head, followed by promotion
-  and merge of PR #14.
+- Hosted run [31900689643](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31900689643)
+  passes all four jobs on evidence commit `b5ab9ce`; PR #14 is ready for promotion and merge.

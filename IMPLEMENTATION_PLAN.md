@@ -861,7 +861,7 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 ## 22. Immediate next actions
 
 Phase 5 is merged at `a0b2e07`. Phase 6 hardening is release-ready on
-`codex/phase-6-mvp-hardening`; the remaining release actions are:
+`codex/phase-6-mvp-hardening`; all implementation and release gates pass. The remaining
+repository action is:
 
-1. Pass hosted CI on the final documentation candidate.
-2. Promote and merge Phase 6 pull request #14 after all required checks pass.
+1. Promote and merge Phase 6 pull request #14.

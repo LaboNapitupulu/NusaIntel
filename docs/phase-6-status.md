@@ -1,6 +1,6 @@
 # Phase 6 status — MVP hardening and release
 
-- Status: Release-ready; final hosted CI pending on the documentation head
+- Status: Release-ready; all release gates passed
 - Date started: 2026-08-11
 - Branch: `codex/phase-6-mvp-hardening`
 - Baseline: Phase 5 merge commit `a0b2e07`
@@ -50,4 +50,6 @@
   disabled by default.
 - Control Tower desktop, Opportunity Engine desktop, and Regional Analytics mobile evidence
   are checked into `docs/assets/` and linked from the README.
-- Re-run hosted CI for this final documentation head before promoting draft PR #14.
+- Hosted run [31900689643](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31900689643)
+  passes backend/PostgreSQL, frontend/Playwright, Compose, and security on documentation
+  evidence commit `b5ab9ce`. Draft PR #14 is ready for promotion.
