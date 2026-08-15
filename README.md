@@ -9,7 +9,8 @@ surfaces:
 
 The current implementation includes the platform foundation, the completed six-indicator
 BPS path, the Data Reliability Control Tower Lite, the Regional Opportunity Engine, and
-regional analytics/reporting. Phase 6 MVP hardening is release-ready. TPT, TPAK, poverty, PDRB per
+regional analytics/reporting. Phase 6 is released and the bounded RegulasiLens corpus foundation
+is now in progress. TPT, TPAK, poverty, PDRB per
 capita, PDRB growth, and HDI flow through immutable Bronze, contract-validated Silver, and
 publish-gated Gold with lineage. Dataset health, freshness, quality history, schema drift,
 incidents, and last-known-good state are exposed through the API and web dashboard.
@@ -232,6 +233,20 @@ evidence are maintained in `docs/architecture.md`, `docs/data-dictionary.md`,
 `docs/runbook.md`, `docs/privacy-and-security.md`, and `docs/benchmark-report.md`. The
 two-minute walkthrough, evidence cases, and release gate are in `docs/demo-guide.md`,
 `docs/case-studies.md`, and `docs/release-scorecard.md`.
+
+## RegulasiLens corpus foundation
+
+Phase 7 starts with a three-document personal-data-protection corpus from official JDIH BPK
+sources. The checked-in manifest pins metadata, status-review date, byte count, and SHA-256;
+downloaded PDFs stay in ignored local runtime storage. Changed or unsupported content is
+quarantined until a human reviews and versions the manifest.
+
+```powershell
+.\backend\.venv\Scripts\python.exe .\scripts\validate_regulation_manifest.py
+```
+
+Scope, source-use policy, update rules, and limitations are documented in
+`docs/regulasilens-scope.md`; ADR 0005 records the domain choice.
 
 ## Configuration
 

@@ -161,8 +161,11 @@ but not `125` (2025). NusaIntel therefore preserves 2025 as unavailable/missing.
 ### JDIH BPK
 
 - Portal: <https://peraturan.bpk.go.id/>
-- Status: Deferred to RegulasiLens phase.
-- Requirement: source manifest, document status vocabulary, checksum, and parsing quality gate.
+- Status: Active for the bounded Phase 7 personal-data-protection corpus.
+- Policy: manifest-listed HTTPS pages and PDFs only; sequential retrieval, official
+  attribution, ignored local cache, checksum/metadata review, and no bulk crawling.
+- Manifest: `regulations/manifests/personal-data-protection.v1.json`.
+- Scope and status vocabulary: `docs/regulasilens-scope.md`.
 
 ## 4. Attribution and usage policy
 

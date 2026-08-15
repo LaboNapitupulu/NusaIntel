@@ -535,28 +535,28 @@ Baseline methodology:
 
 ### Discovery
 
-- [ ] Select one domain: employment, personal-data protection, or education.
-- [ ] Define inclusion/exclusion criteria.
-- [ ] Create initial regulation source manifest.
-- [ ] Record source terms, attribution, and update mechanism.
-- [ ] Define document status vocabulary.
+- [x] Select one domain: personal-data protection.
+- [x] Define inclusion/exclusion criteria.
+- [x] Create initial regulation source manifest.
+- [x] Record source terms, attribution, and update mechanism.
+- [x] Define document status vocabulary.
 
 ### Ingestion
 
-- [ ] Download only from approved official sources.
+- [x] Download only from approved official sources.
 - [ ] Store URL, retrieval timestamp, checksum, and content type.
-- [ ] Detect unchanged documents by checksum.
-- [ ] Quarantine corrupt or unsupported documents.
+- [x] Detect unchanged documents by checksum.
+- [x] Quarantine corrupt or unsupported documents before persistence.
 - [ ] Add document-ingestion runs to Control Tower.
 
 ### Parsing
 
-- [ ] Extract text with page/source anchors where possible.
+- [x] Extract text with page/source anchors where possible.
 - [ ] Detect document title and metadata.
-- [ ] Parse BAB, bagian, pasal, and ayat structure.
-- [ ] Preserve original ordering.
+- [x] Parse BAB, bagian, pasal, and ayat structure.
+- [x] Preserve original ordering.
 - [ ] Validate section uniqueness and continuity.
-- [ ] Maintain parser confidence/status.
+- [x] Maintain parser confidence/status.
 - [ ] Add manual review sample for every parser version.
 
 ### Regulation graph
@@ -860,8 +860,9 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 
 ## 22. Immediate next actions
 
-Phase 5 is merged at `a0b2e07`. Phase 6 hardening is release-ready on
-`codex/phase-6-mvp-hardening`; all implementation and release gates pass. The remaining
-repository action is:
+Phase 6 is merged at `647b143`. Phase 7 is active on
+`codex/phase-7-regulasilens-corpus`; the immediate work is:
 
-1. Promote and merge Phase 6 pull request #14.
+1. Persist regulation versions, sections, relations, and quarantine evidence.
+2. Integrate document-ingestion runs with the Control Tower.
+3. Parse and manually review the three official initial documents.

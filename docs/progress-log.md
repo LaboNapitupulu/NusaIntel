@@ -291,3 +291,18 @@
   Analytics mobile screenshots to the README and closed the documentation gate.
 - Hosted run [31900689643](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31900689643)
   passes all four jobs on evidence commit `b5ab9ce`; PR #14 is ready for promotion and merge.
+
+### Merge evidence
+
+- PR #14 merged into `main` as `647b143` after all four required checks passed.
+
+## Phase 7 — 2026-08-16
+
+### Corpus foundation started
+
+- Created `codex/phase-7-regulasilens-corpus` from Phase 6 merge `647b143`.
+- Selected personal-data protection as the bounded first corpus and recorded ADR 0005.
+- Added strict scope, status vocabulary, source-use policy, update mechanism, and a
+  checksum-pinned three-document JDIH BPK manifest.
+- Added fail-closed retrieval primitives and a deterministic, source-anchored structural
+  parser with unit tests. Database persistence and Control Tower integration are next.
