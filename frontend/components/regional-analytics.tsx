@@ -336,7 +336,7 @@ export function RegionalAnalytics() {
             </div>
             <details className="map-table">
               <summary>Alternatif tabel aksesibel (38 provinsi)</summary>
-              <div className="table-scroll"><table><caption>Nilai yang sama dengan peta tile.</caption><thead><tr><th>Provinsi</th><th>Nilai</th><th>Unit</th></tr></thead><tbody>
+              <div className="table-scroll" tabIndex={0} aria-label="Tabel nilai peta dapat digulir"><table><caption>Nilai yang sama dengan peta tile.</caption><thead><tr><th>Provinsi</th><th>Nilai</th><th>Unit</th></tr></thead><tbody>
                 {mapRows.map((row) => <tr key={row.region_code}><th scope="row">{row.region_name}</th><td>{formatNumber(row.value)}</td><td>{report.map.unit}</td></tr>)}
               </tbody></table></div>
             </details>
@@ -362,7 +362,7 @@ export function RegionalAnalytics() {
                 <p className="cluster-summary">Model terpilih: k={report.clustering.chosen_k}. Label bersifat deskriptif dan non-normatif.</p>
                 <div className="cluster-list">{report.clustering.clusters.map((cluster) => <article key={cluster.cluster_id}><strong>Cluster {cluster.cluster_id}</strong><p>{cluster.description}</p><small>{cluster.regions.length} provinsi</small></article>)}</div>
               </>}
-              <div className="table-scroll"><table><caption>Evidence seluruh kandidat k.</caption><thead><tr><th>k</th><th>Silhouette</th><th>Stability</th><th>Min. anggota</th></tr></thead><tbody>
+              <div className="table-scroll" tabIndex={0} aria-label="Tabel evidence cluster dapat digulir"><table><caption>Evidence seluruh kandidat k.</caption><thead><tr><th>k</th><th>Silhouette</th><th>Stability</th><th>Min. anggota</th></tr></thead><tbody>
                 {report.clustering.candidate_evidence.map((row) => <tr key={row.k}><td>{row.k}</td><td>{formatNumber(row.silhouette, 3)}</td><td>{formatNumber(row.stability, 3)}</td><td>{row.minimum_cluster_size}</td></tr>)}
               </tbody></table></div>
             </section>

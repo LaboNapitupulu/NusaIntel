@@ -9,7 +9,7 @@ surfaces:
 
 The current implementation includes the platform foundation, the completed six-indicator
 BPS path, the Data Reliability Control Tower Lite, the Regional Opportunity Engine, and
-Phase 5 regional analytics/reporting. TPT, TPAK, poverty, PDRB per
+regional analytics/reporting. Phase 6 MVP hardening is release-ready. TPT, TPAK, poverty, PDRB per
 capita, PDRB growth, and HDI flow through immutable Bronze, contract-validated Silver, and
 publish-gated Gold with lineage. Dataset health, freshness, quality history, schema drift,
 incidents, and last-known-good state are exposed through the API and web dashboard.
@@ -102,6 +102,27 @@ After installing backend and frontend dependencies:
 
 Use `-SkipDocker` to run only static checks and tests.
 
+For the Phase 6 release gate, including critical-engine branch coverage, production build,
+desktop/360px Playwright journeys, axe accessibility scan, security audits, and Compose
+configuration validation:
+
+```powershell
+.\scripts\verify_release.ps1
+```
+
+Use `-SkipSecurityAudit` when package registries are unavailable and `-FullStack` to also
+build/start/wait for every Compose service. With a healthy stack, verify database recovery
+without touching the primary database:
+
+```powershell
+.\scripts\backup_restore_smoke.ps1 -RestoreSmoke
+.\scripts\clean_stack_smoke.ps1
+```
+
+The clean-stack smoke uses isolated ports and a disposable Compose project to prove that
+migrations, API, worker, and web start from an empty database. It removes only its own
+scratch containers, network, and volume after verification.
+
 ## Run the TPT pipeline
 
 After the stack is healthy, ingest the live BPS August TPT series:
@@ -130,11 +151,26 @@ Run all six contracted indicators:
 .\scripts\run_bps_pipeline.ps1
 ```
 
+The worker also supports one lightweight scheduled connector. It is disabled by default;
+to run TPT immediately at worker start and then once per day, set:
+
+```dotenv
+BPS_SCHEDULE_ENABLED=true
+BPS_SCHEDULE_INDICATOR=tpt
+BPS_SCHEDULE_INTERVAL_SECONDS=86400
+```
+
+The interval is bounded to 5 minutes–7 days. A PostgreSQL advisory lock prevents concurrent
+workers from fetching/publishing the same scheduled cycle. Keep scheduling disabled until a
+valid BPS key is installed and the deployment owner has selected the intended cadence.
+
 ## Control Tower
 
 Run the six-indicator pipeline at least once, then open <http://localhost:3100/#control-tower>.
 The Control Tower distinguishes source reference period from retrieval/processing time and
 keeps the last-known-good version visible when a critical check blocks a new publication.
+
+![Control Tower showing populated quality checks and lineage](docs/assets/control-tower-desktop.jpg)
 
 Primary endpoints:
 
@@ -154,6 +190,8 @@ Run the six-indicator pipeline, then open <http://localhost:3100/#opportunity>.
 Select two to five provinces and a common analysis year, configure weights and direction,
 then calculate the scenario. Indicator-specific reference periods remain visible even when
 their official months differ.
+
+![Opportunity Engine showing scenario configuration, ranking, and score contributions](docs/assets/opportunity-engine-desktop.png)
 
 Primary endpoints:
 
@@ -175,6 +213,8 @@ similar regions with driver explanations, evidence-gated clusters, a schematic t
 an equivalent table, source/version citations, a regional detail page, JSON download, and
 print layout.
 
+![Regional Analytics configuration on a mobile viewport](docs/assets/regional-analytics-mobile.jpg)
+
 Primary endpoints:
 
 - `POST /api/v1/opportunity/analytics/similarity`
@@ -186,6 +226,12 @@ The tile map is explicitly schematic and contains no third-party administrative 
 geometry. The deterministic preprocessing, similarity formula, validation thresholds, and
 limitations are documented in `docs/regional-analytics-methodology.md`; the source/licensing
 decision is in ADR 0004 and Phase 5 evidence is in `docs/phase-5-status.md`.
+
+Release architecture, physical data definitions, operations, security, and benchmark
+evidence are maintained in `docs/architecture.md`, `docs/data-dictionary.md`,
+`docs/runbook.md`, `docs/privacy-and-security.md`, and `docs/benchmark-report.md`. The
+two-minute walkthrough, evidence cases, and release gate are in `docs/demo-guide.md`,
+`docs/case-studies.md`, and `docs/release-scorecard.md`.
 
 ## Configuration
 
@@ -200,6 +246,9 @@ decision is in ADR 0004 and Phase 5 evidence is in `docs/phase-5-status.md`.
 | `API_PORT` | No | Host port for the API container; defaults to `8000` |
 | `DB_PORT` | No | Host port for local PostgreSQL; defaults to `5432` |
 | `BPS_API_KEY` | Live pipeline | Secret BPS WebAPI token; backend/worker only |
+| `BPS_SCHEDULE_ENABLED` | No | Enable the worker's immediate + interval BPS run; default `false` |
+| `BPS_SCHEDULE_INDICATOR` | Scheduled pipeline | One of the six contracted codes; default `tpt` |
+| `BPS_SCHEDULE_INTERVAL_SECONDS` | Scheduled pipeline | Cadence from 300–604800 seconds; default `86400` |
 
 Real secrets belong only in `.env` or a deployment secret manager. `.env` and
 runtime datasets are ignored by Git.

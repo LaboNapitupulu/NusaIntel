@@ -239,3 +239,55 @@
   [31465223016](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31465223016)
   passes backend/PostgreSQL, frontend, Compose, and security; the full-report benchmark
   remains below its enforced 500 ms p95 threshold.
+
+### Merge evidence
+
+- PR #13 merged into `main` as `a0b2e07` after all four checks passed.
+
+## Phase 6 — 2026-08-11
+
+### Hardening started
+
+- Created `codex/phase-6-mvp-hardening` from the verified Phase 5 merge.
+- Added an 85% branch-coverage gate; critical engines currently reach 88.83%.
+- Added four production-build Playwright journeys across desktop and 360 px.
+- Added axe scanning and fixed discovered contrast/keyboard-scroll violations to zero
+  serious/critical findings in the regional journey.
+- Added CI E2E coverage, error/404 routes, release verification, backup/restore smoke, and
+  the missing architecture/operations/security/release documentation set.
+
+### Next step
+
+- Populated Compose passes with database, API, worker, and web healthy.
+- Backup/restore smoke passes with 17 domain tables, the Gold latest-observation view, and
+  Alembic revision `20260811_0003` restored to a scratch database.
+- Clean-stack smoke passes from an empty isolated PostgreSQL volume and removes its own
+  containers, network, and volume afterward.
+- Full release verification, `pip-audit`, and `npm audit` pass locally.
+- Draft PR [#14](https://github.com/LaboNapitupulu/NusaIntel/pull/14) opened; hosted run
+  [31470460318](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31470460318)
+  passes backend/PostgreSQL, frontend/Playwright, Compose, and security.
+
+### Next step
+
+- Finish portfolio/resource evidence, then promote PR #14 from draft when all release gates
+  are closed.
+
+### Second hardening tranche
+
+- Added a disabled-by-default TPT scheduler with a bounded cadence and PostgreSQL advisory
+  lock; an actual scheduled run completed as `unchanged`.
+- Suppressed `httpx`/`httpcore` request logging after scheduler smoke revealed that the BPS
+  query credential could appear in local logs; the second smoke emitted only safe fields.
+- Added reproducible route-bundle, live-pipeline resource, and SQL query profiling.
+- Added an isolated fail-closed quality incident case and a public-data rank-sensitivity case.
+- Added the two-minute demo guide and PRD release scorecard.
+
+### Release closure — 2026-08-16
+
+- The deployment owner regenerated the BPS key and recreated the worker while keeping the
+  scheduler disabled by default; the replacement secret was neither displayed nor committed.
+- Added the populated Control Tower desktop, Opportunity Engine desktop, and Regional
+  Analytics mobile screenshots to the README and closed the documentation gate.
+- Hosted run [31900689643](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31900689643)
+  passes all four jobs on evidence commit `b5ab9ce`; PR #14 is ready for promotion and merge.

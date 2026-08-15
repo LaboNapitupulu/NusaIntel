@@ -23,11 +23,12 @@ erDiagram
     REGION ||--o{ OBSERVATION : has
     INDICATOR ||--o{ OBSERVATION : measures
     DATASET_VERSION ||--o{ OBSERVATION : supplies
-    SCORE_CONFIGURATION ||--o{ SCORE_WEIGHT : contains
-    INDICATOR ||--o{ SCORE_WEIGHT : weighted_by
-    SCORE_CONFIGURATION ||--o{ SCORE_RUN : executes
-    SCORE_RUN ||--o{ SCORE_RESULT : produces
-    REGION ||--o{ SCORE_RESULT : receives
+    DATASET_VERSION ||--o{ RAW_PAYLOAD : stores
+    DATASET_VERSION ||--o{ QUARANTINE_RECORD : rejects
+    DATASET_VERSION ||--o{ GOLD_REGIONAL_OBSERVATION : publishes
+    DATASET_VERSION ||--o{ COVERAGE_SUMMARY : summarizes
+    REGION ||--o{ GOLD_REGIONAL_OBSERVATION : has
+    INDICATOR ||--o{ GOLD_REGIONAL_OBSERVATION : measures
 
     SOURCE {
         uuid id PK
@@ -168,37 +169,41 @@ erDiagram
         boolean is_national_aggregate
     }
 
-    SCORE_CONFIGURATION {
+    RAW_PAYLOAD {
         uuid id PK
-        string name
-        string normalization_method
-        decimal minimum_coverage
-        jsonb version_manifest
-        timestamp created_at
+        uuid dataset_version_id FK
+        string endpoint
+        jsonb safe_parameters
+        string checksum
+        integer byte_count
+        integer row_count
     }
 
-    SCORE_WEIGHT {
-        uuid configuration_id FK
-        string indicator_code FK
-        decimal weight
-        string direction_override
-    }
-
-    SCORE_RUN {
+    QUARANTINE_RECORD {
         uuid id PK
-        uuid configuration_id FK
-        string code_commit
-        timestamp generated_at
-        jsonb dataset_versions
+        uuid dataset_version_id FK
+        string safe_row_key
+        string reason_code
+        jsonb safe_sample
     }
 
-    SCORE_RESULT {
-        uuid score_run_id FK
+    GOLD_REGIONAL_OBSERVATION {
+        uuid id PK
+        uuid dataset_version_id FK
         string region_code FK
-        decimal score
-        integer rank
-        decimal coverage
-        jsonb contributions
+        string indicator_code FK
+        date period
+        decimal value
+        string unit
+    }
+
+    COVERAGE_SUMMARY {
+        uuid id PK
+        uuid dataset_version_id FK
+        date period
+        integer expected_count
+        integer observed_count
+        decimal coverage_percent
     }
 ```
 
@@ -209,7 +214,7 @@ erDiagram
 | Source, Dataset, DatasetVersion, PipelineRun, Contract, Checks, Exceptions, Drift, Incidents, Lineage | `ops` |
 | Unchanged BPS response payload | `bronze` |
 | Region, Indicator, normalized Observation | `silver` |
-| Scoring configuration, score run/results, coverage marts | `gold` |
+| Published regional observations and coverage marts | `gold` |
 
 ## Modeling notes
 
@@ -217,6 +222,7 @@ erDiagram
 - Province codes must be stored as strings to preserve leading zeroes and code semantics.
 - National aggregate is retained but excluded from province ranking.
 - Provisional, revised, unavailable, zero, and missing values must remain distinguishable through `value_status` and notes.
-- `ScoreRun` freezes dataset versions and code commit so results can be reproduced.
+- Analytical exports freeze dataset versions, methodology, and configuration so results can
+  be reproduced without treating a user scenario as a persisted fact.
 - Every quality result points to the exact contract version used by its pipeline run.
 - Exceptions are time-bounded and auditable; incident resolution never rewrites check history.

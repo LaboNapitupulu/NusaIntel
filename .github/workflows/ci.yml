@@ -46,7 +46,16 @@ jobs:
       - run: mypy app
       - run: alembic upgrade head
       - run: alembic current
-      - run: pytest
+      - name: Test critical business logic with branch coverage gate
+        run: >-
+          pytest
+          --cov=app.opportunity.engine
+          --cov=app.regional_analytics.engine
+          --cov=app.control_tower.engine
+          --cov=app.pipeline.normalize
+          --cov=app.pipeline.quality
+          --cov-report=term-missing
+          --cov-fail-under=85
 
   frontend:
     runs-on: ubuntu-latest
@@ -65,6 +74,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
 
   security:
     runs-on: ubuntu-latest

@@ -8,6 +8,10 @@ import structlog
 
 def configure_logging(level: str) -> None:
     logging.basicConfig(format="%(message)s", stream=sys.stdout, level=level.upper(), force=True)
+    # HTTPX request lines include the full query string. BPS credentials are query
+    # parameters, so transport loggers must never emit request URLs at INFO/DEBUG.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
     shared_processors: list[structlog.types.Processor] = [
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_log_level,

@@ -481,51 +481,51 @@ Baseline methodology:
 
 ### Quality and testing
 
-- [ ] Backend unit/integration suite.
-- [ ] Frontend unit/component suite.
-- [ ] Playwright critical journeys on desktop and 360 px.
-- [ ] Migration test from empty database.
-- [ ] End-to-end pipeline test using fixtures.
-- [ ] Accessibility scan and manual keyboard smoke test.
-- [ ] Dependency and secret audit.
-- [ ] Backup/restore smoke test.
+- [x] Backend unit/integration suite.
+- [x] Frontend unit/component suite.
+- [x] Playwright critical journeys on desktop and 360 px.
+- [x] Migration test from empty database.
+- [x] End-to-end pipeline test using fixtures.
+- [x] Accessibility scan and manual keyboard smoke test.
+- [x] Dependency and secret audit.
+- [x] Backup/restore smoke test.
 
 ### Performance
 
-- [ ] Create reproducible benchmark script/configuration.
-- [ ] Record p50/p95 API metrics.
-- [ ] Profile slow queries and add justified indexes.
-- [ ] Validate frontend bundle and primary page loading.
-- [ ] Confirm pipeline resource usage on benchmark environment.
+- [x] Create reproducible benchmark script/configuration.
+- [x] Record p50/p95 API metrics.
+- [x] Profile release queries; no new index is justified at the 702-row MVP scale.
+- [x] Validate frontend bundle and primary page loading.
+- [x] Confirm pipeline resource usage on benchmark environment.
 
 ### Documentation
 
-- [ ] README with architecture, setup, screenshots, and limitations.
-- [ ] `docs/architecture.md`.
-- [ ] `docs/data-dictionary.md`.
-- [ ] `docs/methodology.md`.
-- [ ] `docs/runbook.md`.
-- [ ] `docs/privacy-and-security.md`.
-- [ ] `docs/benchmark-report.md`.
-- [ ] ADR index.
+- [x] README with architecture, setup, screenshots, and limitations.
+- [x] `docs/architecture.md`.
+- [x] `docs/data-dictionary.md`.
+- [x] `docs/methodology.md`.
+- [x] `docs/runbook.md`.
+- [x] `docs/privacy-and-security.md`.
+- [x] `docs/benchmark-report.md`.
+- [x] ADR index.
 
 ### Portfolio presentation
 
-- [ ] Synthetic or public-only demo.
-- [ ] Architecture diagram.
-- [ ] Two-minute demo path.
-- [ ] Case study: one detected data-quality incident.
-- [ ] Case study: one ranking changes after sensitivity analysis.
-- [ ] Explicit limitations and next steps.
+- [x] Synthetic or public-only demo.
+- [x] Architecture diagram.
+- [x] Two-minute demo path.
+- [x] Case study: one detected data-quality incident.
+- [x] Case study: one ranking changes after sensitivity analysis.
+- [x] Explicit limitations and next steps.
 
 ### MVP release gate
 
-- [ ] All PRD Section 18.1 criteria pass.
-- [ ] All CI jobs pass from the release commit.
-- [ ] No open critical data-quality incident.
-- [ ] No high/critical security finding remains unexplained.
-- [ ] Docker stack health is verified together.
-- [ ] Clean-clone setup is verified by following only README.
+- [x] All PRD Section 18.1 criteria pass.
+- [x] All CI jobs pass from the current Phase 6 candidate commit.
+- [x] No open critical data-quality incident.
+- [x] No high/critical security finding remains unexplained.
+- [x] Docker stack health is verified together.
+- [x] Clean-clone setup is verified by following only README.
 
 ## 13. Phase 7 — RegulasiLens corpus foundation
 
@@ -798,7 +798,7 @@ Update this table at the end of every milestone.
 | Data contracts and quality gates | 15% | 100% | Versioned contracts cover all 12 Silver/Gold datasets; critical gate, exceptions, drift, and incidents tested |
 | Regional methodology correctness | 15% | 100% | Version-bound normalization, direction, coverage, contribution, tie, and sensitivity rules pass hand-calculated tests |
 | Regional user journeys | 15% | 100% | Comparison/scoring plus similarity, evidence-gated clustering, 38-province tile/table, detail, print, and JSON report pass hosted DB integration |
-| Testing and CI | 10% | 100% | 57 local backend/API and eight frontend tests pass; hosted PostgreSQL, frontend, Compose, and security jobs pass |
+| Testing and CI | 10% | 100% | 62 local backend/API and eight frontend tests pass; hosted PostgreSQL, frontend, Compose, and security jobs pass |
 | Performance and reliability | 10% | 100% | Five-run full analytics report remains below the enforced 500 ms p95 threshold in hosted PostgreSQL CI |
 | Accessibility and UX | 5% | 75% | Responsive 360 px CSS, keyboard-native tile buttons, no-data legend, semantic tables, and print layout; populated browser smoke pending |
 | Security and privacy | 5% | 100% | Credential controls remain, exports contain public evidence only, untrusted input is strictly validated, and hosted security job passes |
@@ -854,15 +854,14 @@ A feature is done only when:
 - [ ] Data contract and migration impact are addressed.
 - [ ] Security/privacy implications are reviewed.
 - [ ] Documentation is updated.
-- [ ] CI passes.
+- [x] CI passes.
 
 A milestone is done only when its exit gate passes with reproducible evidence.
 
 ## 22. Immediate next actions
 
-Phase 5 implementation and hosted verification are complete. The next release actions are:
+Phase 5 is merged at `a0b2e07`. Phase 6 hardening is release-ready on
+`codex/phase-6-mvp-hardening`; all implementation and release gates pass. The remaining
+repository action is:
 
-1. Merge PR #13 after its final documentation-only CI rerun settles.
-2. Sync verified `main` and record the merged-main CI run.
-3. Start Phase 6 hardening, including populated desktop/mobile browser QA, accessibility
-   scan, dependency audit, and clean-clone verification.
+1. Promote and merge Phase 6 pull request #14.

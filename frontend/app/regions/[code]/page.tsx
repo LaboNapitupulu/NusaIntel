@@ -1,4 +1,17 @@
 import { RegionalDetail } from "@/components/regional-detail";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ code: string }>;
+}): Promise<Metadata> {
+  const { code } = await params;
+  return {
+    title: `Bukti regional ${code} | NusaIntel`,
+    description: `Nilai indikator, sumber, periode, dan versi dataset untuk provinsi ${code}.`,
+  };
+}
 
 export default async function RegionPage({
   params,
