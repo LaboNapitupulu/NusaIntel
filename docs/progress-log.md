@@ -283,7 +283,11 @@
 - Added an isolated fail-closed quality incident case and a public-data rank-sensitivity case.
 - Added the two-minute demo guide and PRD release scorecard.
 
-### Remaining release actions
+### Release closure — 2026-08-16
 
-- Rotate the exposed BPS key, capture README screenshots manually, and pass hosted CI on the
-  final candidate head.
+- The deployment owner regenerated the BPS key and recreated the worker while keeping the
+  scheduler disabled by default; the replacement secret was neither displayed nor committed.
+- Added the populated Control Tower desktop, Opportunity Engine desktop, and Regional
+  Analytics mobile screenshots to the README and closed the documentation gate.
+- The final remaining action is hosted CI on the documentation head, followed by promotion
+  and merge of PR #14.

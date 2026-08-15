@@ -13,11 +13,12 @@ Use only public BPS data already published through the governed pipeline.
 
 ## Screenshot handoff
 
-The automated E2E suite already validates 1440×1000 and 360×800 layouts. For README
-portfolio images, use the populated local app and avoid including browser chrome:
+The automated E2E suite validates 1440×1000 and 360×800 layouts. The README portfolio set
+uses populated local data, meaningful alt text, and no browser chrome or secret values:
 
-1. **Pending:** Desktop 1440×1000 Opportunity results with contribution and sensitivity panels.
+1. **Captured:** Opportunity Engine results at a 1874×926 desktop viewport, including
+   configuration, ranking, and score contributions.
 2. **Captured:** Desktop Control Tower dataset health and quality evidence.
 3. **Captured:** Mobile Regional Analytics configuration at a 375×811 rendered viewport.
-4. Save the optimized images under `docs/assets/`, add meaningful alt text in README, and
-   avoid including API keys, environment values, or browser chrome.
+
+The optimized assets are stored under `docs/assets/`.

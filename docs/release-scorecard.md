@@ -1,8 +1,8 @@
 # MVP release scorecard
 
 - Candidate branch: `codex/phase-6-mvp-hardening`
-- Evaluated: 2026-08-11
-- Status: conditional — technical gates pass; BPS key rotation and one README screenshot remain
+- Evaluated: 2026-08-16
+- Status: pass — technical, security, and documentation gates are complete
 
 ## PRD Section 4.3
 
@@ -31,11 +31,13 @@
 | Compose services healthy together | Pass | PostgreSQL, migrations, API, worker, web |
 | CI quality/security jobs | Pass | PR #14 run `31507843039` passed on UI implementation commit `0c97143` |
 | Safe public demo | Pass | checked-in/public BPS fixtures and published aggregate statistics only |
-| Release documentation | Conditional | architecture, dictionary, limitations complete; Opportunity screenshot pending |
+| Release documentation | Pass | architecture, dictionary, limitations, and all three interface screenshots complete |
 
 ## Security disposition
 
 During scheduler smoke, HTTP transport INFO logging exposed a credential-bearing request URL
 in local container output. The application now forces `httpx` and `httpcore` to WARNING,
 tests the logger threshold, and a second scheduled smoke confirms no request URL or `key=`
-query appears. The affected BPS key must still be regenerated before release promotion.
+query appears. The deployment owner regenerated the affected BPS key on 2026-08-16,
+recreated the worker, and kept scheduling disabled. The replacement value was not displayed
+or committed, so no unexplained high/critical security finding remains.

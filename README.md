@@ -9,7 +9,7 @@ surfaces:
 
 The current implementation includes the platform foundation, the completed six-indicator
 BPS path, the Data Reliability Control Tower Lite, the Regional Opportunity Engine, and
-regional analytics/reporting. Phase 6 MVP hardening is in progress. TPT, TPAK, poverty, PDRB per
+regional analytics/reporting. Phase 6 MVP hardening is release-ready. TPT, TPAK, poverty, PDRB per
 capita, PDRB growth, and HDI flow through immutable Bronze, contract-validated Silver, and
 publish-gated Gold with lineage. Dataset health, freshness, quality history, schema drift,
 incidents, and last-known-good state are exposed through the API and web dashboard.
@@ -190,6 +190,8 @@ Run the six-indicator pipeline, then open <http://localhost:3100/#opportunity>.
 Select two to five provinces and a common analysis year, configure weights and direction,
 then calculate the scenario. Indicator-specific reference periods remain visible even when
 their official months differ.
+
+![Opportunity Engine showing scenario configuration, ranking, and score contributions](docs/assets/opportunity-engine-desktop.png)
 
 Primary endpoints:
 

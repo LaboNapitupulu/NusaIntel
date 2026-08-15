@@ -500,7 +500,7 @@ Baseline methodology:
 
 ### Documentation
 
-- [ ] README with architecture, setup, screenshots, and limitations (screenshots pending).
+- [x] README with architecture, setup, screenshots, and limitations.
 - [x] `docs/architecture.md`.
 - [x] `docs/data-dictionary.md`.
 - [x] `docs/methodology.md`.
@@ -520,10 +520,10 @@ Baseline methodology:
 
 ### MVP release gate
 
-- [ ] All PRD Section 18.1 criteria pass.
+- [x] All PRD Section 18.1 criteria pass.
 - [x] All CI jobs pass from the current Phase 6 candidate commit.
 - [x] No open critical data-quality incident.
-- [ ] No high/critical security finding remains unexplained.
+- [x] No high/critical security finding remains unexplained.
 - [x] Docker stack health is verified together.
 - [x] Clean-clone setup is verified by following only README.
 
@@ -860,9 +860,8 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 
 ## 22. Immediate next actions
 
-Phase 5 is merged at `a0b2e07`. Phase 6 hardening is active on
-`codex/phase-6-mvp-hardening`; the next release actions are:
+Phase 5 is merged at `a0b2e07`. Phase 6 hardening is release-ready on
+`codex/phase-6-mvp-hardening`; the remaining release actions are:
 
-1. Rotate the BPS key exposed during local scheduler smoke.
-2. Capture and add the remaining Opportunity Engine screenshot from `docs/demo-guide.md`.
-3. Pass hosted CI on the updated candidate, then promote the Phase 6 pull request from draft.
+1. Pass hosted CI on the final documentation candidate.
+2. Promote and merge Phase 6 pull request #14 after all required checks pass.

@@ -1,6 +1,6 @@
 # Phase 6 status — MVP hardening and release
 
-- Status: In progress
+- Status: Release-ready; final hosted CI pending on the documentation head
 - Date started: 2026-08-11
 - Branch: `codex/phase-6-mvp-hardening`
 - Baseline: Phase 5 merge commit `a0b2e07`
@@ -43,10 +43,11 @@
 - HTTP transport request logging is suppressed and regression-tested after a local scheduler
   smoke exposed a credential-bearing URL.
 
-## Verification still required
+## Final release closure
 
-- Regenerate the BPS API key that appeared in local scheduler-smoke output.
-- Capture the remaining Opportunity Engine result screenshot. Control Tower desktop and
-  Regional Analytics mobile assets are now checked into `docs/assets/`; controlled browser
-  access to localhost was blocked when attempting the final capture.
-- Re-run hosted CI for the final Phase 6 head before promoting the draft pull request.
+- The deployment owner regenerated the BPS API key on 2026-08-16 and recreated the worker
+  without exposing the replacement value. `.env` remains ignored and scheduling remains
+  disabled by default.
+- Control Tower desktop, Opportunity Engine desktop, and Regional Analytics mobile evidence
+  are checked into `docs/assets/` and linked from the README.
+- Re-run hosted CI for this final documentation head before promoting draft PR #14.
