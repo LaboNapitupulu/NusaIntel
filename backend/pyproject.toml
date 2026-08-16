@@ -16,7 +16,7 @@ dependencies = [
   "pydantic-settings==2.15.0",
   "sqlalchemy==2.0.51",
   "structlog==26.1.0",
-  "uvicorn[standard]==0.52.1",
+  "uvicorn[standard]==0.52.3",
 ]
 
 [project.optional-dependencies]
