@@ -291,7 +291,7 @@ async def test_all_mvp_contracts_and_control_tower_benchmarks() -> None:
     assert len(dry_run_outcomes) == 30
     assert all(outcome.status == "unchanged" for outcome in dry_run_outcomes)
     assert api_p95_seconds < 0.5
-    assert len(catalog) == 18
+    assert len([item for item in catalog if not item["code"].startswith("regulation_")]) == 18
     assert len(indicator_catalog) == 6
     assert all(item["source_url"] and item["periods"] for item in indicator_catalog)
     assert {item["reference_period"] for item in comparison["regions"][0]["values"]} == {

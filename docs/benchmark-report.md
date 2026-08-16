@@ -15,8 +15,8 @@
 | Critical engine branch coverage | ≥ 85% | 88.83% local Phase 6 baseline |
 | Desktop/360px critical journey | Pass | 4/4 Playwright cases |
 | Serious/critical axe findings | 0 | 0 after contrast/focus remediation |
-| Empty-database migration | Pass | 17 domain tables + Gold view at `20260811_0003` |
-| Backup/restore recovery | Pass | 17 domain tables + Gold view restored in scratch DB |
+| Empty-database migration | Pass | 22 domain tables + Gold view at `20260816_0004` |
+| Backup/restore recovery | Pass | 22 domain tables + Gold view restored in scratch DB |
 | Dependency vulnerabilities | 0 known | `pip-audit` and `npm audit`: 0 known findings |
 | Homepage warm HTTP p95 | < 3 s usable-page budget | 62.37 ms over 20 HTTP responses |
 | `/` first-load JavaScript | ≤ 200 KiB gzip internal budget | 150,859 bytes (147.32 KiB) |

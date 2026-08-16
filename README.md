@@ -236,14 +236,22 @@ two-minute walkthrough, evidence cases, and release gate are in `docs/demo-guide
 
 ## RegulasiLens corpus foundation
 
-Phase 7 starts with a three-document personal-data-protection corpus from official JDIH BPK
-sources. The checked-in manifest pins metadata, status-review date, byte count, and SHA-256;
-downloaded PDFs stay in ignored local runtime storage. Changed or unsupported content is
-quarantined until a human reviews and versions the manifest.
+Phase 7 provides a three-document personal-data-protection corpus from official JDIH BPK
+sources. The checked-in manifest pins metadata, status-review date, byte count, and SHA-256.
+The governed pipeline stores the immutable PDF in Bronze, publishes source-anchored legal
+sections and evidenced relations, exposes every run/check/incident in Control Tower, and
+preserves the last-known-good version when a changed or invalid candidate is quarantined.
 
 ```powershell
 .\backend\.venv\Scripts\python.exe .\scripts\validate_regulation_manifest.py
+.\backend\.venv\Scripts\python.exe .\scripts\benchmark_regulation_parser.py
+.\backend\.venv\Scripts\python.exe .\scripts\run_regulation_pipeline.py
 ```
+
+Read the corpus through `GET /api/v1/regulations`,
+`GET /api/v1/regulations/{document_id}`, and
+`GET /api/v1/regulations/{document_id}/relations`. The parser benchmark is versioned under
+`regulations/evaluation/` and currently reviews 30 positive/negative legal boundaries.
 
 Scope, source-use policy, update rules, and limitations are documented in
 `docs/regulasilens-scope.md`; ADR 0005 records the domain choice.

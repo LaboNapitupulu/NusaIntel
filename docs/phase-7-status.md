@@ -1,7 +1,7 @@
 # Phase 7 status — RegulasiLens corpus foundation
 
-- Status: In progress — discovery and governed-ingestion primitives complete
-- Date started: 2026-08-16
+- Status: Complete — ready for final CI and merge
+- Date completed: 2026-08-16
 - Branch: `codex/phase-7-regulasilens-corpus`
 - Baseline: Phase 6 merge commit `647b143`
 
@@ -15,21 +15,27 @@
   committing the downloaded documents.
 - Added approved-host enforcement and fail-closed download checks for HTTP failure, size,
   content type, PDF signature, checksum, and byte-count drift.
+- Added revision `20260816_0004`, immutable Bronze PDF storage, versioned regulation
+  documents/sections, evidenced relations, and catalog/detail/relation APIs.
+- Integrated ingestion runs, contract checks, quarantine, incidents, and last-known-good
+  behavior with Control Tower.
 - Added a deterministic structure parser for BAB, bagian, paragraf, pasal, and ayat with
-  stable section IDs, original order, page/line anchors, hierarchy, parser version, and
-  explicit `needs_review` state.
-- Live non-persisting smoke accepts all three checksum-pinned PDFs. UU 27/2022 yields 279
-  sections/133 Pasal boundaries, PP 71/2019 yields 438/197, and Permenkominfo 20/2016 yields
-  136/39; all parsed sections retain source anchors. Counts include explanatory sections and
-  are not treated as a manual accuracy benchmark.
+  stable section IDs, original order, page/line anchors, hierarchy, OCR normalization,
+  parser version, and explicit `needs_review` state.
+- Live publication yields 274 sections for UU 27/2022, 427 for PP 71/2019, and 136 for
+  Permenkominfo 20/2016 with 100% source-anchor coverage. A second run returns `unchanged`
+  for all three and reuses their immutable dataset-version IDs.
 - Draft PR [#15](https://github.com/LaboNapitupulu/NusaIntel/pull/15) passes backend/PostgreSQL,
   frontend/Playwright, Compose, and security in hosted run
   [31901770812](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31901770812).
 
-## Remaining Phase 7 work
+## Gate evidence
 
-- Persist document versions, sections, relations, quarantines, and ingestion runs.
-- Add the corpus pipeline to the Control Tower and protect last-known-good retrieval state.
-- Run the parser against all three official PDFs and record manual boundary-review samples.
-- Expose unresolved legal references separately from resolved graph edges.
-- Prove corpus rebuild and Phase 7 quality benchmarks from a clean database.
+- The versioned manual benchmark passes 30/30 reviewed boundaries (100%; target ≥95%),
+  including OCR normalization and a negative repeated-ayat page-boundary case.
+- Database integration proves publication, raw/section persistence, idempotency,
+  rejected-candidate quarantine/incident evidence, relation exposure, and preservation of
+  the published version.
+- Clean-stack migration creates 22 domain tables at `20260816_0004`; backup/restore recreates
+  the same schema and Gold view in an isolated scratch database.
+- Final hosted CI and merge evidence are recorded in `docs/progress-log.md`.

@@ -13,7 +13,7 @@ HEADING_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("bab", re.compile(r"^BAB\s+[IVXLCDM]+(?:\s+.*)?$", re.IGNORECASE)),
     ("bagian", re.compile(r"^Bagian\s+(?:Ke\S+|\S+)(?:\s+.*)?$", re.IGNORECASE)),
     ("paragraf", re.compile(r"^Paragraf\s+\d+(?:\s+.*)?$", re.IGNORECASE)),
-    ("pasal", re.compile(r"^Pasal\s+\d+[A-Z]?$", re.IGNORECASE)),
+    ("pasal", re.compile(r"^Pasal\s+(?:\d+[A-Z]?|[IVXLCDM]+)$", re.IGNORECASE)),
     ("ayat", re.compile(r"^\(\d+\)(?:\s+.*)?$")),
 )
 
@@ -77,6 +77,7 @@ def parse_regulation_pages(
     candidates: list[tuple[str, str, list[str], int, int, tuple[str, ...]]] = []
     hierarchy: dict[str, str] = {}
     current: tuple[str, str, list[str], int, int, tuple[str, ...]] | None = None
+    last_ayat_label: str | None = None
 
     for page in pages:
         for line_number, raw_line in enumerate(page.text.splitlines(), start=1):
@@ -85,6 +86,29 @@ def parse_regulation_pages(
                 continue
             match = _heading_kind(line)
             if match is not None:
+                line = _normalize_heading(match, line)
+                if match == "ayat":
+                    ayat_label = line.split(")", 1)[0] + ")"
+                    if (
+                        current is not None
+                        and current[0] == "ayat"
+                        and ayat_label == last_ayat_label
+                    ):
+                        heading = current[1]
+                        if ". . ." in heading and len(line) > len(heading):
+                            heading = line
+                        current = (
+                            current[0],
+                            heading,
+                            [*current[2], line],
+                            current[3],
+                            current[4],
+                            current[5],
+                        )
+                        continue
+                    last_ayat_label = ayat_label
+                elif match in {"bab", "bagian", "paragraf", "pasal"}:
+                    last_ayat_label = None
                 if current is not None:
                     candidates.append(current)
                 _update_hierarchy(hierarchy, match, line)
@@ -143,6 +167,12 @@ def _heading_kind(line: str) -> str | None:
         if pattern.fullmatch(line):
             return kind
     return None
+
+
+def _normalize_heading(kind: str, heading: str) -> str:
+    if kind == "pasal" and heading.casefold() == "pasal i":
+        return "Pasal 1"
+    return heading
 
 
 def _update_hierarchy(hierarchy: dict[str, str], kind: str, heading: str) -> None:

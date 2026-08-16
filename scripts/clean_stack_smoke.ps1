@@ -11,14 +11,14 @@ function Assert-ExitCode {
 }
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
-$projectName = "nusa-intel-phase6-clean-smoke"
-$expectedProjectName = "nusa-intel-phase6-clean-smoke"
+$projectName = "nusa-intel-phase7-clean-smoke"
+$expectedProjectName = "nusa-intel-phase7-clean-smoke"
 
 if ($projectName -ne $expectedProjectName) {
     throw "Refusing to clean an unexpected Docker Compose project."
 }
 
-$env:DB_PORT = "55432"
+$env:DB_PORT = "55434"
 $env:API_PORT = "18000"
 $env:WEB_PORT = "13100"
 
@@ -36,10 +36,10 @@ try {
         --dbname=nusa_intel `
         --tuples-only `
         --no-align `
-        --command="SELECT count(*) FROM information_schema.tables WHERE table_schema IN ('ops', 'bronze', 'silver', 'gold') AND table_type = 'BASE TABLE';"
+        --command="SELECT count(*) FROM information_schema.tables WHERE table_schema IN ('ops', 'bronze', 'silver', 'gold', 'regulations') AND table_type = 'BASE TABLE';"
     Assert-ExitCode "Clean migration table verification" $LASTEXITCODE
-    if ([int]$domainTableCount -lt 17) {
-        throw "Clean migration produced only $domainTableCount of 17 expected domain tables."
+    if ([int]$domainTableCount -lt 22) {
+        throw "Clean migration produced only $domainTableCount of 22 expected domain tables."
     }
 
     $latestViewCount = docker compose --project-name $projectName exec -T db psql `
@@ -60,7 +60,7 @@ try {
         --no-align `
         --command="SELECT version_num FROM public.alembic_version;"
     Assert-ExitCode "Clean migration revision verification" $LASTEXITCODE
-    if ($revision.Trim() -ne "20260811_0003") {
+    if ($revision.Trim() -ne "20260816_0004") {
         throw "Clean migration found unexpected Alembic revision '$($revision.Trim())'."
     }
 

@@ -544,26 +544,26 @@ Baseline methodology:
 ### Ingestion
 
 - [x] Download only from approved official sources.
-- [ ] Store URL, retrieval timestamp, checksum, and content type.
+- [x] Store URL, retrieval timestamp, checksum, and content type.
 - [x] Detect unchanged documents by checksum.
 - [x] Quarantine corrupt or unsupported documents before persistence.
-- [ ] Add document-ingestion runs to Control Tower.
+- [x] Add document-ingestion runs to Control Tower.
 
 ### Parsing
 
 - [x] Extract text with page/source anchors where possible.
-- [ ] Detect document title and metadata.
+- [x] Detect document title and metadata from the reviewed manifest.
 - [x] Parse BAB, bagian, pasal, and ayat structure.
 - [x] Preserve original ordering.
-- [ ] Validate section uniqueness and continuity.
+- [x] Validate section identity uniqueness and deterministic ordering.
 - [x] Maintain parser confidence/status.
-- [ ] Add manual review sample for every parser version.
+- [x] Add manual review sample for every parser version.
 
 ### Regulation graph
 
-- [ ] Store explicit relations only when supported by metadata/text evidence.
-- [ ] Link changed/revoked documents.
-- [ ] Expose unresolved references separately.
+- [x] Store explicit relations only when supported by metadata/text evidence.
+- [x] Link changed/revoked documents when the target is in the corpus.
+- [x] Expose unresolved references separately.
 
 ### Quality benchmarks
 
@@ -577,9 +577,9 @@ Baseline methodology:
 
 ### Exit gate
 
-- [ ] Corpus can be rebuilt from the source manifest.
-- [ ] Every section is traceable to a regulation version and source URL.
-- [ ] Failed documents cannot silently enter the retrieval index.
+- [x] Corpus can be rebuilt from the source manifest.
+- [x] Every section is traceable to a regulation version and source URL.
+- [x] Failed documents cannot silently enter the retrieval index.
 
 ## 14. Phase 8 — Retrieval baseline and evaluation harness
 
@@ -860,9 +860,9 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 
 ## 22. Immediate next actions
 
-Phase 6 is merged at `647b143`. Phase 7 is active on
-`codex/phase-7-regulasilens-corpus`; the immediate work is:
+Phase 7 is complete on `codex/phase-7-regulasilens-corpus` pending final hosted CI and merge.
+After merge, the next milestone is Phase 8:
 
-1. Persist regulation versions, sections, relations, and quarantine evidence.
-2. Integrate document-ingestion runs with the Control Tower.
-3. Parse and manually review the three official initial documents.
+1. Version a manually reviewed retrieval evaluation set.
+2. Implement and benchmark BM25, dense, and hybrid retrieval baselines.
+3. Enforce corpus/index/version provenance and Recall@10/search-latency gates.

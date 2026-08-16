@@ -309,3 +309,18 @@
 - Opened draft PR [#15](https://github.com/LaboNapitupulu/NusaIntel/pull/15); hosted run
   [31901770812](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31901770812) passes
   all four CI jobs on the initial implementation commit.
+
+### Corpus foundation completed
+
+- Added revision `20260816_0004`, immutable Bronze PDF storage, versioned regulation
+  documents/sections, evidenced relations, and read APIs.
+- Integrated ingestion runs, contract checks, quarantine, incidents, and last-known-good
+  behavior with Control Tower.
+- Corrected OCR `Pasal I` and repeated ayat page-boundary handling; the versioned manual
+  benchmark passes 30/30 reviewed cases (100%, target ≥95%).
+- A live first run published 274 + 427 + 136 source-anchored sections; the second run returned
+  `unchanged` for all three documents with identical dataset-version IDs.
+- Database integration proves rejected candidates stay quarantined while the published legal
+  version remains available. Final release verification and hosted CI follow.
+- Clean-stack and backup/restore smokes pass with 22 domain tables, the Gold view, and
+  Alembic revision `20260816_0004`; both scratch environments were removed after verification.

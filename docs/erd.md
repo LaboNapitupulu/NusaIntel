@@ -1,7 +1,7 @@
 # Entity Relationship Diagram
 
-- Status: Phase 3 logical and physical model
-- Updated: 2026-08-11
+- Status: Physical model through Phase 7
+- Updated: 2026-08-16
 
 ```mermaid
 erDiagram
@@ -29,6 +29,11 @@ erDiagram
     DATASET_VERSION ||--o{ COVERAGE_SUMMARY : summarizes
     REGION ||--o{ GOLD_REGIONAL_OBSERVATION : has
     INDICATOR ||--o{ GOLD_REGIONAL_OBSERVATION : measures
+    DATASET ||--|| REGULATION_DOCUMENT : governs
+    DATASET_VERSION ||--o| RAW_REGULATION_DOCUMENT : stores
+    REGULATION_DOCUMENT ||--o{ REGULATION_DOCUMENT_VERSION : versions
+    REGULATION_DOCUMENT_VERSION ||--o{ REGULATION_SECTION : contains
+    REGULATION_DOCUMENT ||--o{ REGULATION_RELATION : cites
 
     SOURCE {
         uuid id PK
@@ -205,6 +210,54 @@ erDiagram
         integer observed_count
         decimal coverage_percent
     }
+
+    REGULATION_DOCUMENT {
+        string document_id PK
+        uuid dataset_id FK
+        string document_type
+        string number
+        integer year
+        string status
+        string source_page_url
+    }
+
+    RAW_REGULATION_DOCUMENT {
+        uuid id PK
+        uuid dataset_version_id FK
+        string source_url
+        string content_sha256
+        integer byte_count
+        binary body
+    }
+
+    REGULATION_DOCUMENT_VERSION {
+        uuid id PK
+        string document_id FK
+        uuid dataset_version_id FK
+        string checksum
+        string parser_version
+        string parser_status
+        decimal source_anchor_coverage
+        boolean published
+    }
+
+    REGULATION_SECTION {
+        uuid id PK
+        uuid document_version_id FK
+        string section_key
+        integer section_order
+        string kind
+        string source_anchor
+    }
+
+    REGULATION_RELATION {
+        uuid id PK
+        string source_document_id FK
+        string target_document_id FK
+        string relation_type
+        string target_citation
+        boolean resolved
+    }
 ```
 
 ## Schema placement
@@ -215,6 +268,7 @@ erDiagram
 | Unchanged BPS response payload | `bronze` |
 | Region, Indicator, normalized Observation | `silver` |
 | Published regional observations and coverage marts | `gold` |
+| Regulation identity, parsed versions, sections, and evidenced relations | `regulations` |
 
 ## Modeling notes
 

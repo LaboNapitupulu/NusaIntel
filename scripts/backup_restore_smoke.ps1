@@ -56,10 +56,10 @@ try {
                 --dbname=$restoreDatabase `
                 --tuples-only `
                 --no-align `
-                --command="SELECT count(*) FROM information_schema.tables WHERE table_schema IN ('ops', 'bronze', 'silver', 'gold') AND table_type = 'BASE TABLE';"
+                --command="SELECT count(*) FROM information_schema.tables WHERE table_schema IN ('ops', 'bronze', 'silver', 'gold', 'regulations') AND table_type = 'BASE TABLE';"
             Assert-ExitCode "Restored domain table verification" $LASTEXITCODE
-            if ([int]$domainTableCount -lt 17) {
-                throw "Restore smoke produced only $domainTableCount of 17 expected domain tables."
+            if ([int]$domainTableCount -lt 22) {
+                throw "Restore smoke produced only $domainTableCount of 22 expected domain tables."
             }
 
             $revision = docker compose exec -T db psql `
@@ -69,7 +69,7 @@ try {
                 --no-align `
                 --command="SELECT version_num FROM public.alembic_version;"
             Assert-ExitCode "Restored migration revision verification" $LASTEXITCODE
-            if ($revision.Trim() -ne "20260811_0003") {
+            if ($revision.Trim() -ne "20260816_0004") {
                 throw "Restore smoke found unexpected Alembic revision '$($revision.Trim())'."
             }
             $latestViewCount = docker compose exec -T db psql `
