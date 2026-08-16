@@ -1,7 +1,7 @@
 # Data dictionary
 
-- Status: Physical schema at Alembic revision `20260811_0003`
-- Updated: 2026-08-11
+- Status: Physical schema at Alembic revision `20260816_0004`
+- Updated: 2026-08-16
 
 All timestamps are UTC. UUIDs identify immutable operational records. Region and indicator
 codes are strings because they are domain identifiers, not quantities.
@@ -47,3 +47,16 @@ codes are strings because they are domain identifiers, not quantities.
 Analytical scores, similarity, and cluster assignments are computed on request and exported
 with their configuration/version manifest; they are intentionally not persisted as facts.
 See `docs/erd.md` for relationships and migration files for authoritative SQL definitions.
+
+## RegulasiLens corpus
+
+| Table/model | Layer | Grain | Important fields and invariants |
+|---|---|---|---|
+| `regulation_documents` / `RawRegulationDocument` | Bronze | One accepted source PDF per dataset version | Source URL, MIME type, SHA-256, byte count, immutable bytes; dataset version unique |
+| `documents` / `RegulationDocument` | Regulations | One governed legal identity | Manifest metadata, status review, official URLs, attribution, one Control Tower dataset |
+| `document_versions` / `RegulationDocumentVersion` | Regulations | Document × checksum × parser version | Parser status/confidence, section count, anchor coverage, one current published flag |
+| `sections` / `RegulationSection` | Regulations | One ordered legal boundary | Stable key/order, BAB/bagian/paragraf/pasal/ayat kind, hierarchy, page/line anchor |
+| `relations` / `RegulationRelation` | Regulations | One evidenced source relation | Relation type, citation, evidence URL, nullable resolved target, explicit resolved flag |
+
+Rejected source or parser candidates remain in `ops.dataset_versions`, checks, incidents, and
+quarantine records, but never become a published regulation version.

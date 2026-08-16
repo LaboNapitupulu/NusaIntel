@@ -291,3 +291,36 @@
   Analytics mobile screenshots to the README and closed the documentation gate.
 - Hosted run [31900689643](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31900689643)
   passes all four jobs on evidence commit `b5ab9ce`; PR #14 is ready for promotion and merge.
+
+### Merge evidence
+
+- PR #14 merged into `main` as `647b143` after all four required checks passed.
+
+## Phase 7 — 2026-08-16
+
+### Corpus foundation started
+
+- Created `codex/phase-7-regulasilens-corpus` from Phase 6 merge `647b143`.
+- Selected personal-data protection as the bounded first corpus and recorded ADR 0005.
+- Added strict scope, status vocabulary, source-use policy, update mechanism, and a
+  checksum-pinned three-document JDIH BPK manifest.
+- Added fail-closed retrieval primitives and a deterministic, source-anchored structural
+  parser with unit tests. Database persistence and Control Tower integration are next.
+- Opened draft PR [#15](https://github.com/LaboNapitupulu/NusaIntel/pull/15); hosted run
+  [31901770812](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/31901770812) passes
+  all four CI jobs on the initial implementation commit.
+
+### Corpus foundation completed
+
+- Added revision `20260816_0004`, immutable Bronze PDF storage, versioned regulation
+  documents/sections, evidenced relations, and read APIs.
+- Integrated ingestion runs, contract checks, quarantine, incidents, and last-known-good
+  behavior with Control Tower.
+- Corrected OCR `Pasal I` and repeated ayat page-boundary handling; the versioned manual
+  benchmark passes 30/30 reviewed cases (100%, target ≥95%).
+- A live first run published 274 + 427 + 136 source-anchored sections; the second run returned
+  `unchanged` for all three documents with identical dataset-version IDs.
+- Database integration proves rejected candidates stay quarantined while the published legal
+  version remains available. Final release verification and hosted CI follow.
+- Clean-stack and backup/restore smokes pass with 22 domain tables, the Gold view, and
+  Alembic revision `20260816_0004`; both scratch environments were removed after verification.

@@ -535,35 +535,35 @@ Baseline methodology:
 
 ### Discovery
 
-- [ ] Select one domain: employment, personal-data protection, or education.
-- [ ] Define inclusion/exclusion criteria.
-- [ ] Create initial regulation source manifest.
-- [ ] Record source terms, attribution, and update mechanism.
-- [ ] Define document status vocabulary.
+- [x] Select one domain: personal-data protection.
+- [x] Define inclusion/exclusion criteria.
+- [x] Create initial regulation source manifest.
+- [x] Record source terms, attribution, and update mechanism.
+- [x] Define document status vocabulary.
 
 ### Ingestion
 
-- [ ] Download only from approved official sources.
-- [ ] Store URL, retrieval timestamp, checksum, and content type.
-- [ ] Detect unchanged documents by checksum.
-- [ ] Quarantine corrupt or unsupported documents.
-- [ ] Add document-ingestion runs to Control Tower.
+- [x] Download only from approved official sources.
+- [x] Store URL, retrieval timestamp, checksum, and content type.
+- [x] Detect unchanged documents by checksum.
+- [x] Quarantine corrupt or unsupported documents before persistence.
+- [x] Add document-ingestion runs to Control Tower.
 
 ### Parsing
 
-- [ ] Extract text with page/source anchors where possible.
-- [ ] Detect document title and metadata.
-- [ ] Parse BAB, bagian, pasal, and ayat structure.
-- [ ] Preserve original ordering.
-- [ ] Validate section uniqueness and continuity.
-- [ ] Maintain parser confidence/status.
-- [ ] Add manual review sample for every parser version.
+- [x] Extract text with page/source anchors where possible.
+- [x] Detect document title and metadata from the reviewed manifest.
+- [x] Parse BAB, bagian, pasal, and ayat structure.
+- [x] Preserve original ordering.
+- [x] Validate section identity uniqueness and deterministic ordering.
+- [x] Maintain parser confidence/status.
+- [x] Add manual review sample for every parser version.
 
 ### Regulation graph
 
-- [ ] Store explicit relations only when supported by metadata/text evidence.
-- [ ] Link changed/revoked documents.
-- [ ] Expose unresolved references separately.
+- [x] Store explicit relations only when supported by metadata/text evidence.
+- [x] Link changed/revoked documents when the target is in the corpus.
+- [x] Expose unresolved references separately.
 
 ### Quality benchmarks
 
@@ -577,9 +577,9 @@ Baseline methodology:
 
 ### Exit gate
 
-- [ ] Corpus can be rebuilt from the source manifest.
-- [ ] Every section is traceable to a regulation version and source URL.
-- [ ] Failed documents cannot silently enter the retrieval index.
+- [x] Corpus can be rebuilt from the source manifest.
+- [x] Every section is traceable to a regulation version and source URL.
+- [x] Failed documents cannot silently enter the retrieval index.
 
 ## 14. Phase 8 — Retrieval baseline and evaluation harness
 
@@ -860,8 +860,9 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 
 ## 22. Immediate next actions
 
-Phase 5 is merged at `a0b2e07`. Phase 6 hardening is release-ready on
-`codex/phase-6-mvp-hardening`; all implementation and release gates pass. The remaining
-repository action is:
+Phase 7 is complete on `codex/phase-7-regulasilens-corpus` pending final hosted CI and merge.
+After merge, the next milestone is Phase 8:
 
-1. Promote and merge Phase 6 pull request #14.
+1. Version a manually reviewed retrieval evaluation set.
+2. Implement and benchmark BM25, dense, and hybrid retrieval baselines.
+3. Enforce corpus/index/version provenance and Recall@10/search-latency gates.

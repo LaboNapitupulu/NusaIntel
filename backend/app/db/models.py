@@ -13,6 +13,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    LargeBinary,
     Numeric,
     String,
     Text,
@@ -393,3 +394,134 @@ class CoverageSummary(TimestampMixin, Base):
     observed_regions: Mapped[int] = mapped_column(Integer, nullable=False)
     missing_regions: Mapped[int] = mapped_column(Integer, nullable=False)
     coverage_percent: Mapped[Decimal] = mapped_column(Numeric(7, 4), nullable=False)
+
+
+class RawRegulationDocument(TimestampMixin, Base):
+    __tablename__ = "regulation_documents"
+    __table_args__ = {"schema": "bronze"}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    dataset_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ops.dataset_versions.id"),
+        unique=True,
+        nullable=False,
+    )
+    source_url: Mapped[str] = mapped_column(Text, nullable=False)
+    content_type: Mapped[str] = mapped_column(String(128), nullable=False)
+    content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    byte_count: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    body: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+
+
+class RegulationDocument(TimestampMixin, Base):
+    __tablename__ = "documents"
+    __table_args__ = {"schema": "regulations"}
+
+    document_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    dataset_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ops.datasets.id"), unique=True, nullable=False
+    )
+    domain: Mapped[str] = mapped_column(String(128), nullable=False)
+    document_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    number: Mapped[str] = mapped_column(String(32), nullable=False)
+    year: Mapped[int] = mapped_column(Integer, nullable=False)
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    issuer: Mapped[str] = mapped_column(String(255), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    effective_at: Mapped[date] = mapped_column(Date, nullable=False)
+    status_checked_at: Mapped[date] = mapped_column(Date, nullable=False)
+    source_page_url: Mapped[str] = mapped_column(Text, nullable=False)
+    content_url: Mapped[str] = mapped_column(Text, nullable=False)
+    attribution: Mapped[str] = mapped_column(Text, nullable=False)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
+
+
+class RegulationDocumentVersion(TimestampMixin, Base):
+    __tablename__ = "document_versions"
+    __table_args__ = (
+        UniqueConstraint(
+            "document_id",
+            "checksum",
+            "parser_version",
+            name="uq_regulation_document_parser_version",
+        ),
+        CheckConstraint(
+            "source_anchor_coverage >= 0 AND source_anchor_coverage <= 1",
+            name="regulation_anchor_coverage_range",
+        ),
+        {"schema": "regulations"},
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id: Mapped[str] = mapped_column(
+        String(128), ForeignKey("regulations.documents.document_id"), nullable=False
+    )
+    dataset_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ops.dataset_versions.id"),
+        nullable=False,
+    )
+    manifest_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    checksum: Mapped[str] = mapped_column(String(64), nullable=False)
+    byte_count: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    content_type: Mapped[str] = mapped_column(String(128), nullable=False)
+    retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    parser_version: Mapped[str] = mapped_column(String(128), nullable=False)
+    parser_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    parser_confidence: Mapped[Decimal] = mapped_column(Numeric(7, 6), nullable=False)
+    section_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    source_anchor_coverage: Mapped[Decimal] = mapped_column(Numeric(7, 6), nullable=False)
+    published: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+
+
+class RegulationSection(TimestampMixin, Base):
+    __tablename__ = "sections"
+    __table_args__ = (
+        UniqueConstraint("document_version_id", "section_key", name="uq_regulation_section_key"),
+        UniqueConstraint(
+            "document_version_id", "section_order", name="uq_regulation_section_order"
+        ),
+        CheckConstraint("section_order > 0", name="regulation_section_order_positive"),
+        {"schema": "regulations"},
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("regulations.document_versions.id"), nullable=False
+    )
+    section_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    section_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    heading: Mapped[str] = mapped_column(Text, nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    hierarchy: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    page_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    line_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    source_anchor: Mapped[str] = mapped_column(String(128), nullable=False)
+    confidence: Mapped[Decimal] = mapped_column(Numeric(7, 6), nullable=False)
+
+
+class RegulationRelation(TimestampMixin, Base):
+    __tablename__ = "relations"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_document_id",
+            "relation_type",
+            "target_citation",
+            name="uq_regulation_relation_evidence",
+        ),
+        {"schema": "regulations"},
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    source_document_id: Mapped[str] = mapped_column(
+        String(128), ForeignKey("regulations.documents.document_id"), nullable=False
+    )
+    relation_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    target_document_id: Mapped[str | None] = mapped_column(
+        String(128), ForeignKey("regulations.documents.document_id")
+    )
+    target_citation: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_url: Mapped[str] = mapped_column(Text, nullable=False)
+    resolved: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")

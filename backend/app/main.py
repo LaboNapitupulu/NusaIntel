@@ -20,6 +20,7 @@ from app.logging import configure_logging
 from app.middleware import RequestContextMiddleware
 from app.opportunity.service import OpportunityService
 from app.regional_analytics.service import RegionalAnalyticsService
+from app.regulasilens.service import CorpusService
 
 
 def create_app(
@@ -43,7 +44,7 @@ def create_app(
 
     application = FastAPI(
         title=active_settings.app_name,
-        version="0.4.0",
+        version="0.5.0",
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
         lifespan=lifespan,
@@ -58,6 +59,9 @@ def create_app(
     )
     application.state.regional_analytics_service = (
         RegionalAnalyticsService(session_factory) if session_factory is not None else None
+    )
+    application.state.regulation_service = (
+        CorpusService(session_factory) if session_factory is not None else None
     )
     application.add_middleware(RequestContextMiddleware)
     application.add_middleware(

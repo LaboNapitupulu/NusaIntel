@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "corpus_id": "personal-data-protection-id",
+  "corpus_version": "2026-08-16.1",
+  "domain": "personal-data-protection",
+  "language": "id",
+  "scope_decision": "Corpus pertama berfokus pada aturan nasional yang secara langsung mengatur pelindungan data pribadi atau kewajiban perlindungan data dalam sistem elektronik. Scope ini dipilih karena cukup sempit untuk audit struktur dan status, tetapi tetap mewakili relasi lintas tingkat regulasi.",
+  "inclusion_criteria": [
+    "Dokumen peraturan nasional dari portal resmi JDIH yang substansi utamanya mengatur pelindungan data pribadi.",
+    "Aturan sistem elektronik yang memuat kewajiban operasional perlindungan data dan relevan langsung terhadap domain.",
+    "Metadata, halaman sumber, dan berkas PDF resmi tersedia melalui HTTPS."
+  ],
+  "exclusion_criteria": [
+    "Artikel, berita, abstrak nonresmi, komentar hukum, atau salinan dari portal pihak ketiga.",
+    "Peraturan sektoral yang hanya menyebut data pribadi secara insidental.",
+    "Dokumen yang status, identitas, atau berkas sumber resminya belum dapat diverifikasi.",
+    "Putusan pengadilan dan rancangan peraturan; keduanya dicatat sebagai evidence status terpisah jika relevan."
+  ],
+  "status_vocabulary": {
+    "in_force": "Portal resmi menyatakan berlaku pada tanggal pemeriksaan.",
+    "amended": "Masih relevan tetapi sebagian ketentuannya telah diubah oleh dokumen lain.",
+    "revoked": "Secara eksplisit dicabut dan tidak lagi berlaku.",
+    "superseded": "Digantikan oleh dokumen baru berdasarkan evidence resmi.",
+    "unknown": "Status belum dapat dipastikan; dokumen tidak boleh masuk retrieval index."
+  },
+  "source_policy": {
+    "owner": "Badan Pemeriksa Keuangan Republik Indonesia — JDIH BPK",
+    "purpose": "Database Peraturan BPK digunakan sebagai katalog dan tautan dokumen resmi untuk corpus penelitian yang dapat ditelusuri.",
+    "attribution": "Sumber: Database Peraturan BPK, Badan Pemeriksa Keuangan Republik Indonesia.",
+    "approved_hosts": ["peraturan.bpk.go.id"],
+    "redistribution": "link-and-local-cache-only",
+    "request_policy": "Ambil hanya URL yang tercantum dalam manifest, secara berurutan, tanpa crawling; tinjau metadata dan checksum sebelum menerima perubahan."
+  },
+  "update_policy": {
+    "mechanism": "manual-review",
+    "review_interval_days": 30,
+    "change_detection": "checksum-and-metadata"
+  },
+  "documents": [
+    {
+      "document_id": "uu-27-2022",
+      "document_type": "undang-undang",
+      "number": "27",
+      "year": 2022,
+      "title": "Pelindungan Data Pribadi",
+      "issuer": "Pemerintah Pusat",
+      "status": "in_force",
+      "effective_at": "2022-10-17",
+      "status_checked_at": "2026-08-16",
+      "source_page_url": "https://peraturan.bpk.go.id/Details/229798/uu-no-27-tahun-2022",
+      "content_url": "https://peraturan.bpk.go.id/Download/224884/UU%20Nomor%2027%20Tahun%202022.pdf",
+      "content_type": "application/octet-stream",
+      "file_format": "pdf",
+      "expected_sha256": "ed952dea04b87d14ecf037f9f324a65d50b396ddd34fc28ddf9ff014391971f6",
+      "expected_byte_count": 2977828,
+      "attribution": "UU 27/2022; LN 2022 No. 196, TLN No. 6820; Database Peraturan BPK.",
+      "inclusion_reason": "Instrumen utama nasional yang secara khusus mengatur pelindungan data pribadi.",
+      "relations": []
+    },
+    {
+      "document_id": "pp-71-2019",
+      "document_type": "peraturan-pemerintah",
+      "number": "71",
+      "year": 2019,
+      "title": "Penyelenggaraan Sistem dan Transaksi Elektronik",
+      "issuer": "Pemerintah Pusat",
+      "status": "in_force",
+      "effective_at": "2019-10-10",
+      "status_checked_at": "2026-08-16",
+      "source_page_url": "https://peraturan.bpk.go.id/Details/122030/pp-no-71-tahun-2019",
+      "content_url": "https://peraturan.bpk.go.id/Download/112816/PP%20Nomor%2071%20Tahun%202019.pdf",
+      "content_type": "application/octet-stream",
+      "file_format": "pdf",
+      "expected_sha256": "0c454f81e36883d1a2c004247523baaa9f0d121eb60c8b42309cd3487f0ae6a8",
+      "expected_byte_count": 5344523,
+      "attribution": "PP 71/2019; LN 2019 No. 185, TLN No. 6400; Database Peraturan BPK.",
+      "inclusion_reason": "Memuat kewajiban penyelenggara sistem elektronik yang relevan langsung terhadap perlindungan data.",
+      "relations": [
+        {
+          "relation_type": "revokes",
+          "target_document_id": null,
+          "target_citation": "PP Nomor 82 Tahun 2012 tentang Penyelenggaraan Sistem dan Transaksi Elektronik",
+          "evidence_url": "https://peraturan.bpk.go.id/Details/122030/pp-no-71-tahun-2019"
+        }
+      ]
+    },
+    {
+      "document_id": "permenkominfo-20-2016",
+      "document_type": "peraturan-menteri",
+      "number": "20",
+      "year": 2016,
+      "title": "Perlindungan Data Pribadi Dalam Sistem Elektronik",
+      "issuer": "Kementerian Komunikasi dan Informatika",
+      "status": "in_force",
+      "effective_at": "2016-12-01",
+      "status_checked_at": "2026-08-16",
+      "source_page_url": "https://peraturan.bpk.go.id/Details/150543/permenkominfo-no-20-",
+      "content_url": "https://peraturan.bpk.go.id/Download/142743/Permen%20Kominfo%20Nomor%2020%20Tahun%202016.pdf",
+      "content_type": "application/octet-stream",
+      "file_format": "pdf",
+      "expected_sha256": "cee5ba2a62bbcbff4e15cb20a073ef033c1c1aca93f662ccfde9e70fc018e237",
+      "expected_byte_count": 435269,
+      "attribution": "Permenkominfo 20/2016; BN 2016 No. 1829; Database Peraturan BPK.",
+      "inclusion_reason": "Aturan operasional khusus perlindungan data pribadi dalam sistem elektronik.",
+      "relations": []
+    }
+  ]
+}

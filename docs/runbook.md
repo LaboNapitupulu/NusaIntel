@@ -24,6 +24,21 @@ does not delete the PostgreSQL volume.
 Before diagnosing a missing analytical result, confirm the requested indicator/year has a
 published Gold version and inspect Control Tower quality, incidents, and reference period.
 
+## RegulasiLens ingestion
+
+1. Review and version `regulations/manifests/personal-data-protection.v1.json`; never update a
+   checksum merely to silence drift.
+2. Validate locally with `python scripts/validate_regulation_manifest.py`.
+3. Run `python scripts/benchmark_regulation_parser.py`; accuracy must remain at least 95%.
+4. Run `python scripts/run_regulation_pipeline.py`. Exit `0` means all documents published or
+   unchanged; exit `2` means at least one candidate was rejected.
+5. Repeat the pipeline and confirm all unchanged source documents reuse their dataset version.
+6. Inspect `/api/v1/regulations`, the document detail/relations routes, and Control Tower.
+
+Checksum, byte-count, MIME/PDF signature, or parser-quality failure creates auditable failure
+evidence and preserves the previous published document version. Resolve the source change by
+reviewing official metadata and issuing a new manifest version; do not edit stored history.
+
 ## Scheduled connector
 
 Set `BPS_SCHEDULE_ENABLED=true`, one `BPS_SCHEDULE_INDICATOR`, and an interval between 300
@@ -58,7 +73,7 @@ With a healthy local stack:
 ```
 
 The first command writes a custom-format PostgreSQL dump under `artifacts/`. The smoke mode
-restores into the isolated `nusa_intel_restore_smoke` database, verifies all 17 domain
+restores into the isolated `nusa_intel_restore_smoke` database, verifies all 22 domain
 tables, the Gold latest-observation view, and the Alembic revision, then drops only that
 scratch database. It never overwrites the primary `nusa_intel` database.
 
