@@ -33,3 +33,15 @@ startup and database publication.
 All runs produced identical normalized checksums, zero invalid values, zero
 quarantine rows, and publishable quality reports for all contracts. IPM 2025 is
 an explicit source-unavailable period, not a benchmark failure.
+
+## RegulasiLens retrieval benchmark
+
+- Recorded: 2026-08-23
+- Corpus: 837 published sections across three regulation versions
+- Evaluation: 100 reviewed questions; one pass per method/chunker configuration
+- Database: PostgreSQL 17 on local Docker, exposed at port 55432 for the benchmark
+- Timing: Python `perf_counter`, including service call; p95 over 100 questions
+
+The selected hybrid-reranked fixed-1,600 configuration measured Recall@5 0.8083,
+Recall@10 0.8917, p95 0.0448 seconds, and 100% source-anchor coverage. Full methodology and
+comparisons are in `docs/regulasilens-retrieval-benchmark.md`.

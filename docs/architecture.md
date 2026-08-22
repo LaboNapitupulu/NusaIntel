@@ -67,8 +67,9 @@ evidence.
 - `app/opportunity`: comparable indicator context, normalization, scoring, sensitivity.
 - `app/regional_analytics`: complete-case preprocessing, similarity, validated clustering,
   regional reports.
-- `app/regulasilens`: approved-manifest retrieval, immutable legal-document storage,
-  deterministic structural parsing, quality gates, and evidenced relation graph.
+- `app/regulasilens`: approved-manifest ingestion, immutable legal-document storage,
+  deterministic structural parsing, BM25/dense/hybrid retrieval with source-preserving
+  reranking, quality gates, and evidenced relation graph.
 - `frontend/components`: client-side product surfaces consuming versioned API responses.
 
 Core calculation modules are pure/deterministic and tested separately from SQL/service

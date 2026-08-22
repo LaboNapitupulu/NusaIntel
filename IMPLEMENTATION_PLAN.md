@@ -589,39 +589,39 @@ Baseline methodology:
 
 ### Evaluation set
 
-- [ ] Define versioned evaluation-case schema.
-- [ ] Create at least 100 manually reviewed questions.
-- [ ] Include direct lookup questions.
-- [ ] Include paraphrased questions.
-- [ ] Include multi-section and multi-document questions.
-- [ ] Include unanswerable questions.
-- [ ] Include version-sensitive/status questions.
-- [ ] Record expected relevant document/section IDs.
+- [x] Define versioned evaluation-case schema.
+- [x] Create at least 100 manually reviewed questions.
+- [x] Include direct lookup questions.
+- [x] Include paraphrased questions.
+- [x] Include multi-section and multi-document questions.
+- [x] Include unanswerable questions.
+- [x] Include version-sensitive/status questions.
+- [x] Record expected relevant document/section IDs.
 
 ### Retrieval
 
-- [ ] Implement BM25/keyword baseline.
-- [ ] Implement dense retrieval baseline.
-- [ ] Implement hybrid fusion.
-- [ ] Evaluate chunking by structure versus fixed-size baseline.
-- [ ] Add reranker only if benchmark improvement justifies complexity.
-- [ ] Record index, embedding, chunker, and corpus versions.
+- [x] Implement BM25/keyword baseline.
+- [x] Implement dense retrieval baseline.
+- [x] Implement hybrid fusion.
+- [x] Evaluate chunking by structure versus fixed-size baseline.
+- [x] Add reranker only if benchmark improvement justifies complexity.
+- [x] Record index, embedding, chunker, and corpus versions.
 
 ### Benchmarks
 
-- [ ] BM25 baseline report completed.
-- [ ] Dense baseline report completed.
-- [ ] Hybrid Recall@5 and Recall@10 measured.
-- [ ] Target Retrieval Recall@10 ≥ 0.85.
-- [ ] Search p95 < 1.5 seconds on benchmark environment.
-- [ ] No evaluation case is included in prompt tuning without being tracked.
+- [x] BM25 baseline report completed.
+- [x] Dense baseline report completed.
+- [x] Hybrid Recall@5 and Recall@10 measured.
+- [x] Target Retrieval Recall@10 ≥ 0.85.
+- [x] Search p95 < 1.5 seconds on benchmark environment.
+- [x] No evaluation case is included in prompt tuning without being tracked.
 
 ### Exit gate
 
-- [ ] Hybrid retrieval meets or exceeds target.
-- [ ] Failure analysis categorizes missed cases.
-- [ ] Retrieval results always retain source anchors.
-- [ ] Generation work does not begin if retrieval remains below the agreed gate, except for isolated prototyping.
+- [x] Hybrid retrieval meets or exceeds target.
+- [x] Failure analysis categorizes missed cases.
+- [x] Retrieval results always retain source anchors.
+- [x] Generation work does not begin if retrieval remains below the agreed gate, except for isolated prototyping.
 
 ## 15. Phase 9 — Grounded answers and RegulasiLens beta
 
@@ -860,9 +860,9 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 
 ## 22. Immediate next actions
 
-Phase 7 is complete on `codex/phase-7-regulasilens-corpus` pending final hosted CI and merge.
-After merge, the next milestone is Phase 8:
+Phase 8 is complete on `codex/phase-8-retrieval-baseline` pending hosted CI and merge.
+After merge, the next milestone is Phase 9:
 
-1. Version a manually reviewed retrieval evaluation set.
-2. Implement and benchmark BM25, dense, and hybrid retrieval baselines.
-3. Enforce corpus/index/version provenance and Recall@10/search-latency gates.
+1. Define the citation-first grounded-answer contract and refusal behavior.
+2. Build generation only from retrieved, source-anchored sections.
+3. Evaluate citation correctness, faithfulness, unanswerable handling, and end-to-end latency.
