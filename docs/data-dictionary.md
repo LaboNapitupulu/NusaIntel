@@ -48,6 +48,10 @@ Analytical scores, similarity, and cluster assignments are computed on request a
 with their configuration/version manifest; they are intentionally not persisted as facts.
 See `docs/erd.md` for relationships and migration files for authoritative SQL definitions.
 
+RegulasiLens retrieval chunks and indexes are also derived in memory from the current
+published `document_versions` and `sections`. Their deterministic index/chunker/retriever
+versions are returned as provenance rather than persisted as legal facts.
+
 ## RegulasiLens corpus
 
 | Table/model | Layer | Grain | Important fields and invariants |

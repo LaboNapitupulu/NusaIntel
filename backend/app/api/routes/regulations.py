@@ -1,12 +1,20 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException, Query, Request, status
+from pydantic import BaseModel, Field
 
 from app.regulasilens.service import CorpusService
 
 router = APIRouter(prefix="/regulations", tags=["regulations"])
+
+
+class RegulationSearchRequest(BaseModel):
+    query: str = Field(min_length=3, max_length=500)
+    method: Literal["bm25", "dense", "hybrid", "hybrid_rerank"] = "hybrid_rerank"
+    chunker: Literal["structure", "fixed"] = "fixed"
+    limit: int = Field(default=10, ge=1, le=50)
 
 
 def _service(request: Request) -> CorpusService:
@@ -27,6 +35,27 @@ async def regulations(
 ) -> dict[str, Any]:
     items = await _service(request).list_documents(limit=limit, offset=offset)
     return {"items": items, "count": len(items), "limit": limit, "offset": offset}
+
+
+@router.post("/search")
+async def regulation_search(request: Request, payload: RegulationSearchRequest) -> dict[str, Any]:
+    try:
+        return await _service(request).search(
+            payload.query,
+            method=payload.method,
+            chunker=payload.chunker,
+            limit=payload.limit,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.get("/retrieval/manifest")
+async def regulation_retrieval_manifest(
+    request: Request,
+    chunker: Literal["structure", "fixed"] = Query(default="fixed"),
+) -> dict[str, Any]:
+    return await _service(request).retrieval_manifest(chunker=chunker)
 
 
 @router.get("/{document_id}")

@@ -39,6 +39,22 @@ Checksum, byte-count, MIME/PDF signature, or parser-quality failure creates audi
 evidence and preserves the previous published document version. Resolve the source change by
 reviewing official metadata and issuing a new manifest version; do not edit stored history.
 
+## RegulasiLens retrieval
+
+1. Ensure the approved corpus has a published version; search fails closed when no published
+   sections exist.
+2. Run `python scripts/benchmark_regulation_retrieval.py` against the migrated corpus.
+3. Confirm the selected `hybrid_rerank` + `fixed` row retains Recall@10 ≥0.85, p95 <1.5
+   seconds, and source-anchor coverage of 100%.
+4. Store disposable full JSON output under ignored `artifacts/`; commit the summarized result
+   and failure categories to `docs/regulasilens-retrieval-benchmark.md`.
+5. Inspect `/api/v1/regulations/retrieval/manifest` before comparing results. A corpus,
+   chunker, index, dense, fusion, or reranker version change invalidates direct comparisons.
+
+Do not remove failed evaluation cases after tuning. Update the versioned evaluation set only
+after manual corpus review, and issue a new evaluation version when expected references or
+wording materially change.
+
 ## Scheduled connector
 
 Set `BPS_SCHEDULE_ENABLED=true`, one `BPS_SCHEDULE_INDICATOR`, and an interval between 300

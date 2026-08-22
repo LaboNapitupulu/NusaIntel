@@ -9,8 +9,8 @@ surfaces:
 
 The current implementation includes the platform foundation, the completed six-indicator
 BPS path, the Data Reliability Control Tower Lite, the Regional Opportunity Engine, and
-regional analytics/reporting. Phase 6 is released and the bounded RegulasiLens corpus foundation
-is now in progress. TPT, TPAK, poverty, PDRB per
+regional analytics/reporting. The bounded RegulasiLens corpus and its versioned Phase 8
+retrieval baseline are implemented. TPT, TPAK, poverty, PDRB per
 capita, PDRB growth, and HDI flow through immutable Bronze, contract-validated Silver, and
 publish-gated Gold with lineage. Dataset health, freshness, quality history, schema drift,
 incidents, and last-known-good state are exposed through the API and web dashboard.
@@ -255,6 +255,24 @@ Read the corpus through `GET /api/v1/regulations`,
 
 Scope, source-use policy, update rules, and limitations are documented in
 `docs/regulasilens-scope.md`; ADR 0005 records the domain choice.
+
+## RegulasiLens retrieval baseline
+
+The retrieval API provides BM25, deterministic feature-hashing dense search, RRF hybrid
+fusion, and a benchmark-justified legal reranker. The default uses versioned 1,600-character
+chunks and always returns member section IDs, immutable document-version ID, official source
+URL/anchor, and complete corpus/index/retriever provenance.
+
+```powershell
+$env:DATABASE_URL='postgresql+asyncpg://nusa_intel:nusa_intel_dev@localhost:5432/nusa_intel'
+.\backend\.venv\Scripts\python.exe .\scripts\benchmark_regulation_retrieval.py `
+  --output .\artifacts\regulasilens-retrieval-benchmark.v1.json
+```
+
+Search with `POST /api/v1/regulations/search`; inspect the selected index with
+`GET /api/v1/regulations/retrieval/manifest`. The reviewed 100-question evaluation suite is
+under `regulations/evaluation/`. Methodology, metrics, and known misses are recorded in
+`docs/regulasilens-retrieval-benchmark.md` and ADR 0006.
 
 ## Configuration
 

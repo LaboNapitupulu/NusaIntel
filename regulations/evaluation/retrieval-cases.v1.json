@@ -1,0 +1,284 @@
+{
+  "schema_version": 1,
+  "evaluation_id": "regulasilens-personal-data-retrieval",
+  "evaluation_version": "1.0.0",
+  "corpus_manifest_version": "2026-08-16.1",
+  "language": "id",
+  "review_status": "manually-reviewed",
+  "reviewed_at": "2026-08-23",
+  "review_method": "Pertanyaan disusun manual, diparafrasekan tanpa generator runtime, lalu dicocokkan kembali dengan identitas bagian pada corpus terpublikasi.",
+  "minimum_question_count": 100,
+  "topics": [
+    {
+      "topic_id": "topic-01",
+      "category": "direct_lookup",
+      "answerable": true,
+      "questions": [
+        {"question_id": "ret-v1-001", "text": "Apa definisi Data Pribadi menurut UU Pelindungan Data Pribadi?"},
+        {"question_id": "ret-v1-002", "text": "Bagaimana UU 27 Tahun 2022 mendefinisikan Data Pribadi?"},
+        {"question_id": "ret-v1-003", "text": "Apa pengertian Subjek Data Pribadi dalam Pasal 1?"},
+        {"question_id": "ret-v1-004", "text": "Sebutkan definisi Pengendali Data Pribadi dalam undang-undang."},
+        {"question_id": "ret-v1-005", "text": "Di bagian mana definisi dasar pelindungan data pribadi diatur?"}
+      ],
+      "expected_relevant": [{"document_id": "uu-27-2022", "section_id": "806278f0724d1c37aae386f0"}]
+    },
+    {
+      "topic_id": "topic-02",
+      "category": "direct_lookup",
+      "answerable": true,
+      "questions": [
+        {"question_id": "ret-v1-006", "text": "Apa saja jenis Data Pribadi menurut Pasal 4?"},
+        {"question_id": "ret-v1-007", "text": "Data pribadi spesifik dan umum diatur dalam pasal berapa?"},
+        {"question_id": "ret-v1-008", "text": "Apakah data kesehatan termasuk data pribadi yang bersifat spesifik?"},
+        {"question_id": "ret-v1-009", "text": "Sebutkan pengelompokan jenis data pribadi dalam UU PDP."},
+        {"question_id": "ret-v1-010", "text": "Di mana klasifikasi Data Pribadi spesifik dan umum dijelaskan?"}
+      ],
+      "expected_relevant": [{"document_id": "uu-27-2022", "section_id": "4de0ac71655046d1d31c3dea"}]
+    },
+    {
+      "topic_id": "topic-03",
+      "category": "direct_lookup",
+      "answerable": true,
+      "questions": [
+        {"question_id": "ret-v1-011", "text": "Apa hak subjek data untuk memperoleh akses dan salinan datanya?"},
+        {"question_id": "ret-v1-012", "text": "Pasal berapa mengatur hak mendapatkan akses Data Pribadi?"},
+        {"question_id": "ret-v1-013", "text": "Apakah seseorang berhak memperoleh salinan Data Pribadinya?"},
+        {"question_id": "ret-v1-014", "text": "Jelaskan hak akses milik Subjek Data Pribadi."},
+        {"question_id": "ret-v1-015", "text": "Di mana hak melihat dan menerima salinan data diatur?"}
+      ],
+      "expected_relevant": [{"document_id": "uu-27-2022", "section_id": "755b9f85707c812f01a02c0b"}]
+    },
+    {
+      "topic_id": "topic-04",
+      "category": "direct_lookup",
+      "answerable": true,
+      "questions": [
+        {"question_id": "ret-v1-016", "text": "Apa hak subjek data untuk melengkapi dan memperbaiki data yang salah?"},
+        {"question_id": "ret-v1-017", "text": "Pasal mana yang memberi hak koreksi Data Pribadi?"},
+        {"question_id": "ret-v1-018", "text": "Bolehkah pemilik data memperbarui Data Pribadi yang tidak akurat?"},
+        {"question_id": "ret-v1-019", "text": "Jelaskan hak pembetulan dan pembaruan Data Pribadi."},
+        {"question_id": "ret-v1-020", "text": "Di mana hak memperbaiki data pribadi diatur dalam UU PDP?"}
+      ],
+      "expected_relevant": [{"document_id": "uu-27-2022", "section_id": "42972518aca7b4f48abc24ae"}]
+    },
+    {
+      "topic_id": "topic-05",
+      "category": "direct_lookup",
+      "answerable": true,
+      "questions": [
+        {"question_id": "ret-v1-021", "text": "Apa hak subjek data untuk menghapus dan memusnahkan Data Pribadi?"},
+        {"question_id": "ret-v1-022", "text": "Pasal mana mengatur pengakhiran pemrosesan serta penghapusan data?"},
+        {"question_id": "ret-v1-023", "text": "Apakah pemilik data dapat meminta datanya dimusnahkan?"},
+        {"question_id": "ret-v1-024", "text": "Jelaskan hak penghapusan Data Pribadi dalam UU PDP."},
+        {"question_id": "ret-v1-025", "text": "Di mana hak untuk menghentikan pemrosesan dan menghapus data diatur?"}
+      ],
+      "expected_relevant": [{"document_id": "uu-27-2022", "section_id": "fc016fa0878c59d94f47d10c"}]
+    },
+    {
+      "topic_id": "topic-06",
+      "category": "direct_lookup",
+      "answerable": true,
+      "questions": [
+        {"question_id": "ret-v1-026", "text": "Apa hak untuk menarik kembali persetujuan pemrosesan Data Pribadi?"},
+        {"question_id": "ret-v1-027", "text": "Pasal berapa mengatur penarikan persetujuan oleh Subjek Data Pribadi?"},
+        {"question_id": "ret-v1-028", "text": "Bolehkah consent pemrosesan data dicabut kembali?"},
+        {"question_id": "ret-v1-029", "text": "Jelaskan hak pencabutan persetujuan dalam UU PDP."},
+        {"question_id": "ret-v1-030", "text": "Di mana aturan menarik izin pemrosesan data pribadi?"}
+      ],
+      "expected_relevant": [{"document_id": "uu-27-2022", "section_id": "f8ac826e4b95c6484ea12685"}]
+    },
+    {
+      "topic_id": "topic-07",
+      "category": "direct_lookup",
+      "answerable": true,
+      "questions": [
+        {"question_id": "ret-v1-031", "text": "Apakah subjek data berhak menggugat dan menerima ganti rugi?"},
+        {"question_id": "ret-v1-032", "text": "Pasal mana mengatur hak ganti rugi atas pelanggaran pemrosesan data?"},
+        {"question_id": "ret-v1-033", "text": "Bagaimana hak kompensasi akibat pelanggaran Data Pribadi?"},
+        {"question_id": "ret-v1-034", "text": "Jelaskan hak menuntut kerugian dalam UU PDP."},
+        {"question_id": "ret-v1-035", "text": "Di mana dasar gugatan ganti rugi pemilik data diatur?"}
+      ],
+      "expected_relevant": [{"document_id": "uu-27-2022", "section_id": "934b79d744f3bcc923003b7f"}]
+    },
+    {
+      "topic_id": "topic-08",
+      "category": "direct_lookup",
+      "answerable": true,
+      "questions": [
+        {"question_id": "ret-v1-036", "text": "Siapa yang wajib menunjukkan bukti persetujuan pemrosesan Data Pribadi?"},
+        {"question_id": "ret-v1-037", "text": "Apa kewajiban Pengendali Data terkait bukti persetujuan?"},
+        {"question_id": "ret-v1-038", "text": "Pasal mana mengatur pembuktian consent pemrosesan data?"},
+        {"question_id": "ret-v1-039", "text": "Bagaimana pengendali membuktikan adanya izin subjek data?"},
+        {"question_id": "ret-v1-040", "text": "Di mana kewajiban menyimpan bukti persetujuan dijelaskan?"}
+      ],
+      "expected_relevant": [{"document_id": "uu-27-2022", "section_id": "be1e4124d2f626a42a844288"}]
+    },
+    {
+      "topic_id": "topic-09",
+      "category": "paraphrased",
+      "answerable": true,
+      "questions": [
+        {"question_id": "ret-v1-041", "text": "Berapa lama perusahaan boleh menunggu sebelum mengabarkan kebocoran data?"},
+        {"question_id": "ret-v1-042", "text": "Apa tenggat notifikasi insiden Data Pribadi dan apa isi minimalnya?"},
+        {"question_id": "ret-v1-043", "text": "Kalau data pelanggan bocor, kapan korban harus diberi tahu?"},
+        {"question_id": "ret-v1-044", "text": "Jelaskan batas tiga kali dua puluh empat jam untuk pemberitahuan kegagalan."},
+        {"question_id": "ret-v1-045", "text": "Informasi apa yang harus dicantumkan dalam surat pemberitahuan pelanggaran data?"}
+      ],
+      "expected_relevant": [
+        {"document_id": "uu-27-2022", "section_id": "4105bb3f5ac01f92d3ec1cd4"},
+        {"document_id": "uu-27-2022", "section_id": "450a3f9a9cd7bb7aaf41da12"}
+      ]
+    },
+    {
+      "topic_id": "topic-10",
+      "category": "paraphrased",
+      "answerable": true,
+      "questions": [
+        {"question_id": "ret-v1-046", "text": "Kapan organisasi perlu menunjuk petugas pelindungan Data Pribadi?"},
+        {"question_id": "ret-v1-047", "text": "Dalam kondisi apa DPO wajib ditunjuk oleh pengendali atau prosesor?"},
+        {"question_id": "ret-v1-048", "text": "Apakah perusahaan saya membutuhkan pejabat pelindungan data?"},
+        {"question_id": "ret-v1-049", "text": "Jelaskan syarat penunjukan petugas yang mengawasi kepatuhan privasi."},
+        {"question_id": "ret-v1-050", "text": "Di mana kewajiban menunjuk data protection officer diatur?"}
+      ],
+      "expected_relevant": [{"document_id": "uu-27-2022", "section_id": "e62a481ce069f5a03b61b701"}]
+    },
+    {
+      "topic_id": "topic-11",
+      "category": "paraphrased",
+      "answerable": true,
+      "questions": [
+        {"question_id": "ret-v1-051", "text": "Apa syarat mengirim Data Pribadi ke negara lain?"},
+        {"question_id": "ret-v1-052", "text": "Bagaimana aturan transfer data pelanggan ke luar Indonesia?"},
+        {"question_id": "ret-v1-053", "text": "Bolehkah basis data dipindahkan kepada penerima di luar wilayah hukum Indonesia?"},
+        {"question_id": "ret-v1-054", "text": "Jelaskan perlindungan yang diperlukan untuk pemindahan data lintas negara."},
+        {"question_id": "ret-v1-055", "text": "Di mana ketentuan transfer internasional Data Pribadi diatur?"}
+      ],
+      "expected_relevant": [{"document_id": "uu-27-2022", "section_id": "f48081343c6e9afee420624c"}]
+    },
+    {
+      "topic_id": "topic-12",
+      "category": "paraphrased",
+      "answerable": true,
+      "questions": [
+        {"question_id": "ret-v1-056", "text": "Apa kewajiban mencegah pemrosesan Data Pribadi secara melawan hukum?"},
+        {"question_id": "ret-v1-057", "text": "Bagaimana pengendali harus menjaga data dari penggunaan yang tidak sah?"},
+        {"question_id": "ret-v1-058", "text": "Apakah organisasi wajib melindungi data dari akses ilegal?"},
+        {"question_id": "ret-v1-059", "text": "Jelaskan tindakan perlindungan terhadap pemrosesan tanpa izin."},
+        {"question_id": "ret-v1-060", "text": "Di mana kewajiban mencegah pengolahan data yang melanggar hukum?"}
+      ],
+      "expected_relevant": [{"document_id": "uu-27-2022", "section_id": "b14e37f5f2de2a7f09b49b34"}]
+    },
+    {
+      "topic_id": "topic-13",
+      "category": "multi_section",
+      "answerable": true,
+      "questions": [
+        {"question_id": "ret-v1-061", "text": "Apa saja hak untuk mengakses, memperbaiki, dan menghapus Data Pribadi?"},
+        {"question_id": "ret-v1-062", "text": "Rangkum pasal tentang salinan data, koreksi data, serta pemusnahan data."},
+        {"question_id": "ret-v1-063", "text": "Bagaimana seseorang dapat melihat, membetulkan, lalu meminta penghapusan datanya?"},
+        {"question_id": "ret-v1-064", "text": "Tunjukkan ketentuan hak akses, pembaruan, dan pengakhiran pemrosesan."},
+        {"question_id": "ret-v1-065", "text": "Bagian mana yang bersama-sama mengatur akses, koreksi, dan hak untuk dilupakan?"}
+      ],
+      "expected_relevant": [
+        {"document_id": "uu-27-2022", "section_id": "755b9f85707c812f01a02c0b"},
+        {"document_id": "uu-27-2022", "section_id": "42972518aca7b4f48abc24ae"},
+        {"document_id": "uu-27-2022", "section_id": "fc016fa0878c59d94f47d10c"}
+      ]
+    },
+    {
+      "topic_id": "topic-14",
+      "category": "multi_document",
+      "answerable": true,
+      "questions": [
+        {"question_id": "ret-v1-066", "text": "Bandingkan perlindungan data dari pemrosesan tidak sah, keamanan perangkat lunak, dan pengamanan penyimpanan data."},
+        {"question_id": "ret-v1-067", "text": "Regulasi mana mengatur pemrosesan data tidak sah, keandalan perangkat lunak, serta prosedur keamanan penyimpanan?"},
+        {"question_id": "ret-v1-068", "text": "Cari ketentuan lintas dokumen tentang data yang diproses ilegal, perangkat lunak yang aman, dan penyimpanan yang terlindungi."},
+        {"question_id": "ret-v1-069", "text": "Apa kewajiban mencegah pemrosesan tidak sah, menjamin software, dan mengamankan penyimpanan Data Pribadi?"},
+        {"question_id": "ret-v1-070", "text": "Tunjukkan dasar hukum perlindungan pemrosesan, keandalan perangkat lunak, serta sarana pengamanan penyimpanan data."}
+      ],
+      "expected_relevant": [
+        {"document_id": "uu-27-2022", "section_id": "e563d4f4758d5b1a4352a4ab"},
+        {"document_id": "pp-71-2019", "section_id": "0853efa0d2a3643d283ac2d7"},
+        {"document_id": "permenkominfo-20-2016", "section_id": "337f805de4db3bb52f7d9961"}
+      ]
+    },
+    {
+      "topic_id": "topic-15",
+      "category": "version_sensitive",
+      "answerable": true,
+      "questions": [
+        {"question_id": "ret-v1-071", "text": "Kapan UU Nomor 27 Tahun 2022 mulai berlaku?"},
+        {"question_id": "ret-v1-072", "text": "Apa ketentuan penutup mengenai tanggal berlakunya UU PDP?"},
+        {"question_id": "ret-v1-073", "text": "Sejak tanggal berapa Undang-Undang Pelindungan Data Pribadi efektif?"},
+        {"question_id": "ret-v1-074", "text": "Tunjukkan pasal mulai berlaku pada versi UU 27 Tahun 2022."},
+        {"question_id": "ret-v1-075", "text": "Apakah UU PDP berlaku sejak diundangkan?"}
+      ],
+      "expected_relevant": [{"document_id": "uu-27-2022", "section_id": "c3236796fe27d9631a28779d"}]
+    },
+    {
+      "topic_id": "topic-16",
+      "category": "version_sensitive",
+      "answerable": true,
+      "questions": [
+        {"question_id": "ret-v1-076", "text": "Kapan Permenkominfo Nomor 20 Tahun 2016 mulai berlaku?"},
+        {"question_id": "ret-v1-077", "text": "Apa pasal penutup yang menetapkan keberlakuan Permenkominfo 20/2016?"},
+        {"question_id": "ret-v1-078", "text": "Sejak kapan aturan perlindungan data dalam sistem elektronik ini efektif?"},
+        {"question_id": "ret-v1-079", "text": "Tunjukkan bagian mulai berlaku pada versi Permenkominfo 20 Tahun 2016."},
+        {"question_id": "ret-v1-080", "text": "Apakah Permenkominfo 20/2016 berlaku pada tanggal diundangkan?"}
+      ],
+      "expected_relevant": [{"document_id": "permenkominfo-20-2016", "section_id": "82ba87d38c0e21c688cdf382"}]
+    },
+    {
+      "topic_id": "topic-17",
+      "category": "unanswerable",
+      "answerable": false,
+      "questions": [
+        {"question_id": "ret-v1-081", "text": "Berapa upah minimum provinsi DKI Jakarta tahun 2026?"},
+        {"question_id": "ret-v1-082", "text": "Apa aturan lembur bagi pekerja pada hari libur?"},
+        {"question_id": "ret-v1-083", "text": "Bagaimana cara menghitung pesangon akibat pemutusan hubungan kerja?"},
+        {"question_id": "ret-v1-084", "text": "Berapa lama cuti melahirkan menurut hukum ketenagakerjaan?"},
+        {"question_id": "ret-v1-085", "text": "Apakah pekerja kontrak berhak mendapat uang kompensasi?"}
+      ],
+      "expected_relevant": []
+    },
+    {
+      "topic_id": "topic-18",
+      "category": "unanswerable",
+      "answerable": false,
+      "questions": [
+        {"question_id": "ret-v1-086", "text": "Berapa tarif Pajak Pertambahan Nilai yang berlaku saat ini?"},
+        {"question_id": "ret-v1-087", "text": "Kapan batas pelaporan SPT Tahunan orang pribadi?"},
+        {"question_id": "ret-v1-088", "text": "Apakah dividen dikenai pajak penghasilan?"},
+        {"question_id": "ret-v1-089", "text": "Bagaimana menghitung pajak kendaraan bermotor?"},
+        {"question_id": "ret-v1-090", "text": "Apa sanksi terlambat membayar pajak bumi dan bangunan?"}
+      ],
+      "expected_relevant": []
+    },
+    {
+      "topic_id": "topic-19",
+      "category": "unanswerable",
+      "answerable": false,
+      "questions": [
+        {"question_id": "ret-v1-091", "text": "Apa syarat memperoleh izin praktik dokter?"},
+        {"question_id": "ret-v1-092", "text": "Bagaimana prosedur akreditasi rumah sakit?"},
+        {"question_id": "ret-v1-093", "text": "Obat apa yang wajib tersedia di puskesmas?"},
+        {"question_id": "ret-v1-094", "text": "Siapa yang menanggung biaya pelayanan gawat darurat?"},
+        {"question_id": "ret-v1-095", "text": "Berapa standar jumlah tempat tidur rumah sakit?"}
+      ],
+      "expected_relevant": []
+    },
+    {
+      "topic_id": "topic-20",
+      "category": "unanswerable",
+      "answerable": false,
+      "questions": [
+        {"question_id": "ret-v1-096", "text": "Berapa lama masa perlindungan hak cipta sebuah lagu?"},
+        {"question_id": "ret-v1-097", "text": "Apakah program komputer dilindungi oleh hak cipta?"},
+        {"question_id": "ret-v1-098", "text": "Bagaimana cara mendaftarkan merek dagang?"},
+        {"question_id": "ret-v1-099", "text": "Apa sanksi pembajakan film menurut undang-undang?"},
+        {"question_id": "ret-v1-100", "text": "Siapa pemegang hak ekonomi atas karya yang dibuat pegawai?"}
+      ],
+      "expected_relevant": []
+    }
+  ]
+}

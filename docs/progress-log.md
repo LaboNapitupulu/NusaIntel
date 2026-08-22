@@ -324,3 +324,17 @@
   version remains available. Final release verification and hosted CI follow.
 - Clean-stack and backup/restore smokes pass with 22 domain tables, the Gold view, and
   Alembic revision `20260816_0004`; both scratch environments were removed after verification.
+
+## Phase 8 — 2026-08-23
+
+### Retrieval baseline and evaluation harness
+
+- Created a strict versioned schema and 100 manually reviewed retrieval questions spanning
+  all required direct, paraphrased, multi-section, multi-document, unanswerable, and
+  version-sensitive categories.
+- Implemented BM25, deterministic TF-IDF feature hashing, RRF hybrid fusion, structure and
+  fixed chunkers, legal normalization, explanatory duplicate handling, and provenance.
+- Benchmark evidence justified adopting the legal coverage/diversity reranker and the
+  fixed-1,600 chunker: Recall@5 0.8083, Recall@10 0.8917, p95 0.0448 seconds, and 100% anchors.
+- Added search/index-manifest APIs, validation/unit/API tests, and database integration
+  assertions that published sections remain source-anchored and version reproducible.

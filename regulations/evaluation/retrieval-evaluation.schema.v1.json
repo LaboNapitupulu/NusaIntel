@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nusaintel.local/schemas/retrieval-evaluation.v1.json",
+  "title": "NusaIntel RegulasiLens Retrieval Evaluation Set",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evaluation_id",
+    "evaluation_version",
+    "corpus_manifest_version",
+    "language",
+    "review_status",
+    "reviewed_at",
+    "review_method",
+    "minimum_question_count",
+    "topics"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "evaluation_id": {"type": "string", "minLength": 3},
+    "evaluation_version": {"type": "string", "minLength": 1},
+    "corpus_manifest_version": {"type": "string", "minLength": 1},
+    "language": {"const": "id"},
+    "review_status": {"const": "manually-reviewed"},
+    "reviewed_at": {"type": "string", "format": "date"},
+    "review_method": {"type": "string", "minLength": 10},
+    "minimum_question_count": {"type": "integer", "minimum": 100},
+    "topics": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["topic_id", "category", "answerable", "questions", "expected_relevant"],
+        "properties": {
+          "topic_id": {"type": "string", "pattern": "^topic-[0-9]{2}$"},
+          "category": {
+            "enum": [
+              "direct_lookup",
+              "paraphrased",
+              "multi_section",
+              "multi_document",
+              "unanswerable",
+              "version_sensitive"
+            ]
+          },
+          "answerable": {"type": "boolean"},
+          "questions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["question_id", "text"],
+              "properties": {
+                "question_id": {"type": "string", "pattern": "^ret-v1-[0-9]{3}$"},
+                "text": {"type": "string", "minLength": 8}
+              }
+            }
+          },
+          "expected_relevant": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["document_id", "section_id"],
+              "properties": {
+                "document_id": {"type": "string", "minLength": 3},
+                "section_id": {"type": "string", "minLength": 8}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

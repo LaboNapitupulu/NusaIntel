@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import uuid
@@ -34,6 +35,17 @@ from app.regulasilens.parser import (
     ParseOutcome,
     extract_pdf_pages,
     parse_regulation_pages,
+)
+from app.regulasilens.retrieval import (
+    BM25_VERSION,
+    DENSE_VERSION,
+    HYBRID_VERSION,
+    RERANKER_VERSION,
+    RETRIEVAL_VERSION,
+    Chunker,
+    RetrievalIndex,
+    SearchMethod,
+    SourceSection,
 )
 
 FetchDocument = Callable[[RegulationSource, str | None], Awaitable[FetchOutcome]]
@@ -92,6 +104,8 @@ class CorpusRunOutcome:
 class CorpusService:
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._session_factory = session_factory
+        self._retrieval_indexes: dict[Chunker, RetrievalIndex] = {}
+        self._retrieval_lock = asyncio.Lock()
 
     async def run_manifest(
         self, manifest: CorpusManifest, fetch: FetchDocument
@@ -139,6 +153,7 @@ class CorpusService:
                     parsed,
                 )
             )
+        self._retrieval_indexes.clear()
         return CorpusRunOutcome(
             corpus_id=manifest.corpus_id,
             corpus_version=manifest.corpus_version,
@@ -209,6 +224,120 @@ class CorpusService:
                 }
                 for relation in relations
             ]
+
+    async def search(
+        self,
+        query: str,
+        *,
+        method: SearchMethod = "hybrid_rerank",
+        chunker: Chunker = "fixed",
+        limit: int = 10,
+    ) -> dict[str, Any]:
+        outcome = (await self._retrieval_index(chunker)).search(query, method=method, limit=limit)
+        return {
+            "query": outcome.query,
+            "method": outcome.method,
+            "count": len(outcome.hits),
+            "hits": [
+                {
+                    "rank": hit.rank,
+                    "chunk_id": hit.chunk_id,
+                    "section_ids": list(hit.section_ids),
+                    "document_id": hit.document_id,
+                    "document_version_id": hit.document_version_id,
+                    "document_title": hit.document_title,
+                    "document_status": hit.document_status,
+                    "heading": hit.heading,
+                    "excerpt": hit.excerpt,
+                    "source_url": hit.source_url,
+                    "source_anchor": hit.source_anchor,
+                    "score": hit.score,
+                    "bm25_score": hit.bm25_score,
+                    "dense_score": hit.dense_score,
+                }
+                for hit in outcome.hits
+            ],
+            "provenance": {
+                "corpus_version": outcome.corpus_version,
+                "index_version": outcome.index_version,
+                "retrieval_version": outcome.retrieval_version,
+                "bm25_version": outcome.bm25_version,
+                "dense_version": outcome.dense_version,
+                "hybrid_version": outcome.hybrid_version,
+                "reranker_version": outcome.reranker_version,
+                "chunker_version": outcome.chunker_version,
+            },
+        }
+
+    async def retrieval_manifest(self, *, chunker: Chunker = "fixed") -> dict[str, Any]:
+        index = await self._retrieval_index(chunker)
+        document_versions = sorted({chunk.document_version_id for chunk in index.chunks})
+        return {
+            "corpus_version": index.corpus_version,
+            "index_version": index.index_version,
+            "retrieval_version": RETRIEVAL_VERSION,
+            "bm25_version": BM25_VERSION,
+            "dense_version": DENSE_VERSION,
+            "hybrid_version": HYBRID_VERSION,
+            "reranker_version": RERANKER_VERSION,
+            "chunker_version": index.chunker_version,
+            "document_version_ids": document_versions,
+            "chunk_count": len(index.chunks),
+        }
+
+    async def _retrieval_index(self, chunker: Chunker) -> RetrievalIndex:
+        cached = self._retrieval_indexes.get(chunker)
+        if cached is not None:
+            return cached
+        async with self._retrieval_lock:
+            cached = self._retrieval_indexes.get(chunker)
+            if cached is not None:
+                return cached
+            sections = await self._published_source_sections()
+            index = RetrievalIndex(sections, chunker=chunker)
+            self._retrieval_indexes[chunker] = index
+            return index
+
+    async def _published_source_sections(self) -> tuple[SourceSection, ...]:
+        async with self._session_factory() as session:
+            rows = (
+                await session.execute(
+                    select(
+                        RegulationSection,
+                        RegulationDocumentVersion,
+                        RegulationDocument,
+                    )
+                    .join(
+                        RegulationDocumentVersion,
+                        RegulationDocumentVersion.id == RegulationSection.document_version_id,
+                    )
+                    .join(
+                        RegulationDocument,
+                        RegulationDocument.document_id == RegulationDocumentVersion.document_id,
+                    )
+                    .where(RegulationDocumentVersion.published.is_(True))
+                    .order_by(
+                        RegulationDocument.document_id,
+                        RegulationSection.section_order,
+                    )
+                )
+            ).all()
+        return tuple(
+            SourceSection(
+                section_id=section.section_key,
+                document_id=document.document_id,
+                document_version_id=str(version.id),
+                manifest_version=version.manifest_version,
+                document_title=document.title,
+                document_status=document.status,
+                heading=section.heading,
+                text=section.text,
+                source_url=document.source_page_url,
+                source_anchor=section.source_anchor,
+                section_order=section.section_order,
+            )
+            for section, version, document in rows
+        )
 
     async def _synchronize_catalog(self, manifest: CorpusManifest) -> None:
         async with self._session_factory() as session, session.begin():

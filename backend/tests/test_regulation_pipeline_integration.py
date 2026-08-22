@@ -105,6 +105,8 @@ async def test_corpus_publish_idempotency_and_rejection_preserve_last_good(
     catalog = await service.list_documents(limit=500)
     detail = await service.get_document(pp.document_id)
     relations = await service.relations(pp.document_id)
+    search = await service.search("definisi sistem elektronik")
+    retrieval_manifest = await service.retrieval_manifest()
     datasets = await tower.list_datasets(limit=200)
 
     published_version_id = first.documents[0].dataset_version_id
@@ -187,5 +189,11 @@ async def test_corpus_publish_idempotency_and_rejection_preserve_last_good(
     assert catalog_document["latest_version"]["dataset_version_id"] == published_version_id
     assert detail is not None and detail["sections"]
     assert relations is not None and relations[0]["resolved"] is False
+    assert search["method"] == "hybrid_rerank"
+    assert search["hits"][0]["document_id"] == pp.document_id
+    assert search["hits"][0]["source_anchor"].startswith("page:")
+    assert search["provenance"]["chunker_version"] == "fixed-1600-char-v1"
+    assert retrieval_manifest["chunk_count"] >= 1
+    assert retrieval_manifest["index_version"] == search["provenance"]["index_version"]
     assert any(item["code"] == f"regulation_{pp.document_id}" for item in datasets)
     assert published_version is not None and published_version.status == "published"
