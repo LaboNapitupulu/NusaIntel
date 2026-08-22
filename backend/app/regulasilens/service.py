@@ -28,6 +28,8 @@ from app.db.models import (
     RegulationSection,
     Source,
 )
+from app.regulasilens.comparison import VersionSection, compare_version_sections
+from app.regulasilens.grounding import AnswerEvidence, generate_grounded_answer
 from app.regulasilens.ingestion import FetchOutcome
 from app.regulasilens.manifest import CorpusManifest, RegulationSource
 from app.regulasilens.parser import (
@@ -102,10 +104,18 @@ class CorpusRunOutcome:
 
 
 class CorpusService:
-    def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
+    def __init__(
+        self,
+        session_factory: async_sessionmaker[AsyncSession],
+        *,
+        answer_timeout_seconds: float = 9.0,
+        maximum_concurrent_answers: int = 8,
+    ) -> None:
         self._session_factory = session_factory
         self._retrieval_indexes: dict[Chunker, RetrievalIndex] = {}
         self._retrieval_lock = asyncio.Lock()
+        self._answer_timeout_seconds = answer_timeout_seconds
+        self._answer_semaphore = asyncio.Semaphore(maximum_concurrent_answers)
 
     async def run_manifest(
         self, manifest: CorpusManifest, fetch: FetchDocument
@@ -254,6 +264,7 @@ class CorpusService:
                     "score": hit.score,
                     "bm25_score": hit.bm25_score,
                     "dense_score": hit.dense_score,
+                    "status_checked_at": hit.status_checked_at,
                 }
                 for hit in outcome.hits
             ],
@@ -268,6 +279,145 @@ class CorpusService:
                 "chunker_version": outcome.chunker_version,
             },
         }
+
+    async def answer(
+        self,
+        question: str,
+        *,
+        maximum_citations: int = 5,
+    ) -> dict[str, Any]:
+        async with self._answer_semaphore:
+            async with asyncio.timeout(self._answer_timeout_seconds):
+                index = await self._retrieval_index("fixed")
+                outcome = index.search(
+                    question,
+                    method="hybrid_rerank",
+                    limit=max(10, maximum_citations),
+                )
+                chunks = {chunk.chunk_id: chunk for chunk in index.chunks}
+                evidence = tuple(
+                    AnswerEvidence(hit=hit, text=chunks[hit.chunk_id].text)
+                    for hit in outcome.hits
+                    if hit.chunk_id in chunks
+                )
+                response = generate_grounded_answer(
+                    question,
+                    evidence,
+                    maximum_citations=maximum_citations,
+                )
+                response["provenance"] = {
+                    "corpus_version": outcome.corpus_version,
+                    "index_version": outcome.index_version,
+                    "retrieval_version": outcome.retrieval_version,
+                    "chunker_version": outcome.chunker_version,
+                    "retrieval_method": outcome.method,
+                    "retrieved_evidence_count": len(evidence),
+                }
+                response["usage"] = {
+                    "provider": "deterministic-extractive",
+                    "external_model_calls": 0,
+                    "question_characters": len(question),
+                    "evidence_characters": sum(len(item.text) for item in evidence),
+                    "answer_characters": len(response["answer"]),
+                    "maximum_citations": maximum_citations,
+                }
+                return response
+
+    async def document_versions(self, document_id: str) -> list[dict[str, Any]] | None:
+        async with self._session_factory() as session:
+            document = await session.get(RegulationDocument, document_id)
+            if document is None:
+                return None
+            versions = list(
+                await session.scalars(
+                    select(RegulationDocumentVersion)
+                    .where(RegulationDocumentVersion.document_id == document_id)
+                    .order_by(RegulationDocumentVersion.retrieved_at.desc())
+                )
+            )
+            return [self._serialize_version(version) for version in versions]
+
+    async def section_context(
+        self,
+        document_id: str,
+        section_id: str,
+        *,
+        before: int = 2,
+        after: int = 2,
+        version_id: str | None = None,
+    ) -> dict[str, Any] | None:
+        async with self._session_factory() as session:
+            document = await session.get(RegulationDocument, document_id)
+            if document is None:
+                return None
+            version = await self._version(session, document_id, version_id)
+            if version is None:
+                return None
+            selected = await session.scalar(
+                select(RegulationSection).where(
+                    RegulationSection.document_version_id == version.id,
+                    RegulationSection.section_key == section_id,
+                )
+            )
+            if selected is None:
+                return None
+            sections = list(
+                await session.scalars(
+                    select(RegulationSection)
+                    .where(
+                        RegulationSection.document_version_id == version.id,
+                        RegulationSection.section_order.between(
+                            max(1, selected.section_order - before),
+                            selected.section_order + after,
+                        ),
+                    )
+                    .order_by(RegulationSection.section_order)
+                )
+            )
+            return {
+                "document_id": document_id,
+                "document_title": document.title,
+                "document_status": document.status,
+                "status_checked_at": document.status_checked_at,
+                "document_version": self._serialize_version(version),
+                "selected_section_id": section_id,
+                "source_url": document.source_page_url,
+                "sections": [self._serialize_section(section) for section in sections],
+            }
+
+    async def compare_versions(
+        self,
+        document_id: str,
+        base_version_id: str,
+        target_version_id: str,
+    ) -> dict[str, Any] | None:
+        async with self._session_factory() as session:
+            document = await session.get(RegulationDocument, document_id)
+            if document is None:
+                return None
+            base = await self._version(session, document_id, base_version_id)
+            target = await self._version(session, document_id, target_version_id)
+            if base is None or target is None:
+                return None
+            base_sections = await self._version_sections(session, base.id)
+            target_sections = await self._version_sections(session, target.id)
+            result = compare_version_sections(base_sections, target_sections)
+            return {
+                "document": {
+                    "document_id": document.document_id,
+                    "title": document.title,
+                    "status": document.status,
+                    "status_checked_at": document.status_checked_at,
+                    "source_url": document.source_page_url,
+                },
+                "base_version": self._serialize_version(base),
+                "target_version": self._serialize_version(target),
+                **result,
+                "disclaimer": (
+                    "Perbandingan hanya mencakup versi yang tersimpan dalam corpus. "
+                    "Setiap ringkasan perubahan disertai teks sumber yang dibandingkan."
+                ),
+            }
 
     async def retrieval_manifest(self, *, chunker: Chunker = "fixed") -> dict[str, Any]:
         index = await self._retrieval_index(chunker)
@@ -335,6 +485,7 @@ class CorpusService:
                 source_url=document.source_page_url,
                 source_anchor=section.source_anchor,
                 section_order=section.section_order,
+                status_checked_at=document.status_checked_at.isoformat(),
             )
             for section, version, document in rows
         )
@@ -956,6 +1107,66 @@ class CorpusService:
             .limit(1)
         )
         return version
+
+    async def _version(
+        self,
+        session: AsyncSession,
+        document_id: str,
+        version_id: str | None,
+    ) -> RegulationDocumentVersion | None:
+        if version_id is None:
+            return await self._latest_published_version(session, document_id)
+        try:
+            identifier = uuid.UUID(version_id)
+        except ValueError:
+            return None
+        version: RegulationDocumentVersion | None = await session.scalar(
+            select(RegulationDocumentVersion).where(
+                RegulationDocumentVersion.id == identifier,
+                RegulationDocumentVersion.document_id == document_id,
+            )
+        )
+        return version
+
+    @staticmethod
+    async def _version_sections(
+        session: AsyncSession, version_id: uuid.UUID
+    ) -> tuple[VersionSection, ...]:
+        sections = list(
+            await session.scalars(
+                select(RegulationSection)
+                .where(RegulationSection.document_version_id == version_id)
+                .order_by(RegulationSection.section_order)
+            )
+        )
+        return tuple(
+            VersionSection(
+                section_id=section.section_key,
+                section_order=section.section_order,
+                kind=section.kind,
+                heading=section.heading,
+                hierarchy=tuple(section.hierarchy),
+                text=section.text,
+                source_anchor=section.source_anchor,
+            )
+            for section in sections
+        )
+
+    @staticmethod
+    def _serialize_version(version: RegulationDocumentVersion) -> dict[str, Any]:
+        return {
+            "id": str(version.id),
+            "dataset_version_id": str(version.dataset_version_id),
+            "manifest_version": version.manifest_version,
+            "checksum": version.checksum,
+            "retrieved_at": version.retrieved_at,
+            "parser_version": version.parser_version,
+            "parser_status": version.parser_status,
+            "parser_confidence": version.parser_confidence,
+            "section_count": version.section_count,
+            "source_anchor_coverage": version.source_anchor_coverage,
+            "published": version.published,
+        }
 
     @staticmethod
     def _serialize_section(section: RegulationSection) -> dict[str, Any]:

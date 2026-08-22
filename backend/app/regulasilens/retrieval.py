@@ -98,6 +98,7 @@ class SourceSection:
     source_url: str
     source_anchor: str
     section_order: int
+    status_checked_at: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -114,6 +115,7 @@ class RetrievalChunk:
     source_url: str
     source_anchor: str
     is_explanation: bool = False
+    status_checked_at: str | None = None
 
     @property
     def searchable_text(self) -> str:
@@ -136,6 +138,7 @@ class SearchHit:
     score: float
     bm25_score: float | None
     dense_score: float | None
+    status_checked_at: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -399,6 +402,7 @@ class RetrievalIndex:
             score=score,
             bm25_score=bm25_score,
             dense_score=dense_score,
+            status_checked_at=chunk.status_checked_at,
         )
 
 
@@ -546,6 +550,7 @@ def _legal_structure_chunk(
             else f"{first.source_anchor}..{last.source_anchor}"
         ),
         is_explanation=is_explanation,
+        status_checked_at=first.status_checked_at,
     )
 
 
@@ -630,6 +635,7 @@ def _fixed_chunk(sections: list[SourceSection]) -> RetrievalChunk:
         text="\n".join(section.text for section in sections),
         source_url=first.source_url,
         source_anchor=f"{first.source_anchor}..{last.source_anchor}",
+        status_checked_at=first.status_checked_at,
     )
 
 

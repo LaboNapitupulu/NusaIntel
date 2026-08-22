@@ -44,7 +44,7 @@ def create_app(
 
     application = FastAPI(
         title=active_settings.app_name,
-        version="0.6.0",
+        version="0.7.0",
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
         lifespan=lifespan,
@@ -61,7 +61,13 @@ def create_app(
         RegionalAnalyticsService(session_factory) if session_factory is not None else None
     )
     application.state.regulation_service = (
-        CorpusService(session_factory) if session_factory is not None else None
+        CorpusService(
+            session_factory,
+            answer_timeout_seconds=active_settings.regulation_answer_timeout_seconds,
+            maximum_concurrent_answers=active_settings.regulation_maximum_concurrent_answers,
+        )
+        if session_factory is not None
+        else None
     )
     application.add_middleware(RequestContextMiddleware)
     application.add_middleware(

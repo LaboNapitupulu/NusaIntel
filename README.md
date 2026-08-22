@@ -274,6 +274,28 @@ Search with `POST /api/v1/regulations/search`; inspect the selected index with
 under `regulations/evaluation/`. Methodology, metrics, and known misses are recorded in
 `docs/regulasilens-retrieval-benchmark.md` and ADR 0006.
 
+## RegulasiLens grounded answers
+
+`POST /api/v1/regulations/answer` produces an extractive answer only from retrieved,
+source-anchored evidence. Every material line has a validated `[C#]` marker; insufficient or
+out-of-domain evidence returns a refusal without citations. The UI shows confidence,
+evidence coverage, document status/check date, disclaimer, immutable provenance, official
+source links, and surrounding context.
+
+Use `GET /api/v1/regulations/{document_id}/versions` and
+`GET /api/v1/regulations/compare` for source-preserving structured version differences.
+Run the 100-question beta gate with:
+
+```powershell
+$env:DATABASE_URL='postgresql+asyncpg://nusa_intel:nusa_intel_dev@localhost:5432/nusa_intel'
+.\backend\.venv\Scripts\python.exe .\scripts\benchmark_regulation_answers.py `
+  --output .\artifacts\regulasilens-answer-benchmark.json
+```
+
+The recorded result, rubric, and known misses are in
+`docs/regulasilens-answer-benchmark.md` and ADR 0007. This beta is a retrieval and evidence
+exploration tool, not legal advice.
+
 ## Configuration
 
 | Variable | Required | Purpose |
@@ -289,6 +311,8 @@ under `regulations/evaluation/`. Methodology, metrics, and known misses are reco
 | `BPS_API_KEY` | Live pipeline | Secret BPS WebAPI token; backend/worker only |
 | `BPS_SCHEDULE_ENABLED` | No | Enable the worker's immediate + interval BPS run; default `false` |
 | `BPS_SCHEDULE_INDICATOR` | Scheduled pipeline | One of the six contracted codes; default `tpt` |
+| `REGULATION_ANSWER_TIMEOUT_SECONDS` | No | Grounded-answer timeout, maximum 10 seconds; default `9` |
+| `REGULATION_MAXIMUM_CONCURRENT_ANSWERS` | No | In-process answer concurrency guard; default `8` |
 | `BPS_SCHEDULE_INTERVAL_SECONDS` | Scheduled pipeline | Cadence from 300–604800 seconds; default `86400` |
 
 Real secrets belong only in `.env` or a deployment secret manager. `.env` and

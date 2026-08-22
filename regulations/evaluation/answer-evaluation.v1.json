@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "evaluation_id": "regulasilens-personal-data-grounded-answer",
+  "evaluation_version": "1.0.0",
+  "retrieval_suite": "retrieval-cases.v1.json",
+  "pipeline_version": "evidence-extractive-id-v1",
+  "rubric": {
+    "citation_correctness": "Marker citation harus mengarah ke evidence retrieval nyata dengan section ID, kutipan, URL, dan source anchor.",
+    "citation_coverage": "Setiap klaim material non-refusal harus memiliki tepat sedikitnya satu marker citation yang valid.",
+    "answer_correctness": "Jawaban answerable dinilai supported bila sedikitnya satu section yang dikutip cocok dengan expected relevant section yang direview manual.",
+    "refusal_accuracy": "Pertanyaan unanswerable harus ditolak tanpa citation dan tanpa klaim hukum substantif.",
+    "version_sensitive_accuracy": "Pertanyaan version-sensitive harus menjawab dan mengutip expected relevant section dari versi corpus yang direview.",
+    "fabricated_citation": "Marker dianggap fabricated bila tidak ada pada citation payload atau citation tidak dapat membuka context section corpus."
+  },
+  "targets": {
+    "retrieval_recall_at_10_minimum": 0.85,
+    "citation_correctness_minimum": 0.95,
+    "citation_coverage_minimum": 0.90,
+    "refusal_accuracy_minimum": 0.90,
+    "fabricated_citation_rate_maximum": 0.0,
+    "version_sensitive_accuracy_minimum": 0.85,
+    "end_to_end_p95_seconds_maximum": 10.0
+  }
+}
