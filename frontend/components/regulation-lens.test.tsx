@@ -85,7 +85,8 @@ describe("RegulationLens", () => {
     fireEvent.click(screen.getByRole("button", { name: "Jawab dengan bukti" }));
 
     expect(await screen.findByText("ANSWERABLE")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("tab", { name: /Evidence/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Buka citation C1" }));
+    expect(screen.getByRole("tab", { name: /Evidence/ })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText(/\[C1\] Pasal 7/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Dokumen resmi" })).toHaveAttribute(
       "href",

@@ -1,8 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
-import { EmptyState, WorkspaceSkeleton, WorkspaceTabs, WorkspaceToast } from "./workspace-ui";
+import { AnimatedNumber, EmptyState, WorkspaceSkeleton, WorkspaceTabs, WorkspaceToast } from "./workspace-ui";
 
 type RegulationTab = "answer" | "evidence" | "compare";
 
@@ -116,6 +116,8 @@ export function RegulationLens() {
   const [message, setMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<RegulationTab>("answer");
   const [corpusOpen, setCorpusOpen] = useState(true);
+  const [activeCitationId, setActiveCitationId] = useState<string | null>(null);
+  const [selectedChangeIndex, setSelectedChangeIndex] = useState(0);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -178,6 +180,7 @@ export function RegulationLens() {
         body: JSON.stringify({ question, maximum_citations: 5 }),
       });
       setAnswer(result);
+      setActiveCitationId(result.citations[0]?.citation_id ?? null);
       setActiveTab("answer");
       setMessage(result.answerable ? "Jawaban selesai. Evidence citation tersedia pada tab Evidence." : "Pertanyaan ditolak sesuai batas corpus.");
     } catch (error) {
@@ -197,6 +200,7 @@ export function RegulationLens() {
           new URLSearchParams({ version_id: citation.document_version_id, before: "2", after: "2" }),
       );
       setContext(result);
+      setActiveCitationId(citation.citation_id);
       setActiveTab("evidence");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Konteks citation tidak dapat dibuka.");
@@ -213,6 +217,7 @@ export function RegulationLens() {
         target_version_id: targetVersion,
       });
       setComparison(await fetchJson<Comparison>(`/api/v1/regulations/compare?${query}`));
+      setSelectedChangeIndex(0);
       setMessage("Perbandingan versi selesai.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Versi tidak dapat dibandingkan.");
@@ -228,6 +233,46 @@ export function RegulationLens() {
     } catch {
       setMessage("Pertanyaan tersimpan pada URL halaman.");
     }
+  }
+
+  const activeCitation = useMemo(
+    () => answer?.citations.find((citation) => citation.citation_id === activeCitationId) ?? answer?.citations[0] ?? null,
+    [activeCitationId, answer],
+  );
+  const activeChange = comparison?.changes[selectedChangeIndex] ?? comparison?.changes[0] ?? null;
+
+  function showCitation(citationId: string) {
+    setActiveCitationId(citationId);
+    setActiveTab("evidence");
+    window.setTimeout(() => {
+      const card = document.querySelector<HTMLElement>(`[data-citation-id="${citationId}"]`);
+      card?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+    }, 0);
+  }
+
+  function renderGroundedLine(line: string, lineIndex: number) {
+    const parts = line.split(/(\[C\d+\])/g);
+    return (
+      <p key={`${line}-${lineIndex}`} style={{ animationDelay: `${lineIndex * 90}ms` }}>
+        {parts.map((part, index) => {
+          const match = part.match(/^\[(C\d+)\]$/);
+          if (!match) return part;
+          const citationId = match[1];
+          const exists = answer?.citations.some((citation) => citation.citation_id === citationId);
+          return exists ? (
+            <button
+              type="button"
+              className="citation-reference"
+              key={`${part}-${index}`}
+              onClick={() => showCitation(citationId)}
+              onPointerEnter={() => setActiveCitationId(citationId)}
+              onFocus={() => setActiveCitationId(citationId)}
+              aria-label={`Buka citation ${citationId}`}
+            >{part}</button>
+          ) : part;
+        })}
+      </p>
+    );
   }
 
   return (
@@ -310,7 +355,7 @@ export function RegulationLens() {
                 <span>coverage {Math.round(answer.evidence_coverage * 100)}%</span>
               </div>
               <div className={answer.answerable ? "grounded-answer" : "refusal-answer"}>
-                {answer.answer.split("\n").map((line) => <p key={line}>{line}</p>)}
+                {answer.answer.split("\n").map(renderGroundedLine)}
                 {answer.refusal_reason && <small>{answer.refusal_reason}</small>}
               </div>
               <p className="regulation-disclaimer">{answer.disclaimer}</p>
@@ -324,9 +369,24 @@ export function RegulationLens() {
 
       <div className="evidence-workspace" hidden={activeTab !== "evidence"}>
       {answer?.citations.length ? (
+        <>
+        {activeCitation && (
+          <div className="evidence-link-strip" aria-live="polite">
+            <i aria-hidden="true" />
+            <span>Klaim aktif</span>
+            <strong>Citation {activeCitation.citation_id} · {activeCitation.heading}</strong>
+            <small>{activeCitation.document_title}</small>
+          </div>
+        )}
         <div className="citation-grid" aria-label="Citation evidence">
           {answer.citations.map((citation) => (
-            <article key={citation.citation_id}>
+            <article
+              key={citation.citation_id}
+              data-citation-id={citation.citation_id}
+              data-active={activeCitation?.citation_id === citation.citation_id}
+              data-tilt
+              onPointerEnter={() => setActiveCitationId(citation.citation_id)}
+            >
               <div className="citation-heading">
                 <strong>[{citation.citation_id}] {citation.heading}</strong>
                 <span>{citation.document_status}</span>
@@ -341,6 +401,7 @@ export function RegulationLens() {
             </article>
           ))}
         </div>
+        </>
       ) : (
         <EmptyState
           eyebrow="Belum ada evidence"
@@ -400,21 +461,40 @@ export function RegulationLens() {
         {comparison && (
           <div className="comparison-result">
             <div className="comparison-counts">
-              <span>{comparison.counts.added} ditambah</span>
-              <span>{comparison.counts.removed} dihapus</span>
-              <span>{comparison.counts.modified} diubah</span>
-              <span>{comparison.unchanged_count} tetap</span>
+              <span data-change="added"><AnimatedNumber value={comparison.counts.added} initialFrom={0} /> ditambah</span>
+              <span data-change="removed"><AnimatedNumber value={comparison.counts.removed} initialFrom={0} /> dihapus</span>
+              <span data-change="modified"><AnimatedNumber value={comparison.counts.modified} initialFrom={0} /> diubah</span>
+              <span data-change="unchanged"><AnimatedNumber value={comparison.unchanged_count} initialFrom={0} /> tetap</span>
             </div>
-            {comparison.changes.map((change, index) => (
-              <article key={`${change.heading}-${index}`}>
-                <strong>{change.change_type.toUpperCase()} · {change.heading}</strong>
-                <p>{change.summary}</p>
-                <div className="comparison-texts">
-                  <pre>{change.base?.text ?? "— tidak ada pada versi dasar —"}</pre>
-                  <pre>{change.target?.text ?? "— tidak ada pada versi target —"}</pre>
-                </div>
-              </article>
-            ))}
+            {activeChange ? (
+              <div className="diff-explorer">
+                <nav aria-label="Daftar perubahan versi">
+                  {comparison.changes.map((change, index) => (
+                    <button
+                      type="button"
+                      key={`${change.heading}-${index}`}
+                      data-active={selectedChangeIndex === index}
+                      data-change={change.change_type}
+                      aria-pressed={selectedChangeIndex === index}
+                      onClick={() => setSelectedChangeIndex(index)}
+                    >
+                      <span>{change.change_type}</span>
+                      <strong>{change.heading}</strong>
+                    </button>
+                  ))}
+                </nav>
+                <article className="diff-stage" data-change={activeChange.change_type}>
+                  <div className="diff-stage-heading">
+                    <span>{activeChange.change_type.toUpperCase()}</span>
+                    <div><strong>{activeChange.heading}</strong><p>{activeChange.summary}</p></div>
+                  </div>
+                  <div className="comparison-texts">
+                    <section data-side="base"><span>Versi dasar</span><pre>{activeChange.base?.text ?? "— tidak ada pada versi dasar —"}</pre></section>
+                    <section data-side="target"><span>Versi target</span><pre>{activeChange.target?.text ?? "— tidak ada pada versi target —"}</pre></section>
+                  </div>
+                </article>
+              </div>
+            ) : <p className="empty-copy">Tidak ada perubahan tekstual pada dua versi ini.</p>}
             <p className="regulation-disclaimer">{comparison.disclaimer}</p>
           </div>
         )}

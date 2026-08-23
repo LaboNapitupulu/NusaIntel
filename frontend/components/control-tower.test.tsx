@@ -111,6 +111,11 @@ describe("ControlTower", () => {
     expect(screen.getByText("Contract")).toBeInTheDocument();
     expect(screen.getByText("v2")).toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole("tab", { name: /Lineage/ }));
+    const lineageNode = screen.getByRole("button", { name: /silver.*tpt_silver.*rejected/i });
+    expect(lineageNode).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText(/versi version-/)).toBeInTheDocument();
+
     fireEvent.change(screen.getByLabelText("Status"), { target: { value: "passed" } });
     expect(screen.getByText("Tidak ada check pada filter ini.")).toBeInTheDocument();
   });

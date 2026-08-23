@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { EmptyState, WorkspaceSkeleton, WorkspaceTabs, WorkspaceToast } from "./workspace-ui";
 
@@ -148,6 +149,24 @@ function equalWeights(codes: string[], indicators: Indicator[]): WeightState[] {
   });
 }
 
+function rebalanceWeights(weights: WeightState[], changedCode: string, requestedWeight: number): WeightState[] {
+  if (weights.length <= 1) return weights.map((item) => ({ ...item, weight: 100 }));
+  const nextWeight = Math.min(100, Math.max(0, requestedWeight));
+  const others = weights.filter((item) => item.code !== changedCode);
+  const remaining = 100 - nextWeight;
+  const otherTotal = others.reduce((total, item) => total + item.weight, 0);
+  let distributed = 0;
+  return weights.map((item) => {
+    if (item.code === changedCode) return { ...item, weight: Math.round(nextWeight * 100) / 100 };
+    const otherIndex = others.findIndex((candidate) => candidate.code === item.code);
+    const isLast = otherIndex === others.length - 1;
+    const proportional = otherTotal > 0 ? remaining * (item.weight / otherTotal) : remaining / others.length;
+    const weight = isLast ? remaining - distributed : Math.round(proportional * 100) / 100;
+    distributed += weight;
+    return { ...item, weight: Math.round(weight * 100) / 100 };
+  });
+}
+
 function commonYears(weights: WeightState[], indicators: Indicator[]): number[] {
   const selected = weights
     .map((weight) => indicators.find((indicator) => indicator.code === weight.code))
@@ -248,6 +267,9 @@ export function OpportunityEngine() {
   const [message, setMessage] = useState<string | null>(null);
   const [setupStep, setSetupStep] = useState<SetupStep>(1);
   const [resultTab, setResultTab] = useState<ResultTab>("ranking");
+  const [previewing, setPreviewing] = useState(false);
+  const [livePreview, setLivePreview] = useState(false);
+  const lastScoredFingerprint = useRef("");
 
   const initialize = useCallback(async () => {
     setState("loading");
@@ -351,6 +373,7 @@ export function OpportunityEngine() {
     () => ({ ...scenario, year: activeYear }),
     [activeYear, scenario],
   );
+  const scenarioFingerprint = useMemo(() => JSON.stringify(scorePayload(activeScenario)), [activeScenario]);
   useEffect(() => {
     if (state !== "ready" || !scenario.regionCodes.length || !scenario.weights.length) return;
     window.localStorage.setItem("nusa-intel-opportunity-scenario", encodeScenario(activeScenario));
@@ -392,8 +415,10 @@ export function OpportunityEngine() {
         }),
       ]);
       setComparison(nextComparison);
+      lastScoredFingerprint.current = scenarioFingerprint;
       setScore(nextScore);
       setSensitivity(nextSensitivity);
+      setLivePreview(false);
       setResultTab("ranking");
       setMessage("Analisis selesai. Ranking dan evidence siap diperiksa.");
     } catch (error) {
@@ -401,7 +426,33 @@ export function OpportunityEngine() {
     } finally {
       setRunning(false);
     }
-  }, [activeScenario, configurationValid]);
+  }, [activeScenario, configurationValid, scenarioFingerprint]);
+
+  useEffect(() => {
+    if (!score || !configurationValid || scenarioFingerprint === lastScoredFingerprint.current) return;
+    let active = true;
+    setPreviewing(true);
+    const timer = window.setTimeout(() => {
+      void fetchJson<ScoreResponse>("/api/v1/opportunity/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(scorePayload(activeScenario)),
+      })
+        .then((nextScore) => {
+          if (!active) return;
+          lastScoredFingerprint.current = scenarioFingerprint;
+          setScore(nextScore);
+          setResultTab("ranking");
+          setLivePreview(true);
+        })
+        .catch((error) => active && setMessage(error instanceof Error ? error.message : "Pratinjau ranking gagal diperbarui."))
+        .finally(() => active && setPreviewing(false));
+    }, 450);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [activeScenario, configurationValid, scenarioFingerprint, score]);
 
   function toggleRegion(code: string) {
     setScenario((current) => {
@@ -646,6 +697,22 @@ export function OpportunityEngine() {
                         <option value="lower">Lebih rendah</option>
                       </select>
                     </label>
+                    <label className="weight-live-slider">
+                      <span className="sr-only">Atur cepat bobot {indicator?.name ?? item.code}</span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={item.weight}
+                        onChange={(event) =>
+                          setScenario((current) => ({
+                            ...current,
+                            weights: rebalanceWeights(current.weights, item.code, Number(event.target.value)),
+                          }))
+                        }
+                      />
+                    </label>
                   </div>
                 );
               })}
@@ -721,6 +788,12 @@ export function OpportunityEngine() {
 
         <div className="opportunity-results" aria-live="polite">
           {running && <div className="analysis-progress" role="status"><i /><span>Menghitung ranking, distribusi, dan sensitivitas…</span></div>}
+          {score && (
+            <div className="live-preview-status" data-active={previewing} role="status">
+              <i aria-hidden="true" />
+              <span>{previewing ? "Memperbarui ranking dari bobot terbaru…" : livePreview ? "Ranking live diperbarui · jalankan analisis penuh untuk sensitivity terbaru" : "Live what-if siap · geser bobot untuk melihat ranking berubah"}</span>
+            </div>
+          )}
           {!score || !comparison || !sensitivity ? (
             <EmptyState
               eyebrow="Belum ada hasil"
@@ -750,12 +823,22 @@ export function OpportunityEngine() {
                   <span>{comparison.methodology_version}</span>
                 </div>
                 <div className="ranking-grid">
-                  {score.results.map((row) => (
-                    <article className="ranking-card" key={row.region_code} data-eligible={row.eligible}>
+                  {score.results.map((row, index) => (
+                    <article
+                      className="ranking-card"
+                      key={`${row.region_code}-${row.rank}-${row.score}`}
+                      data-eligible={row.eligible}
+                      data-tilt
+                      style={{
+                        "--rank-order": index,
+                        "--rank-fill": `${Math.max(0, Math.min(100, row.score ?? 0))}%`,
+                      } as CSSProperties}
+                    >
                       <span className="rank-mark">{row.rank ? `#${row.rank}` : "Tidak diranking"}</span>
                       <h4>{row.region_name}</h4>
                       <strong>{row.score === null ? "—" : formatNumber(row.score)}</strong>
                       <small>Coverage {Math.round(row.coverage * 100)}%</small>
+                      <span className="rank-meter" aria-hidden="true"><i /></span>
                     </article>
                   ))}
                 </div>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-import { EmptyState, WorkspaceSkeleton, WorkspaceTabs, WorkspaceToast } from "./workspace-ui";
+import { AnimatedNumber, EmptyState, WorkspaceSkeleton, WorkspaceTabs, WorkspaceToast } from "./workspace-ui";
 
 type ViewState = "loading" | "ready" | "empty" | "error";
 type AnalyticsTab = "map" | "similarity" | "cluster" | "methodology";
@@ -194,6 +194,7 @@ export function RegionalAnalytics() {
   const [message, setMessage] = useState<string | null>(null);
   const [configOpen, setConfigOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<AnalyticsTab>("map");
+  const [focusedMapRegion, setFocusedMapRegion] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -246,6 +247,10 @@ export function RegionalAnalytics() {
     () => quantileBreaks(mapRows.flatMap((row) => (row.value === null ? [] : [row.value]))),
     [mapRows],
   );
+  const activeMapRow = useMemo(
+    () => mapRows.find((row) => row.region_code === focusedMapRegion) ?? mapRows.find((row) => row.region_code === target) ?? null,
+    [focusedMapRegion, mapRows, target],
+  );
 
   function toggleIndicator(code: string) {
     setSelected((current) => {
@@ -272,6 +277,7 @@ export function RegionalAnalytics() {
         }),
       });
       setReport(next);
+      setFocusedMapRegion(next.target_region.region_code);
       setActiveTab("map");
       setConfigOpen(false);
       setMessage("Laporan regional selesai dan siap dieksplorasi.");
@@ -375,11 +381,11 @@ export function RegionalAnalytics() {
         />
       ) : (
         <div className="analytics-report">
-          <section className="analytics-evidence">
-            <div><span>Provinsi acuan</span><strong>{report.target_region.region_name}</strong></div>
-            <div><span>Feature set</span><code>{report.similarity.feature_set_version}</code></div>
-            <div><span>Preprocessing</span><code>{report.similarity.preprocessing_version}</code></div>
-            <div><span>Cakupan</span><strong>{report.similarity.selected_features.length} fitur / {38 - report.similarity.excluded_regions.length} provinsi</strong></div>
+          <section className="analytics-evidence" data-reveal>
+            <div data-tilt><span>Provinsi acuan</span><strong>{report.target_region.region_name}</strong></div>
+            <div data-tilt><span>Feature set</span><code>{report.similarity.feature_set_version}</code></div>
+            <div data-tilt><span>Preprocessing</span><code>{report.similarity.preprocessing_version}</code></div>
+            <div data-tilt><span>Cakupan</span><strong><AnimatedNumber value={report.similarity.selected_features.length} initialFrom={0} /> fitur / <AnimatedNumber value={38 - report.similarity.excluded_regions.length} initialFrom={0} /> provinsi</strong></div>
           </section>
 
           <WorkspaceTabs
@@ -397,17 +403,30 @@ export function RegionalAnalytics() {
           <section className="analytics-panel map-panel" aria-labelledby="map-title" hidden={activeTab !== "map"}>
             <div className="result-heading"><div><p className="kicker">Schematic choropleth</p><h3 id="map-title">{report.map.indicator_name}</h3></div><span>{activeYear}</span></div>
             <p className="map-disclaimer">{report.map.disclaimer}</p>
+            {activeMapRow && (
+              <div className="map-live-inspector" aria-live="polite">
+                <span>Provinsi aktif</span>
+                <strong>{activeMapRow.region_name}</strong>
+                <b>{formatNumber(activeMapRow.value)} {report.map.unit}</b>
+                <i data-band={valueBand(activeMapRow.value, breaks)} aria-hidden="true" />
+              </div>
+            )}
             <div className="tile-map" aria-label={`Peta tile ${report.map.indicator_name}`}>
-              {mapRows.map((row) => row.tile && (
+              {mapRows.map((row, index) => row.tile && (
                 <button
                   type="button"
                   key={row.region_code}
                   className="province-tile no-print"
                   data-band={valueBand(row.value, breaks)}
                   data-selected={row.region_code === target}
-                  style={{ gridColumn: row.tile[0], gridRow: row.tile[1] }}
+                  data-focused={activeMapRow?.region_code === row.region_code}
+                  data-tilt
+                  style={{ gridColumn: row.tile[0], gridRow: row.tile[1], animationDelay: `${index * 18}ms` }}
                   title={`${row.region_name}: ${formatNumber(row.value)} ${report.map.unit}`}
                   aria-label={`${row.region_name}, ${formatNumber(row.value)} ${report.map.unit}`}
+                  onPointerEnter={() => setFocusedMapRegion(row.region_code)}
+                  onPointerLeave={() => setFocusedMapRegion(target)}
+                  onFocus={() => setFocusedMapRegion(row.region_code)}
                   onClick={() => { setTarget(row.region_code); setReport(null); }}
                 >{row.tile[2]}</button>
               ))}
@@ -427,8 +446,8 @@ export function RegionalAnalytics() {
             <section className="analytics-panel" hidden={activeTab !== "similarity"}>
               <div className="result-heading"><div><p className="kicker">Distance search</p><h3>Wilayah paling mirip</h3></div></div>
               <ol className="similarity-list">
-                {report.similarity.results.map((row) => (
-                  <li key={row.region_code}>
+                {report.similarity.results.map((row, index) => (
+                  <li key={row.region_code} data-tilt style={{ animationDelay: `${index * 70}ms` }}>
                     <div><Link href={`/regions/${row.region_code}?year=${activeYear}`}>{row.region_name}</Link><strong>jarak {formatNumber(row.distance, 3)}</strong></div>
                     <ul>{row.drivers.slice(0, 3).map((driver) => <li key={driver.indicator_code}>{driver.indicator_name}: {formatNumber(driver.distance_share * 100, 1)}% jarak ({formatNumber(driver.target_value)} vs {formatNumber(driver.candidate_value)} {driver.unit})</li>)}</ul>
                   </li>

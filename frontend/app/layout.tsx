@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { SiteHeader } from "@/components/site-header";
+import { MotionOrchestrator } from "@/components/motion-orchestrator";
 
 import "./styles.css";
 
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         />
       </head>
       <body>
+        <MotionOrchestrator />
         <SiteHeader />
         {children}
         <footer className="site-footer">

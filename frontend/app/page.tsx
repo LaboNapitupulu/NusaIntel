@@ -79,6 +79,8 @@ export default function Home() {
             <Link
               className="module-card"
               data-tone={product.tone}
+              data-tilt
+              data-reveal
               href={product.href}
               key={product.href}
             >

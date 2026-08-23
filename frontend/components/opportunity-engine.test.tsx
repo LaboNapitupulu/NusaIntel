@@ -54,6 +54,7 @@ const regions = [
 
 afterEach(() => {
   vi.restoreAllMocks();
+  window.localStorage.removeItem("nusa-intel-opportunity-scenario");
   window.history.replaceState(null, "", "/");
 });
 
@@ -163,6 +164,17 @@ describe("OpportunityEngine", () => {
     expect(screen.getByText(/not a confidence interval/)).toBeInTheDocument();
     expect(screen.getByText(/reference 2025-08-01 · version version-hdi/)).toBeInTheDocument();
     expect(screen.getByText("Alternatif data tabel untuk distribusi")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /4Bobot/ }));
+    fireEvent.change(screen.getByRole("slider", { name: /Atur cepat bobot Tingkat Pengangguran Terbuka/ }), {
+      target: { value: "50" },
+    });
+    expect(screen.getByText(/Total bobot: 100%/)).toBeInTheDocument();
+    await waitFor(
+      () => expect(screen.getByText(/Ranking live diperbarui/)).toBeInTheDocument(),
+      { timeout: 2000 },
+    );
+    expect(vi.mocked(global.fetch).mock.calls.filter(([input]) => String(input).endsWith("/opportunity/score"))).toHaveLength(2);
 
     fireEvent.click(screen.getByRole("button", { name: "Salin skenario" }));
     await waitFor(() => expect(window.location.search).toContain("scenario="));

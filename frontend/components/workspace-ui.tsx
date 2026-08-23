@@ -1,4 +1,7 @@
-import type { ReactNode } from "react";
+"use client";
+
+import type { KeyboardEvent, ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export interface WorkspaceTab<T extends string> {
   id: T;
@@ -17,8 +20,23 @@ export function WorkspaceTabs<T extends string>({
   active: T;
   onChange: (tab: T) => void;
 }) {
+  function moveFocus(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== "Home" && event.key !== "End") return;
+    const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("[role='tab']"));
+    const current = buttons.indexOf(document.activeElement as HTMLButtonElement);
+    if (current < 0) return;
+    event.preventDefault();
+    const next = event.key === "Home"
+      ? 0
+      : event.key === "End"
+        ? buttons.length - 1
+        : (current + (event.key === "ArrowRight" ? 1 : -1) + buttons.length) % buttons.length;
+    buttons[next]?.focus();
+    buttons[next]?.click();
+  }
+
   return (
-    <div className="workspace-tabs" role="tablist" aria-label={label}>
+    <div className="workspace-tabs" role="tablist" aria-label={label} onKeyDown={moveFocus}>
       {tabs.map((tab) => (
         <button
           type="button"
@@ -33,6 +51,51 @@ export function WorkspaceTabs<T extends string>({
         </button>
       ))}
     </div>
+  );
+}
+
+export function AnimatedNumber({
+  value,
+  digits = 0,
+  suffix = "",
+  initialFrom,
+}: {
+  value: number;
+  digits?: number;
+  suffix?: string;
+  initialFrom?: number;
+}) {
+  const [display, setDisplay] = useState(initialFrom ?? value);
+  const previous = useRef(initialFrom ?? value);
+
+  useEffect(() => {
+    const from = previous.current;
+    previous.current = value;
+    const reducedMotion = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (from === value || reducedMotion) {
+      setDisplay(value);
+      return;
+    }
+    const startedAt = performance.now();
+    const duration = 680;
+    let frame = 0;
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - startedAt) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(from + (value - from) * eased);
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [value]);
+
+  return (
+    <span className="animated-number" aria-label={`${value}${suffix}`}>
+      {new Intl.NumberFormat("id-ID", {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+      }).format(display)}{suffix}
+    </span>
   );
 }
 

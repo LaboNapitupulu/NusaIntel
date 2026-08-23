@@ -1,8 +1,9 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { EmptyState, WorkspaceSkeleton, WorkspaceTabs, WorkspaceToast } from "./workspace-ui";
+import { AnimatedNumber, EmptyState, WorkspaceSkeleton, WorkspaceTabs, WorkspaceToast } from "./workspace-ui";
 
 type Health = "healthy" | "warning" | "critical" | "unknown";
 type LoadState = "loading" | "ready" | "empty" | "error";
@@ -131,6 +132,7 @@ export function ControlTower() {
   const [datasetQuery, setDatasetQuery] = useState("");
   const [healthFilter, setHealthFilter] = useState<Health | "all">("all");
   const [toast, setToast] = useState<string | null>(null);
+  const [focusedLineageVersion, setFocusedLineageVersion] = useState<string | null>(null);
 
   const loadOverview = useCallback(async () => {
     try {
@@ -181,6 +183,7 @@ export function ControlTower() {
         setDetail(nextDetail);
         setQuality(qualityPayload.items);
         setLineage(lineagePayload);
+        setFocusedLineageVersion(lineagePayload.nodes.at(-1)?.version_id ?? null);
       })
       .catch(() => {
         if (active) setDetail(null);
@@ -218,6 +221,17 @@ export function ControlTower() {
     [datasets],
   );
 
+  const focusedLineage = useMemo(
+    () => lineage.nodes.find((node) => node.version_id === focusedLineageVersion) ?? lineage.nodes.at(-1) ?? null,
+    [focusedLineageVersion, lineage.nodes],
+  );
+  const focusedEdges = useMemo(
+    () => lineage.edges.filter(
+      (edge) => edge.upstream_version_id === focusedLineage?.version_id || edge.downstream_version_id === focusedLineage?.version_id,
+    ),
+    [focusedLineage, lineage.edges],
+  );
+
   const resolveIncident = async (incident: Incident) => {
     const note = resolutionNotes[incident.id]?.trim();
     if (!note) return;
@@ -249,10 +263,10 @@ export function ControlTower() {
 
       {state === "ready" && (
         <section className="health-overview" aria-label="Ringkasan kesehatan data">
-          <article data-health="healthy"><span>Dataset sehat</span><strong>{healthSummary.healthy}</strong><small>siap digunakan</small></article>
-          <article data-health="warning"><span>Perlu perhatian</span><strong>{healthSummary.warning}</strong><small>periksa kualitas</small></article>
-          <article data-health="critical"><span>Kritis</span><strong>{healthSummary.critical}</strong><small>publish diblokir</small></article>
-          <article data-health="incidents"><span>Insiden terbuka</span><strong>{incidents.filter((item) => item.status === "open").length}</strong><small>perlu tindak lanjut</small></article>
+          <article data-health="healthy" data-tilt data-reveal><span>Dataset sehat</span><strong><AnimatedNumber value={healthSummary.healthy} initialFrom={0} /></strong><small>siap digunakan</small></article>
+          <article data-health="warning" data-tilt data-reveal><span>Perlu perhatian</span><strong><AnimatedNumber value={healthSummary.warning} initialFrom={0} /></strong><small>periksa kualitas</small></article>
+          <article data-health="critical" data-tilt data-reveal><span>Kritis</span><strong><AnimatedNumber value={healthSummary.critical} initialFrom={0} /></strong><small>publish diblokir</small></article>
+          <article data-health="incidents" data-tilt data-reveal><span>Insiden terbuka</span><strong><AnimatedNumber value={incidents.filter((item) => item.status === "open").length} initialFrom={0} /></strong><small>perlu tindak lanjut</small></article>
         </section>
       )}
 
@@ -298,9 +312,13 @@ export function ControlTower() {
               {filteredDatasets.map((dataset) => (
                 <button
                   className={`dataset-row ${selectedId === dataset.id ? "dataset-active" : ""}`}
+                  data-tilt
                   key={dataset.id}
                   type="button"
-                  onClick={() => setSelectedId(dataset.id)}
+                  onClick={() => {
+                    setDetail(null);
+                    setSelectedId(dataset.id);
+                  }}
                   aria-pressed={selectedId === dataset.id}
                 >
                   <span className={`health-pill health-${dataset.health}`}>
@@ -394,11 +412,36 @@ export function ControlTower() {
 
                   <section className="tower-panel lineage-panel" aria-labelledby="lineage-title" hidden={activeTab !== "lineage"}>
                     <div className="panel-title"><span id="lineage-title">Lineage</span><strong>{lineage.edges.length}</strong></div>
-                    <ol className="lineage-list lineage-graph">
-                      {lineage.nodes.map((node) => (
-                        <li key={node.version_id}><span>{node.layer}</span><strong>{node.dataset_code}</strong><small>{node.status}</small></li>
-                      ))}
-                    </ol>
+                    <div className="lineage-stage">
+                      <ol className="lineage-list lineage-graph" aria-label="Alur versi dataset">
+                        {lineage.nodes.map((node, index) => (
+                          <li key={node.version_id} style={{ "--node-order": index } as CSSProperties}>
+                            <button
+                              type="button"
+                              className="lineage-node"
+                              data-active={focusedLineage?.version_id === node.version_id}
+                              aria-pressed={focusedLineage?.version_id === node.version_id}
+                              onClick={() => setFocusedLineageVersion(node.version_id)}
+                              onFocus={() => setFocusedLineageVersion(node.version_id)}
+                              onPointerEnter={() => setFocusedLineageVersion(node.version_id)}
+                            >
+                              <i aria-hidden="true" />
+                              <span>{node.layer}</span>
+                              <strong>{node.dataset_code}</strong>
+                              <small>{node.status}</small>
+                            </button>
+                          </li>
+                        ))}
+                      </ol>
+                      {focusedLineage && (
+                        <aside className="lineage-inspector" aria-live="polite">
+                          <span>Node aktif · {focusedLineage.layer}</span>
+                          <strong>{focusedLineage.dataset_code}</strong>
+                          <small>{focusedLineage.status} · {focusedEdges.length} koneksi · versi {focusedLineage.version_id.slice(0, 8)}</small>
+                          <div className="signal-track" aria-hidden="true"><i /></div>
+                        </aside>
+                      )}
+                    </div>
                     {!lineage.nodes.length && <p className="empty-copy">Lineage belum tersedia untuk versi ini.</p>}
                   </section>
                 </div>

@@ -51,7 +51,7 @@ export function SystemStatus() {
   }, [apiBaseUrl]);
 
   return (
-    <aside className="status-panel" aria-live="polite">
+    <aside className="status-panel" data-tilt data-reveal aria-live="polite">
       <div className="status-heading">
         <span className={`status-dot status-${status}`} aria-hidden="true" />
         <span>{labels[status]}</span>

@@ -1,6 +1,6 @@
 export function DataScene() {
   return (
-    <div className="data-scene" aria-hidden="true">
+    <div className="data-scene" data-reveal aria-hidden="true">
       <div className="scene-halo" />
       <div className="scene-orbit scene-orbit-one" />
       <div className="scene-orbit scene-orbit-two" />
