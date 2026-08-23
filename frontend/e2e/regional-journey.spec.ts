@@ -193,6 +193,7 @@ test("regional report is usable, responsive, and has no serious accessibility vi
 test("regional report links to a source-aware regional detail page", async ({ page }) => {
   await page.goto("/regional-analytics");
   await page.getByRole("button", { name: "Jalankan analisis" }).click();
+  await page.getByRole("tab", { name: /Similarity/ }).click();
   await page.getByRole("link", { name: "Buka detail ACEH" }).click();
 
   await expect(page).toHaveURL(/\/regions\/1100\?year=2024$/);

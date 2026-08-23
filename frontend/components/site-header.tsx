@@ -15,6 +15,13 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  function toggleTheme() {
+    const current = document.documentElement.dataset.theme;
+    const next = current === "night" ? "day" : "night";
+    document.documentElement.dataset.theme = next;
+    window.localStorage.setItem("nusa-intel-theme", next);
+  }
+
   return (
     <header className="site-header">
       <div className="site-header-inner">
@@ -58,6 +65,9 @@ export function SiteHeader() {
               </Link>
             );
           })}
+          <button className="theme-toggle" type="button" onClick={toggleTheme}>
+            Ganti tema
+          </button>
           <span className="phase-label">Release 0.7</span>
         </nav>
       </div>

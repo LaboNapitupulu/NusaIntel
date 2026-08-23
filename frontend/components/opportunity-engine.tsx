@@ -2,9 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { EmptyState, WorkspaceSkeleton, WorkspaceTabs, WorkspaceToast } from "./workspace-ui";
+
 type Normalization = "min_max" | "percentile";
 type Direction = "higher" | "lower";
 type ViewState = "loading" | "ready" | "empty" | "error";
+type SetupStep = 1 | 2 | 3 | 4;
+type ResultTab = "ranking" | "comparison" | "trend" | "sensitivity" | "methodology";
 
 interface Indicator {
   code: string;
@@ -242,6 +246,8 @@ export function OpportunityEngine() {
   const [sensitivity, setSensitivity] = useState<SensitivityResponse | null>(null);
   const [running, setRunning] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [setupStep, setSetupStep] = useState<SetupStep>(1);
+  const [resultTab, setResultTab] = useState<ResultTab>("ranking");
 
   const initialize = useCallback(async () => {
     setState("loading");
@@ -256,7 +262,9 @@ export function OpportunityEngine() {
         setState("empty");
         return;
       }
-      const shared = decodeScenario(new URLSearchParams(window.location.search).get("scenario"));
+      const shared =
+        decodeScenario(new URLSearchParams(window.location.search).get("scenario")) ??
+        decodeScenario(window.localStorage.getItem("nusa-intel-opportunity-scenario"));
       const availableCodes = new Set(indicatorPayload.items.map((item) => item.code));
       const availableRegions = new Set(regionPayload.items.map((item) => item.code));
       if (
@@ -298,9 +306,9 @@ export function OpportunityEngine() {
           setState("empty");
           return;
         }
-        const shared = decodeScenario(
-          new URLSearchParams(window.location.search).get("scenario"),
-        );
+        const shared =
+          decodeScenario(new URLSearchParams(window.location.search).get("scenario")) ??
+          decodeScenario(window.localStorage.getItem("nusa-intel-opportunity-scenario"));
         const availableCodes = new Set(indicatorPayload.items.map((item) => item.code));
         const availableRegions = new Set(regionPayload.items.map((item) => item.code));
         if (
@@ -343,6 +351,10 @@ export function OpportunityEngine() {
     () => ({ ...scenario, year: activeYear }),
     [activeYear, scenario],
   );
+  useEffect(() => {
+    if (state !== "ready" || !scenario.regionCodes.length || !scenario.weights.length) return;
+    window.localStorage.setItem("nusa-intel-opportunity-scenario", encodeScenario(activeScenario));
+  }, [activeScenario, scenario.regionCodes.length, scenario.weights.length, state]);
   const weightTotal = scenario.weights.reduce((total, item) => total + item.weight, 0);
   const configurationValid =
     scenario.regionCodes.length >= 2 &&
@@ -382,6 +394,8 @@ export function OpportunityEngine() {
       setComparison(nextComparison);
       setScore(nextScore);
       setSensitivity(nextSensitivity);
+      setResultTab("ranking");
+      setMessage("Analisis selesai. Ranking dan evidence siap diperiksa.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Analisis gagal dijalankan.");
     } finally {
@@ -422,7 +436,7 @@ export function OpportunityEngine() {
   async function shareScenario() {
     const parameters = new URLSearchParams(window.location.search);
     parameters.set("scenario", encodeScenario(activeScenario));
-    const url = `${window.location.pathname}?${parameters.toString()}#opportunity`;
+    const url = `${window.location.pathname}?${parameters.toString()}`;
     window.history.replaceState(null, "", url);
     try {
       await navigator.clipboard?.writeText(window.location.href);
@@ -455,7 +469,7 @@ export function OpportunityEngine() {
   }
 
   if (state === "loading") {
-    return <section className="opportunity-shell opportunity-state">Memuat Opportunity Engine…</section>;
+    return <section className="opportunity-shell opportunity-state"><WorkspaceSkeleton label="Memuat Opportunity Engine" /></section>;
   }
   if (state === "error") {
     return (
@@ -498,7 +512,22 @@ export function OpportunityEngine() {
 
       <div className="opportunity-layout">
         <aside className="scenario-panel" aria-label="Konfigurasi skenario">
-          <fieldset>
+          <div className="wizard-progress" aria-label="Tahapan konfigurasi">
+            {([1, 2, 3, 4] as SetupStep[]).map((step) => (
+              <button
+                type="button"
+                key={step}
+                data-active={setupStep === step}
+                aria-current={setupStep === step ? "step" : undefined}
+                onClick={() => setSetupStep(step)}
+              >
+                <span>{step}</span>
+                {step === 1 ? "Wilayah" : step === 2 ? "Indikator" : step === 3 ? "Periode" : "Bobot"}
+              </button>
+            ))}
+          </div>
+
+          <fieldset hidden={setupStep !== 1}>
             <legend>1. Pilih 2–5 provinsi</legend>
             <div className="selector-list region-selector-list">
               {regions.map((region) => (
@@ -516,7 +545,7 @@ export function OpportunityEngine() {
             <small>{scenario.regionCodes.length}/5 dipilih</small>
           </fieldset>
 
-          <fieldset>
+          <fieldset hidden={setupStep !== 2}>
             <legend>2. Pilih indikator</legend>
             <div className="selector-list">
               {indicators.map((indicator) => (
@@ -536,7 +565,7 @@ export function OpportunityEngine() {
             </div>
           </fieldset>
 
-          <fieldset>
+          <fieldset hidden={setupStep !== 3}>
             <legend>3. Periode dan metode</legend>
             <label className="field-label">
               Tahun analisis comparable
@@ -570,7 +599,7 @@ export function OpportunityEngine() {
             </label>
           </fieldset>
 
-          <fieldset>
+          <fieldset hidden={setupStep !== 4}>
             <legend>4. Bobot dan arah</legend>
             <div className="weight-list">
               {scenario.weights.map((item) => {
@@ -658,26 +687,61 @@ export function OpportunityEngine() {
             </label>
           </fieldset>
 
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => void runAnalysis()}
-            disabled={!configurationValid || running}
-          >
-            {running ? "Menghitung…" : "Hitung skenario"}
-          </button>
+          <div className="wizard-actions">
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={setupStep === 1}
+              onClick={() => setSetupStep((setupStep - 1) as SetupStep)}
+            >
+              Kembali
+            </button>
+            {setupStep < 4 && (
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setSetupStep((setupStep + 1) as SetupStep)}
+              >
+                Lanjut
+              </button>
+            )}
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => void runAnalysis()}
+              disabled={!configurationValid || running}
+            >
+              {running ? "Menghitung…" : "Hitung skenario"}
+            </button>
+          </div>
           {!configurationValid && (
             <p className="form-warning">Pilih 2–5 provinsi, periode valid, dan total bobot 100%.</p>
           )}
-          {message && <p className="scenario-message" role="status">{message}</p>}
         </aside>
 
         <div className="opportunity-results" aria-live="polite">
+          {running && <div className="analysis-progress" role="status"><i /><span>Menghitung ranking, distribusi, dan sensitivitas…</span></div>}
           {!score || !comparison || !sensitivity ? (
-            <div className="result-placeholder">Konfigurasikan skenario untuk melihat hasil.</div>
+            <EmptyState
+              eyebrow="Belum ada hasil"
+              title="Bangun skenario pertama Anda"
+              description="Ikuti empat tahap konfigurasi. Hasil akan dipisahkan menjadi ranking, perbandingan, tren, dan sensitivitas."
+            />
           ) : (
             <>
-              <section className="ranking-panel" aria-labelledby="ranking-title">
+              <WorkspaceTabs
+                label="Hasil Opportunity Engine"
+                active={resultTab}
+                onChange={setResultTab}
+                tabs={[
+                  { id: "ranking", label: "Ranking", count: score.results.length },
+                  { id: "comparison", label: "Perbandingan", count: scenario.weights.length },
+                  { id: "trend", label: "Tren", count: comparison.trends.length },
+                  { id: "sensitivity", label: "Sensitivity", count: sensitivity.scenario_count },
+                  { id: "methodology", label: "Metodologi" },
+                ]}
+              />
+              <section className="ranking-panel" aria-labelledby="ranking-title" hidden={resultTab !== "ranking"}>
                 <div className="result-heading">
                   <div>
                     <p className="kicker">Ranking skenario</p>
@@ -696,7 +760,7 @@ export function OpportunityEngine() {
                   ))}
                 </div>
                 <div className="table-scroll">
-                  <table>
+                  <table className="responsive-table">
                     <caption>Kontribusi indikator untuk reproduksi skor</caption>
                     <thead>
                       <tr>
@@ -712,12 +776,12 @@ export function OpportunityEngine() {
                       {score.results.flatMap((row) =>
                         row.contributions.map((item) => (
                           <tr key={`${row.region_code}-${item.indicator_code}`}>
-                            <td>{row.region_name}</td>
-                            <td>{indicators.find((indicator) => indicator.code === item.indicator_code)?.name ?? item.indicator_code}</td>
-                            <td>{formatNumber(item.raw_value)}</td>
-                            <td>{formatNumber(item.normalized_value, 4)}</td>
-                            <td>{item.effective_weight === null ? "—" : `${formatNumber(item.effective_weight)}%`}</td>
-                            <td>{formatNumber(item.contribution, 4)}</td>
+                            <td data-label="Wilayah">{row.region_name}</td>
+                            <td data-label="Indikator">{indicators.find((indicator) => indicator.code === item.indicator_code)?.name ?? item.indicator_code}</td>
+                            <td data-label="Nilai mentah">{formatNumber(item.raw_value)}</td>
+                            <td data-label="Normalisasi">{formatNumber(item.normalized_value, 4)}</td>
+                            <td data-label="Bobot efektif">{item.effective_weight === null ? "—" : `${formatNumber(item.effective_weight)}%`}</td>
+                            <td data-label="Kontribusi">{formatNumber(item.contribution, 4)}</td>
                           </tr>
                         )),
                       )}
@@ -726,7 +790,7 @@ export function OpportunityEngine() {
                 </div>
               </section>
 
-              <section className="comparison-panel" aria-labelledby="comparison-title">
+              <section className="comparison-panel" aria-labelledby="comparison-title" hidden={resultTab !== "comparison"}>
                 <div className="result-heading">
                   <div>
                     <p className="kicker">Raw + normalized</p>
@@ -781,7 +845,7 @@ export function OpportunityEngine() {
                 </div>
               </section>
 
-              <section className="trend-panel" aria-labelledby="trend-title">
+              <section className="trend-panel" aria-labelledby="trend-title" hidden={resultTab !== "trend"}>
                 <div className="result-heading"><div><p className="kicker">Trend</p><h3 id="trend-title">Riwayat nilai tanpa mencampur unit.</h3></div></div>
                 <div className="table-scroll">
                   <table>
@@ -792,7 +856,7 @@ export function OpportunityEngine() {
                 </div>
               </section>
 
-              <section className="sensitivity-panel" aria-labelledby="sensitivity-title">
+              <section className="sensitivity-panel" aria-labelledby="sensitivity-title" hidden={resultTab !== "sensitivity"}>
                 <div className="result-heading"><div><p className="kicker">Sensitivity</p><h3 id="sensitivity-title">Apakah ranking stabil ketika bobot bergeser?</h3></div><span>{sensitivity.scenario_count} skenario</span></div>
                 <div className="stability-grid">
                   {sensitivity.stability.map((row) => <article key={row.region_code}><h4>{row.region_name}</h4><strong>{formatNumber(row.unchanged_percent, 0)}%</strong><span>peringkat tetap</span><small>Rentang #{row.min_rank ?? "—"}–#{row.max_rank ?? "—"} · pergeseran maks {row.max_absolute_shift ?? "—"}</small></article>)}
@@ -800,7 +864,7 @@ export function OpportunityEngine() {
                 <p className="method-warning">{sensitivity.disclaimer}</p>
               </section>
 
-              <details className="methodology-drawer">
+              <details className="methodology-drawer" open hidden={resultTab !== "methodology"}>
                 <summary>Sumber, versi data, dan metodologi</summary>
                 <p>Skor = jumlah normalisasi × bobot efektif. Missing value tidak pernah menjadi nol; bobot tersedia hanya dinormalisasi ulang bila coverage masih memenuhi threshold.</p>
                 <ul>
@@ -815,6 +879,7 @@ export function OpportunityEngine() {
           )}
         </div>
       </div>
+      <WorkspaceToast message={message} tone={message?.toLowerCase().includes("gagal") ? "error" : "success"} onDismiss={() => setMessage(null)} />
     </section>
   );
 }

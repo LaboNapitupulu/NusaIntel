@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { EmptyState, WorkspaceSkeleton, WorkspaceTabs, WorkspaceToast } from "./workspace-ui";
+
 type Health = "healthy" | "warning" | "critical" | "unknown";
 type LoadState = "loading" | "ready" | "empty" | "error";
+type TowerTab = "overview" | "quality" | "lineage" | "operations" | "incidents";
 
 interface DatasetSummary {
   id: string;
@@ -124,6 +127,10 @@ export function ControlTower() {
   const [severityFilter, setSeverityFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [resolutionNotes, setResolutionNotes] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState<TowerTab>("overview");
+  const [datasetQuery, setDatasetQuery] = useState("");
+  const [healthFilter, setHealthFilter] = useState<Health | "all">("all");
+  const [toast, setToast] = useState<string | null>(null);
 
   const loadOverview = useCallback(async () => {
     try {
@@ -193,15 +200,38 @@ export function ControlTower() {
     [quality, severityFilter, statusFilter],
   );
 
+  const filteredDatasets = useMemo(() => {
+    const query = datasetQuery.trim().toLocaleLowerCase("id-ID");
+    return datasets.filter(
+      (dataset) =>
+        (healthFilter === "all" || dataset.health === healthFilter) &&
+        (!query || `${dataset.name} ${dataset.code} ${dataset.layer}`.toLocaleLowerCase("id-ID").includes(query)),
+    );
+  }, [datasetQuery, datasets, healthFilter]);
+
+  const healthSummary = useMemo(
+    () => ({
+      healthy: datasets.filter((dataset) => dataset.health === "healthy").length,
+      warning: datasets.filter((dataset) => dataset.health === "warning").length,
+      critical: datasets.filter((dataset) => dataset.health === "critical").length,
+    }),
+    [datasets],
+  );
+
   const resolveIncident = async (incident: Incident) => {
     const note = resolutionNotes[incident.id]?.trim();
     if (!note) return;
-    await fetchJson(`${apiBaseUrl}/api/v1/incidents/${incident.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "resolved", resolution_note: note }),
-    });
-    await loadOverview();
+    try {
+      await fetchJson(`${apiBaseUrl}/api/v1/incidents/${incident.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "resolved", resolution_note: note }),
+      });
+      await loadOverview();
+      setToast(`Insiden ${incident.check_code} ditandai selesai.`);
+    } catch {
+      setToast("Insiden belum dapat diperbarui. Coba lagi.");
+    }
   };
 
   return (
@@ -217,7 +247,16 @@ export function ControlTower() {
         </p>
       </div>
 
-      {state === "loading" && <p className="tower-state" role="status">Memuat katalog data…</p>}
+      {state === "ready" && (
+        <section className="health-overview" aria-label="Ringkasan kesehatan data">
+          <article data-health="healthy"><span>Dataset sehat</span><strong>{healthSummary.healthy}</strong><small>siap digunakan</small></article>
+          <article data-health="warning"><span>Perlu perhatian</span><strong>{healthSummary.warning}</strong><small>periksa kualitas</small></article>
+          <article data-health="critical"><span>Kritis</span><strong>{healthSummary.critical}</strong><small>publish diblokir</small></article>
+          <article data-health="incidents"><span>Insiden terbuka</span><strong>{incidents.filter((item) => item.status === "open").length}</strong><small>perlu tindak lanjut</small></article>
+        </section>
+      )}
+
+      {state === "loading" && <WorkspaceSkeleton label="Memuat katalog data" />}
       {state === "error" && (
         <div className="tower-state tower-error" role="alert">
           <p>Control Tower belum dapat dijangkau.</p>
@@ -235,8 +274,28 @@ export function ControlTower() {
               <span>Dataset catalog</span>
               <strong>{datasets.length}</strong>
             </div>
+            <div className="catalog-toolbar">
+              <label>
+                <span className="sr-only">Cari dataset</span>
+                <input
+                  type="search"
+                  placeholder="Cari dataset atau kode…"
+                  value={datasetQuery}
+                  onChange={(event) => setDatasetQuery(event.target.value)}
+                />
+              </label>
+              <label>
+                <span className="sr-only">Filter kesehatan</span>
+                <select value={healthFilter} onChange={(event) => setHealthFilter(event.target.value as Health | "all")}>
+                  <option value="all">Semua status</option>
+                  <option value="healthy">Sehat</option>
+                  <option value="warning">Perlu perhatian</option>
+                  <option value="critical">Kritis</option>
+                </select>
+              </label>
+            </div>
             <div className="dataset-list">
-              {datasets.map((dataset) => (
+              {filteredDatasets.map((dataset) => (
                 <button
                   className={`dataset-row ${selectedId === dataset.id ? "dataset-active" : ""}`}
                   key={dataset.id}
@@ -251,6 +310,13 @@ export function ControlTower() {
                   <span>{dataset.layer} · {dataset.owner}</span>
                 </button>
               ))}
+              {!filteredDatasets.length && (
+                <EmptyState
+                  eyebrow="Tidak ditemukan"
+                  title="Tidak ada dataset yang cocok"
+                  description="Ubah kata pencarian atau tampilkan kembali semua status."
+                />
+              )}
             </div>
           </aside>
 
@@ -275,8 +341,21 @@ export function ControlTower() {
                   </div>
                 </section>
 
-                <div className="tower-grid">
-                  <section className="tower-panel quality-panel" aria-labelledby="quality-title">
+                <WorkspaceTabs
+                  label="Area Control Tower"
+                  active={activeTab}
+                  onChange={setActiveTab}
+                  tabs={[
+                    { id: "overview", label: "Overview" },
+                    { id: "quality", label: "Quality", count: quality.filter((item) => item.status === "failed").length },
+                    { id: "lineage", label: "Lineage", count: lineage.nodes.length },
+                    { id: "operations", label: "Pipeline", count: runs.length },
+                    { id: "incidents", label: "Insiden", count: incidents.filter((item) => item.status === "open").length },
+                  ]}
+                />
+
+                <div className="tower-grid" hidden={activeTab === "operations" || activeTab === "incidents"}>
+                  <section className="tower-panel quality-panel" aria-labelledby="quality-title" hidden={activeTab !== "quality"}>
                     <div className="panel-title">
                       <span id="quality-title">Quality checks</span>
                       <strong>{filteredQuality.length}</strong>
@@ -306,16 +385,16 @@ export function ControlTower() {
                     </div>
                   </section>
 
-                  <section className="tower-panel" aria-labelledby="drift-title">
+                  <section className="tower-panel tower-overview-panel" aria-labelledby="drift-title" hidden={activeTab !== "overview"}>
                     <div className="panel-title"><span id="drift-title">Schema drift</span><strong>{detail.schema_drift.length}</strong></div>
                     {detail.schema_drift.length ? detail.schema_drift.slice(0, 8).map((drift) => (
                       <article className="event-row" key={drift.id}><strong>{drift.column_name}</strong><span>{drift.change_type}</span></article>
                     )) : <p className="empty-copy">Tidak ada perubahan schema terdeteksi.</p>}
                   </section>
 
-                  <section className="tower-panel" aria-labelledby="lineage-title">
+                  <section className="tower-panel lineage-panel" aria-labelledby="lineage-title" hidden={activeTab !== "lineage"}>
                     <div className="panel-title"><span id="lineage-title">Lineage</span><strong>{lineage.edges.length}</strong></div>
-                    <ol className="lineage-list">
+                    <ol className="lineage-list lineage-graph">
                       {lineage.nodes.map((node) => (
                         <li key={node.version_id}><span>{node.layer}</span><strong>{node.dataset_code}</strong><small>{node.status}</small></li>
                       ))}
@@ -329,8 +408,9 @@ export function ControlTower() {
         </div>
       )}
 
-      <div className="operations-grid">
-        <section className="tower-panel" aria-labelledby="runs-title">
+      {state === "ready" && (activeTab === "operations" || activeTab === "incidents") && (
+      <div className="operations-grid operations-focus">
+        <section className="tower-panel" aria-labelledby="runs-title" hidden={activeTab !== "operations"}>
           <div className="panel-title"><span id="runs-title">Pipeline runs</span><strong>{runs.length}</strong></div>
           {runs.map((run) => (
             <article className="event-row" key={run.id}>
@@ -341,7 +421,7 @@ export function ControlTower() {
           {!runs.length && <p className="empty-copy">Belum ada histori pipeline.</p>}
         </section>
 
-        <section className="tower-panel" aria-labelledby="incident-title">
+        <section className="tower-panel" aria-labelledby="incident-title" hidden={activeTab !== "incidents"}>
           <div className="panel-title"><span id="incident-title">Incidents</span><strong>{incidents.length}</strong></div>
           {incidents.map((incident) => (
             <article className="incident-row" key={incident.id}>
@@ -358,6 +438,8 @@ export function ControlTower() {
           {!incidents.length && <p className="empty-copy">Tidak ada insiden tercatat.</p>}
         </section>
       </div>
+      )}
+      <WorkspaceToast message={toast} onDismiss={() => setToast(null)} />
     </section>
   );
 }

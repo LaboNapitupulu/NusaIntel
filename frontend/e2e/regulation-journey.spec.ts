@@ -94,6 +94,7 @@ test("grounded answer remains usable without horizontal overflow", async ({ page
 
   await page.getByRole("button", { name: "Jawab dengan bukti" }).click();
   await expect(page.getByText("ANSWERABLE")).toBeVisible();
+  await page.getByRole("tab", { name: /Evidence/ }).click();
   await expect(page.getByText(/\[C1\] Pasal 7/)).toBeVisible();
   await expect(page.getByRole("link", { name: "Dokumen resmi" })).toHaveAttribute(
     "href",

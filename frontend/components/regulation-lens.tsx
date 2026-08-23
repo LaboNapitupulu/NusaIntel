@@ -2,6 +2,10 @@
 
 import { FormEvent, useEffect, useState } from "react";
 
+import { EmptyState, WorkspaceSkeleton, WorkspaceTabs, WorkspaceToast } from "./workspace-ui";
+
+type RegulationTab = "answer" | "evidence" | "compare";
+
 interface Version {
   id: string;
   manifest_version: string;
@@ -110,6 +114,23 @@ export function RegulationLens() {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<RegulationTab>("answer");
+  const [corpusOpen, setCorpusOpen] = useState(true);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const storedQuestion = window.localStorage.getItem("nusa-intel-regulation-question");
+    const requestedQuestion = params.get("q") ?? storedQuestion;
+    if (requestedQuestion && requestedQuestion.length >= 8 && requestedQuestion.length <= 500) {
+      queueMicrotask(() => setQuestion(requestedQuestion));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (question.trim().length >= 8) {
+      window.localStorage.setItem("nusa-intel-regulation-question", question);
+    }
+  }, [question]);
 
   useEffect(() => {
     let active = true;
@@ -157,6 +178,8 @@ export function RegulationLens() {
         body: JSON.stringify({ question, maximum_citations: 5 }),
       });
       setAnswer(result);
+      setActiveTab("answer");
+      setMessage(result.answerable ? "Jawaban selesai. Evidence citation tersedia pada tab Evidence." : "Pertanyaan ditolak sesuai batas corpus.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Jawaban tidak dapat dibuat.");
     } finally {
@@ -174,6 +197,7 @@ export function RegulationLens() {
           new URLSearchParams({ version_id: citation.document_version_id, before: "2", after: "2" }),
       );
       setContext(result);
+      setActiveTab("evidence");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Konteks citation tidak dapat dibuka.");
     }
@@ -189,8 +213,20 @@ export function RegulationLens() {
         target_version_id: targetVersion,
       });
       setComparison(await fetchJson<Comparison>(`/api/v1/regulations/compare?${query}`));
+      setMessage("Perbandingan versi selesai.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Versi tidak dapat dibandingkan.");
+    }
+  }
+
+  async function shareQuestion() {
+    const query = new URLSearchParams({ q: question.trim() });
+    window.history.replaceState(null, "", `${window.location.pathname}?${query}`);
+    try {
+      await navigator.clipboard?.writeText(window.location.href);
+      setMessage("Tautan pertanyaan disalin.");
+    } catch {
+      setMessage("Pertanyaan tersimpan pada URL halaman.");
     }
   }
 
@@ -212,8 +248,15 @@ export function RegulationLens() {
         </div>
       </div>
 
-      <div className="regulation-catalog" aria-label="Corpus regulasi">
-        {loading && <p>Memuat corpus...</p>}
+      <div className="workspace-config-toggle corpus-toggle">
+        <div><span>Corpus aktif</span><strong>{documents.length} dokumen · status dan versi terlacak</strong></div>
+        <button type="button" onClick={() => setCorpusOpen((current) => !current)} aria-expanded={corpusOpen}>
+          {corpusOpen ? "Sembunyikan corpus" : "Lihat corpus"}
+        </button>
+      </div>
+
+      <div className="regulation-catalog" aria-label="Corpus regulasi" hidden={!corpusOpen}>
+        {loading && <WorkspaceSkeleton label="Memuat corpus regulasi" />}
         {!loading && !documents.length && <p>Belum ada dokumen terpublikasi.</p>}
         {documents.map((document) => (
           <article key={document.document_id}>
@@ -227,7 +270,18 @@ export function RegulationLens() {
         ))}
       </div>
 
-      <div className="regulation-workspace">
+      <WorkspaceTabs
+        label="Area RegulasiLens"
+        active={activeTab}
+        onChange={setActiveTab}
+        tabs={[
+          { id: "answer", label: "Pencarian & Jawaban" },
+          { id: "evidence", label: "Evidence", count: answer?.citations.length ?? 0 },
+          { id: "compare", label: "Perbandingan", count: versions.length },
+        ]}
+      />
+
+      <div className="regulation-workspace" hidden={activeTab !== "answer"}>
         <form className="answer-panel" onSubmit={ask}>
           <label htmlFor="regulation-question">Pertanyaan berbasis corpus</label>
           <textarea
@@ -239,6 +293,7 @@ export function RegulationLens() {
           />
           <div className="answer-actions">
             <small>{question.length}/500 karakter · maksimum 5 citation</small>
+            <button type="button" className="secondary-button" onClick={() => void shareQuestion()} disabled={question.trim().length < 8}>Salin pertanyaan</button>
             <button type="submit" disabled={running || question.trim().length < 8}>
               {running ? "Memeriksa evidence..." : "Jawab dengan bukti"}
             </button>
@@ -247,7 +302,6 @@ export function RegulationLens() {
 
         <div className="answer-output" aria-live="polite">
           {!answer && !message && <p className="empty-copy">Jawaban dan refusal akan muncul di sini.</p>}
-          {message && <p className="error-copy">{message}</p>}
           {answer && (
             <>
               <div className="answer-meta">
@@ -268,6 +322,7 @@ export function RegulationLens() {
         </div>
       </div>
 
+      <div className="evidence-workspace" hidden={activeTab !== "evidence"}>
       {answer?.citations.length ? (
         <div className="citation-grid" aria-label="Citation evidence">
           {answer.citations.map((citation) => (
@@ -286,7 +341,13 @@ export function RegulationLens() {
             </article>
           ))}
         </div>
-      ) : null}
+      ) : (
+        <EmptyState
+          eyebrow="Belum ada evidence"
+          title="Ajukan pertanyaan terlebih dahulu"
+          description="Citation, kutipan sumber, dan konteks pasal akan dikumpulkan di area ini."
+        />
+      )}
 
       {context && (
         <aside className="context-viewer" aria-labelledby="context-title">
@@ -306,8 +367,9 @@ export function RegulationLens() {
           ))}
         </aside>
       )}
+      </div>
 
-      <div className="version-compare">
+      <div className="version-compare" hidden={activeTab !== "compare"}>
         <div>
           <p className="kicker">Structured version comparison</p>
           <h3>Perubahan hanya diringkas jika teks sumber tersedia.</h3>
@@ -357,6 +419,8 @@ export function RegulationLens() {
           </div>
         )}
       </div>
+      {running && <div className="analysis-progress" role="status"><i /><span>Menelusuri corpus dan memeriksa evidence…</span></div>}
+      <WorkspaceToast message={message} tone={message?.toLowerCase().includes("tidak dapat") ? "error" : "info"} onDismiss={() => setMessage(null)} />
     </section>
   );
 }

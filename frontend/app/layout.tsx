@@ -13,6 +13,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="id" data-scroll-behavior="smooth">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "try{document.documentElement.dataset.theme=localStorage.getItem('nusa-intel-theme')||'day'}catch(e){}",
+          }}
+        />
+      </head>
       <body>
         <SiteHeader />
         {children}

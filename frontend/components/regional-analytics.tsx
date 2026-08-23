@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { EmptyState, WorkspaceSkeleton, WorkspaceTabs, WorkspaceToast } from "./workspace-ui";
+
 type ViewState = "loading" | "ready" | "empty" | "error";
+type AnalyticsTab = "map" | "similarity" | "cluster" | "methodology";
 
 interface Indicator {
   code: string;
@@ -162,6 +165,23 @@ function valueBand(value: number | null, breaks: number[]): number {
   return band === -1 ? 4 : band;
 }
 
+function storedRegionalConfig(): { selected?: string[]; target?: string; year?: number } {
+  try {
+    const value = window.localStorage.getItem("nusa-intel-regional-config");
+    if (!value) return {};
+    const parsed = JSON.parse(value) as Record<string, unknown>;
+    return {
+      selected: Array.isArray(parsed.selected)
+        ? parsed.selected.filter((item): item is string => typeof item === "string")
+        : undefined,
+      target: typeof parsed.target === "string" ? parsed.target : undefined,
+      year: typeof parsed.year === "number" && Number.isFinite(parsed.year) ? parsed.year : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
 export function RegionalAnalytics() {
   const [state, setState] = useState<ViewState>("loading");
   const [indicators, setIndicators] = useState<Indicator[]>([]);
@@ -172,6 +192,8 @@ export function RegionalAnalytics() {
   const [report, setReport] = useState<AnalyticsReport | null>(null);
   const [running, setRunning] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [configOpen, setConfigOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState<AnalyticsTab>("map");
 
   useEffect(() => {
     let active = true;
@@ -189,8 +211,18 @@ export function RegionalAnalytics() {
         }
         const available = new Set(indicatorPayload.items.map((item) => item.code));
         const defaults = preferredIndicators.filter((code) => available.has(code));
-        setSelected(defaults.length >= 2 ? defaults : indicatorPayload.items.slice(0, 3).map((item) => item.code));
-        setTarget(regionPayload.items.some((item) => item.code === "1100") ? "1100" : regionPayload.items[0].code);
+        const params = new URLSearchParams(window.location.search);
+        const storedConfig = storedRegionalConfig();
+        const requestedIndicators = (params.get("indicators")?.split(",") ?? storedConfig.selected ?? [])
+          .filter((code) => available.has(code));
+        const nextSelected = requestedIndicators.length >= 2
+          ? requestedIndicators.slice(0, 6)
+          : (defaults.length >= 2 ? defaults : indicatorPayload.items.slice(0, 3).map((item) => item.code));
+        const availableRegions = new Set(regionPayload.items.map((item) => item.code));
+        const requestedTarget = params.get("target") ?? storedConfig.target ?? "1100";
+        setSelected(nextSelected);
+        setTarget(availableRegions.has(requestedTarget) ? requestedTarget : regionPayload.items[0].code);
+        setYear(Number(params.get("year") ?? storedConfig.year ?? 2024));
         setState("ready");
       })
       .catch(() => active && setState("error"));
@@ -199,6 +231,13 @@ export function RegionalAnalytics() {
 
   const years = useMemo(() => commonYears(selected, indicators), [selected, indicators]);
   const activeYear = years.includes(year) ? year : (years[0] ?? 0);
+  useEffect(() => {
+    if (state !== "ready" || selected.length < 2 || !target || !activeYear) return;
+    window.localStorage.setItem(
+      "nusa-intel-regional-config",
+      JSON.stringify({ selected, target, year: activeYear }),
+    );
+  }, [activeYear, selected, state, target]);
   const mapRows = useMemo(
     () => report?.map.values.map((row) => ({ ...row, tile: tilePositions[row.region_code] })) ?? [],
     [report],
@@ -233,6 +272,9 @@ export function RegionalAnalytics() {
         }),
       });
       setReport(next);
+      setActiveTab("map");
+      setConfigOpen(false);
+      setMessage("Laporan regional selesai dan siap dieksplorasi.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Analisis regional gagal.");
     } finally {
@@ -248,13 +290,29 @@ export function RegionalAnalytics() {
     link.download = `nusa-intel-regional-${target}-${activeYear}.json`;
     link.click();
     URL.revokeObjectURL(link.href);
+    setMessage("Laporan regional berhasil diunduh.");
+  }
+
+  async function shareConfiguration() {
+    const query = new URLSearchParams({
+      target,
+      year: String(activeYear),
+      indicators: selected.join(","),
+    });
+    window.history.replaceState(null, "", `${window.location.pathname}?${query}`);
+    try {
+      await navigator.clipboard?.writeText(window.location.href);
+      setMessage("Tautan konfigurasi regional disalin.");
+    } catch {
+      setMessage("Konfigurasi regional tersimpan pada URL.");
+    }
   }
 
   if (state !== "ready") {
     const copy = state === "loading" ? "Memuat Regional Analytics..." : state === "empty"
       ? "Data Gold belum cukup untuk analitik regional."
       : "Katalog analitik regional belum dapat dimuat.";
-    return <section className="analytics-shell analytics-state">{copy}</section>;
+    return <section className="analytics-shell analytics-state">{state === "loading" ? <WorkspaceSkeleton label="Memuat Regional Analytics" /> : copy}</section>;
   }
 
   return (
@@ -269,12 +327,20 @@ export function RegionalAnalytics() {
           </p>
         </div>
         <div className="scenario-actions no-print">
+          <button className="secondary-button" type="button" onClick={() => void shareConfiguration()}>Salin konfigurasi</button>
           <button className="secondary-button" type="button" disabled={!report} onClick={downloadReport}>Unduh JSON</button>
           <button className="secondary-button" type="button" disabled={!report} onClick={() => window.print()}>Cetak laporan</button>
         </div>
       </header>
 
-      <div className="analytics-config no-print">
+      <div className="workspace-config-toggle no-print">
+        <div><span>Konfigurasi aktif</span><strong>{selected.length} indikator · {regions.find((item) => item.code === target)?.name} · {activeYear}</strong></div>
+        <button type="button" onClick={() => setConfigOpen((current) => !current)} aria-expanded={configOpen}>
+          {configOpen ? "Sembunyikan konfigurasi" : "Ubah konfigurasi"}
+        </button>
+      </div>
+
+      <div className="analytics-config no-print" hidden={!configOpen}>
         <fieldset>
           <legend>Fitur pembanding (2-6)</legend>
           <div className="analytics-feature-list">
@@ -299,11 +365,14 @@ export function RegionalAnalytics() {
         <button className="primary-button" type="button" disabled={running || selected.length < 2 || !activeYear} onClick={() => void runReport()}>
           {running ? "Menghitung..." : "Jalankan analisis"}
         </button>
-        {message && <p role="alert" className="analytics-message">{message}</p>}
       </div>
 
       {!report ? (
-        <div className="analytics-placeholder">Pilih provinsi acuan dan jalankan analisis untuk membuat laporan yang dapat direproduksi.</div>
+        <EmptyState
+          eyebrow="Siap dianalisis"
+          title="Pilih profil pembanding"
+          description="Tentukan provinsi acuan, periode, dan sedikitnya dua indikator untuk membuat laporan yang dapat direproduksi."
+        />
       ) : (
         <div className="analytics-report">
           <section className="analytics-evidence">
@@ -313,7 +382,19 @@ export function RegionalAnalytics() {
             <div><span>Cakupan</span><strong>{report.similarity.selected_features.length} fitur / {38 - report.similarity.excluded_regions.length} provinsi</strong></div>
           </section>
 
-          <section className="analytics-panel map-panel" aria-labelledby="map-title">
+          <WorkspaceTabs
+            label="Hasil Regional Analytics"
+            active={activeTab}
+            onChange={setActiveTab}
+            tabs={[
+              { id: "map", label: "Peta", count: mapRows.length },
+              { id: "similarity", label: "Similarity", count: report.similarity.results.length },
+              { id: "cluster", label: "Cluster", count: report.clustering.clusters.length },
+              { id: "methodology", label: "Metodologi", count: report.citations.length },
+            ]}
+          />
+
+          <section className="analytics-panel map-panel" aria-labelledby="map-title" hidden={activeTab !== "map"}>
             <div className="result-heading"><div><p className="kicker">Schematic choropleth</p><h3 id="map-title">{report.map.indicator_name}</h3></div><span>{activeYear}</span></div>
             <p className="map-disclaimer">{report.map.disclaimer}</p>
             <div className="tile-map" aria-label={`Peta tile ${report.map.indicator_name}`}>
@@ -336,14 +417,14 @@ export function RegionalAnalytics() {
             </div>
             <details className="map-table">
               <summary>Alternatif tabel aksesibel (38 provinsi)</summary>
-              <div className="table-scroll" tabIndex={0} aria-label="Tabel nilai peta dapat digulir"><table><caption>Nilai yang sama dengan peta tile.</caption><thead><tr><th>Provinsi</th><th>Nilai</th><th>Unit</th></tr></thead><tbody>
-                {mapRows.map((row) => <tr key={row.region_code}><th scope="row">{row.region_name}</th><td>{formatNumber(row.value)}</td><td>{report.map.unit}</td></tr>)}
+              <div className="table-scroll" tabIndex={0} aria-label="Tabel nilai peta dapat digulir"><table className="responsive-table"><caption>Nilai yang sama dengan peta tile.</caption><thead><tr><th>Provinsi</th><th>Nilai</th><th>Unit</th></tr></thead><tbody>
+                {mapRows.map((row) => <tr key={row.region_code}><th scope="row">{row.region_name}</th><td data-label="Nilai">{formatNumber(row.value)}</td><td data-label="Unit">{report.map.unit}</td></tr>)}
               </tbody></table></div>
             </details>
           </section>
 
-          <div className="analytics-columns">
-            <section className="analytics-panel">
+          <div className="analytics-columns analytics-columns-focus" hidden={activeTab !== "similarity" && activeTab !== "cluster"}>
+            <section className="analytics-panel" hidden={activeTab !== "similarity"}>
               <div className="result-heading"><div><p className="kicker">Distance search</p><h3>Wilayah paling mirip</h3></div></div>
               <ol className="similarity-list">
                 {report.similarity.results.map((row) => (
@@ -356,7 +437,7 @@ export function RegionalAnalytics() {
               <Link className="detail-link" href={`/regions/${target}?year=${activeYear}`}>Buka detail {report.target_region.region_name}</Link>
             </section>
 
-            <section className="analytics-panel">
+            <section className="analytics-panel" hidden={activeTab !== "cluster"}>
               <div className="result-heading"><div><p className="kicker">Validation evidence</p><h3>Cluster regional</h3></div></div>
               {!report.clustering.publishable ? <p className="withheld-result">Keanggotaan cluster tidak ditampilkan. {report.clustering.validation_message}</p> : <>
                 <p className="cluster-summary">Model terpilih: k={report.clustering.chosen_k}. Label bersifat deskriptif dan non-normatif.</p>
@@ -368,7 +449,7 @@ export function RegionalAnalytics() {
             </section>
           </div>
 
-          <section className="analytics-panel methodology-panel">
+          <section className="analytics-panel methodology-panel" hidden={activeTab !== "methodology"}>
             <div className="result-heading"><div><p className="kicker">Audit trail</p><h3>Metodologi, sumber, dan batas penggunaan</h3></div><span>{report.methodology_version}</span></div>
             <div className="methodology-grid">
               <div><h4>Sumber</h4><ul>{report.citations.map((citation) => <li key={citation.indicator_code}><a href={citation.source.url} target="_blank" rel="noreferrer">{citation.indicator_name}</a> — {citation.unit}; periode {citation.reference_period}; versi <code>{citation.dataset_version.version_id}</code></li>)}</ul></div>
@@ -377,6 +458,8 @@ export function RegionalAnalytics() {
           </section>
         </div>
       )}
+      {running && <div className="analysis-progress" role="status"><i /><span>Menyusun similarity, cluster, dan peta…</span></div>}
+      <WorkspaceToast message={message} tone={message?.toLowerCase().includes("gagal") ? "error" : "success"} onDismiss={() => setMessage(null)} />
     </section>
   );
 }

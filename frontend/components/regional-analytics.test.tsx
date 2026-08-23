@@ -76,14 +76,16 @@ describe("RegionalAnalytics", () => {
     expect(screen.getByRole("button", { name: "ACEH, 1 Persen" })).toHaveAttribute("data-band", "0");
     expect(screen.getByRole("button", { name: "PROVINSI 38, Tidak tersedia Persen" })).toHaveAttribute("data-band", "-1");
     expect(screen.getByText("Alternatif tabel aksesibel (38 provinsi)")).toBeInTheDocument();
-    expect(screen.getByText("Evidence seluruh kandidat k.")).toBeInTheDocument();
-    expect(screen.getByText(/Relatif lebih tinggi pada HDI/)).toBeInTheDocument();
-    expect(screen.queryByText(/terbaik|terburuk|tertinggal/i)).not.toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /PROVINSI 2/ })[0]).toHaveAttribute("href", "/regions/1200?year=2024");
-
     const table = screen.getByText("Nilai yang sama dengan peta tile.").closest("table");
     expect(table).not.toBeNull();
     expect(within(table!).getAllByRole("row")).toHaveLength(39);
+    fireEvent.click(screen.getByRole("tab", { name: /Similarity/ }));
+    expect(screen.getAllByRole("link", { name: /PROVINSI 2/ })[0]).toHaveAttribute("href", "/regions/1200?year=2024");
+    fireEvent.click(screen.getByRole("tab", { name: /Cluster/ }));
+    expect(screen.getByText("Evidence seluruh kandidat k.")).toBeInTheDocument();
+    expect(screen.getByText(/Relatif lebih tinggi pada HDI/)).toBeInTheDocument();
+    expect(screen.queryByText(/terbaik|terburuk|tertinggal/i)).not.toBeInTheDocument();
+
   });
 
   it("does not expose memberships when validation is weak", async () => {
@@ -106,6 +108,7 @@ describe("RegionalAnalytics", () => {
 
     render(<RegionalAnalytics />);
     fireEvent.click(await screen.findByRole("button", { name: "Jalankan analisis" }));
+    fireEvent.click(await screen.findByRole("tab", { name: /Cluster/ }));
     expect(await screen.findByText(/Keanggotaan cluster tidak ditampilkan/)).toBeInTheDocument();
     expect(screen.queryByText("Cluster 0")).not.toBeInTheDocument();
   });
