@@ -50,12 +50,12 @@ export function RegionalDetail({ code, year }: { code: string; year: number }) {
     return () => { active = false; };
   }, [code, year]);
 
-  if (error) return <main className="detail-page"><p role="alert">{error}</p><Link href="/#regional-analytics">Kembali ke analitik</Link></main>;
+  if (error) return <main className="detail-page"><p role="alert">{error}</p><Link href="/regional-analytics">Kembali ke analitik</Link></main>;
   if (!detail) return <main className="detail-page">Memuat bukti regional...</main>;
 
   return (
     <main className="detail-page">
-      <nav aria-label="Breadcrumb"><Link href="/#regional-analytics">NusaIntel / Regional Analytics</Link></nav>
+      <nav aria-label="Breadcrumb"><Link href="/regional-analytics">NusaIntel / Regional Analytics</Link></nav>
       <header>
         <p className="kicker">Regional evidence / {detail.year}</p>
         <h1>{detail.region_name}</h1>

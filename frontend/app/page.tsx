@@ -1,86 +1,114 @@
-import { ControlTower } from "@/components/control-tower";
-import { OpportunityEngine } from "@/components/opportunity-engine";
-import { RegionalAnalytics } from "@/components/regional-analytics";
-import { RegulationLens } from "@/components/regulation-lens";
+import Link from "next/link";
+
+import { DataScene } from "@/components/data-scene";
+import { LegacyHashRedirect } from "@/components/legacy-hash-redirect";
 import { SystemStatus } from "@/components/system-status";
 
-const foundations = [
+const products = [
   {
-    eyebrow: "01 / Trust",
+    number: "01",
+    eyebrow: "Trust",
     title: "Data Reliability Control Tower",
     description: "Pantau freshness, kontrak, lineage, dan insiden sebelum data dipublikasikan.",
+    href: "/control-tower",
+    metric: "21 dataset",
+    tone: "teal",
   },
   {
-    eyebrow: "02 / Compare",
+    number: "02",
+    eyebrow: "Compare",
     title: "Regional Opportunity Engine",
-    description: "Bandingkan provinsi dengan skor yang transparan, dapat diuji, dan sensitif konteks.",
+    description: "Bangun ranking provinsi dengan bobot, coverage, dan asumsi yang dapat diaudit.",
+    href: "/opportunity",
+    metric: "38 provinsi",
+    tone: "coral",
   },
   {
-    eyebrow: "03 / Understand",
+    number: "03",
+    eyebrow: "Discover",
+    title: "Regional Analytics",
+    description: "Temukan wilayah serupa, cluster tervalidasi, dan bukti pembentuk profilnya.",
+    href: "/regional-analytics",
+    metric: "Analisis spasial",
+    tone: "gold",
+  },
+  {
+    number: "04",
+    eyebrow: "Understand",
     title: "RegulasiLens ID",
     description: "Telusuri regulasi berbasis versi dengan jawaban yang selalu kembali ke sumber.",
+    href: "/regulations",
+    metric: "3 dokumen resmi",
+    tone: "mint",
   },
 ];
 
 export default function Home() {
   return (
-    <main>
-      <section className="hero">
-        <nav aria-label="Navigasi utama">
-          <a className="brand" href="#top" aria-label="NusaIntel beranda">
-            <span className="brand-mark">NI</span>
-            <span>NusaIntel</span>
-          </a>
-          <div className="nav-links">
-            <a href="#control-tower">Control Tower</a>
-            <a href="#opportunity">Opportunity Engine</a>
-            <a href="#regional-analytics">Regional Analytics</a>
-            <a href="#regulasilens">RegulasiLens</a>
-            <span className="phase-label">Release 0.6 / Phase 9</span>
-          </div>
-        </nav>
-
-        <div className="hero-grid" id="top">
-          <div>
-            <p className="kicker">Evidence-first intelligence for Indonesia</p>
-            <h1>Keputusan regional dimulai dari data yang dapat dipercaya.</h1>
-            <p className="lede">
-              NusaIntel menghubungkan kualitas data, analisis peluang daerah, dan penelusuran
-              regulasi dalam satu sistem yang transparan.
-            </p>
+    <main className="home-page">
+      <LegacyHashRedirect />
+      <section className="landing-hero" aria-labelledby="home-title">
+        <div className="landing-copy">
+          <p className="kicker">Evidence-first intelligence for Indonesia</p>
+          <h1 id="home-title">Dari data publik menjadi keputusan yang bisa dibuktikan.</h1>
+          <p className="lede">
+            Empat ruang kerja, satu rantai bukti. Pilih modul yang Anda perlukan tanpa harus
+            menelusuri satu halaman yang panjang.
+          </p>
+          <div className="landing-actions">
+            <Link className="landing-primary" href="/control-tower">Mulai dari kualitas data</Link>
+            <Link className="landing-secondary" href="/opportunity">Buka opportunity engine</Link>
           </div>
           <SystemStatus />
         </div>
+        <DataScene />
       </section>
 
-      <section className="foundation" aria-labelledby="foundation-title">
-        <div className="section-heading">
-          <p className="kicker">Product foundation</p>
-          <h2 id="foundation-title">Tiga lapisan, satu rantai bukti.</h2>
+      <section className="module-launchpad" aria-labelledby="modules-title">
+        <div className="launchpad-heading">
+          <div>
+            <p className="kicker">Workspace</p>
+            <h2 id="modules-title">Satu tujuan per halaman.</h2>
+          </div>
+          <p>
+            Navigasi kini mempertahankan konteks setiap alat, sementara halaman beranda berfungsi
+            sebagai pintu masuk—bukan tumpukan seluruh dashboard.
+          </p>
         </div>
-        <div className="card-grid">
-          {foundations.map((item) => (
-            <article className="product-card" key={item.title}>
-              <p className="card-eyebrow">{item.eyebrow}</p>
-              <h3>{item.title}</h3>
-              <p>{item.description}</p>
-            </article>
+
+        <div className="module-card-grid">
+          {products.map((product) => (
+            <Link
+              className="module-card"
+              data-tone={product.tone}
+              href={product.href}
+              key={product.href}
+            >
+              <span className="module-number">{product.number}</span>
+              <span className="module-card-layer" aria-hidden="true" />
+              <span className="module-card-content">
+                <span className="card-eyebrow">{product.eyebrow}</span>
+                <strong>{product.title}</strong>
+                <span>{product.description}</span>
+                <span className="module-card-footer">
+                  <small>{product.metric}</small>
+                  <b aria-hidden="true">↗</b>
+                </span>
+              </span>
+            </Link>
           ))}
         </div>
       </section>
 
-      <ControlTower />
-
-      <OpportunityEngine />
-
-      <RegionalAnalytics />
-
-      <RegulationLens />
-
-      <footer>
-        <span>NusaIntel © 2026</span>
-        <span>Data publik. Metodologi terbuka.</span>
-      </footer>
+      <section className="evidence-strip" aria-label="Alur kerja NusaIntel">
+        <span>01 · Observe</span>
+        <i aria-hidden="true" />
+        <span>02 · Validate</span>
+        <i aria-hidden="true" />
+        <span>03 · Compare</span>
+        <i aria-hidden="true" />
+        <span>04 · Decide</span>
+      </section>
     </main>
   );
 }
