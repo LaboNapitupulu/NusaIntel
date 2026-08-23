@@ -88,7 +88,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("grounded answer remains usable without horizontal overflow", async ({ page }) => {
-  await page.goto("/#regulasilens");
+  await page.goto("/regulations");
   await expect(page.getByRole("heading", { name: /Jawaban hukum berhenti/ })).toBeVisible();
   await expect(page.getByText(/UU 27\/2022/)).toBeVisible();
 

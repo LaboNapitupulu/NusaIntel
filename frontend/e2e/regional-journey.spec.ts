@@ -164,7 +164,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("regional report is usable, responsive, and has no serious accessibility violations", async ({ page }) => {
-  await page.goto("/#regional-analytics");
+  await page.goto("/regional-analytics");
   await expect(page.getByRole("heading", { name: /Temukan kemiripan/ })).toBeVisible();
   await page.getByRole("button", { name: "Jalankan analisis" }).click();
 
@@ -191,7 +191,7 @@ test("regional report is usable, responsive, and has no serious accessibility vi
 });
 
 test("regional report links to a source-aware regional detail page", async ({ page }) => {
-  await page.goto("/#regional-analytics");
+  await page.goto("/regional-analytics");
   await page.getByRole("button", { name: "Jalankan analisis" }).click();
   await page.getByRole("link", { name: "Buka detail ACEH" }).click();
 
