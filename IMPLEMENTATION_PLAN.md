@@ -675,6 +675,40 @@ Baseline methodology:
 - [x] Each answer can open every cited source section.
 - [x] Limitations are visible in product and documentation.
 
+## 15.1 Phase 10 — Public beta hardening
+
+**Goal:** Make the merged beta safe to operate publicly without claiming a deployment that
+does not yet exist.
+
+### Operational controls
+
+- [x] Separate process liveness from dependency readiness.
+- [x] Enforce explicit production HTTPS origins and trusted hosts.
+- [x] Add security and no-store response headers.
+- [x] Bound grounded-answer request rate per direct client in each API process.
+- [x] Bound rate-limit memory and return `429`, `Retry-After`, and visible quota headers.
+- [x] Keep edge rate limiting mandatory for multi-instance/public deployments.
+
+### Deployment preparation
+
+- [x] Provide a non-secret production environment template.
+- [x] Add a fail-closed production configuration preflight.
+- [x] Route container readiness to the dependency-aware endpoint.
+- [x] Document TLS, private database, migration, backup, rollback, and key-rotation gates.
+- [ ] Select the hosting provider, public domains, owner, budget, RPO, and RTO.
+- [ ] Deploy and run the post-deploy smoke against the real public endpoints.
+
+### Exit gate
+
+- [x] Full local release verification passes.
+- [ ] Hosted release verification passes.
+- [x] Grounded-answer benchmark remains above every Phase 9 threshold.
+- [x] No secret is committed or printed by release commands.
+- [x] Production preflight rejects unsafe configuration and accepts the reviewed template.
+
+The final two deployment items require an explicit infrastructure decision and credentials;
+they are not inferred from local readiness.
+
 ## 16. Test strategy
 
 ### 16.1 Unit tests

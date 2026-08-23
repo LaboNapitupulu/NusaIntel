@@ -22,8 +22,26 @@ class HealthResponse(BaseModel):
     dependencies: dict[str, DependencyStatus]
 
 
-@router.get("/health", response_model=HealthResponse)
-async def health(request: Request) -> JSONResponse:
+class LivenessResponse(BaseModel):
+    status: Literal["alive"]
+    service: str
+    version: str
+    environment: str
+    timestamp: datetime
+
+
+@router.get("/live", response_model=LivenessResponse)
+async def live(request: Request) -> LivenessResponse:
+    return LivenessResponse(
+        status="alive",
+        service=request.app.state.settings.app_name,
+        version=request.app.version,
+        environment=request.app.state.settings.app_env,
+        timestamp=datetime.now(UTC),
+    )
+
+
+async def _readiness(request: Request) -> JSONResponse:
     database_status: Literal["ready", "unavailable"] = "ready"
     try:
         await request.app.state.database_probe()
@@ -41,3 +59,13 @@ async def health(request: Request) -> JSONResponse:
     return JSONResponse(
         status_code=200 if is_healthy else 503, content=body.model_dump(mode="json")
     )
+
+
+@router.get("/ready", response_model=HealthResponse)
+async def ready(request: Request) -> JSONResponse:
+    return await _readiness(request)
+
+
+@router.get("/health", response_model=HealthResponse)
+async def health(request: Request) -> JSONResponse:
+    return await _readiness(request)

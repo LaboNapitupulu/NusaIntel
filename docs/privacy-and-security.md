@@ -39,6 +39,12 @@ fixtures, reports, screenshots, or Git history.
   an upstream access layer before public internet exposure.
 - Production deployments should terminate TLS at a trusted proxy, restrict PostgreSQL to a
   private network, enforce request/body limits, and add rate limiting at the edge.
+- Production configuration rejects wildcard/non-HTTPS browser origins and wildcard or
+  local-only host allowlists. The API emits `nosniff`, frame-denial, referrer, permissions,
+  HSTS, and no-store headers where applicable.
+- Grounded answers have a bounded per-process, per-direct-peer request window in addition to
+  concurrency and timeout guards. This local limiter is defense in depth and does not replace
+  distributed edge enforcement across replicas.
 
 ## Retention and deletion
 

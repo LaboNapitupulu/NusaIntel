@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from typing import Literal, Self
+from urllib.parse import urlsplit
 
 from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -19,6 +20,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     database_url: str | None = None
     cors_origins: list[str] = ["http://localhost:3000"]
+    allowed_hosts: list[str] = ["localhost", "127.0.0.1", "test", "testserver"]
     bps_api_key: SecretStr | None = None
     bps_base_url: str = "https://webapi.bps.go.id/v1/api"
     bps_timeout_seconds: float = Field(default=30.0, gt=0, le=120)
@@ -38,11 +40,41 @@ class Settings(BaseSettings):
     bps_schedule_interval_seconds: int = Field(default=86400, ge=300, le=604800)
     regulation_answer_timeout_seconds: float = Field(default=9.0, gt=0, le=10)
     regulation_maximum_concurrent_answers: int = Field(default=8, ge=1, le=64)
+    regulation_answer_rate_limit_requests: int = Field(default=10, ge=1, le=1000)
+    regulation_answer_rate_limit_window_seconds: int = Field(default=60, ge=1, le=3600)
 
     @model_validator(mode="after")
     def validate_production_configuration(self) -> Self:
         if self.app_env == "production" and not self.database_url:
             raise ValueError("DATABASE_URL is required when APP_ENV=production")
+        if self.app_env == "production":
+            parsed_origins = [urlsplit(origin) for origin in self.cors_origins]
+            if not parsed_origins or any(
+                parsed.scheme != "https"
+                or not parsed.hostname
+                or parsed.username is not None
+                or parsed.password is not None
+                or parsed.path not in {"", "/"}
+                or parsed.query
+                or parsed.fragment
+                for parsed in parsed_origins
+            ):
+                raise ValueError("Production CORS_ORIGINS must contain explicit HTTPS origins only")
+            if (
+                not self.allowed_hosts
+                or "*" in self.allowed_hosts
+                or any(
+                    not host.strip() or "://" in host or "/" in host for host in self.allowed_hosts
+                )
+            ):
+                raise ValueError("Production ALLOWED_HOSTS must be explicit and cannot use '*'")
+            public_hosts = {
+                host
+                for host in self.allowed_hosts
+                if host not in {"localhost", "127.0.0.1", "test", "testserver"}
+            }
+            if not public_hosts:
+                raise ValueError("Production ALLOWED_HOSTS must include the public API hostname")
         if self.bps_schedule_enabled and (
             self.bps_api_key is None or not self.bps_api_key.get_secret_value().strip()
         ):

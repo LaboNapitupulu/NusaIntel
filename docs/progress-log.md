@@ -354,3 +354,18 @@
   refusal accuracy 0.95, fabricated citation rate 0, version accuracy 0.90, and p95 0.0242s.
 - Component, API, grounding, comparison, desktop/mobile E2E, accessibility, and production
   build checks cover the critical answer/refusal/context journeys.
+
+## Phase 10 — 2026-08-23
+
+### Public beta hardening
+
+- Split process liveness from database-aware readiness while retaining `/health` compatibility.
+- Added production fail-closed HTTPS CORS and trusted-host validation, security/no-store
+  headers, and bounded per-process answer rate limiting with a machine-readable retry contract.
+- Added a production environment template, configuration preflight, container readiness
+  routing, deployment/rollback checklist, and explicit edge-rate-limit boundary.
+- A real public deployment remains gated on provider/domain/owner/budget/RPO/RTO selection and
+  credential rotation; local readiness is not represented as a deployment.
+- Local release verification passes with 92 backend tests, 88.83% critical coverage, 10
+  component tests, production build, 6 E2E journeys, clean dependency audits, container probe
+  smoke, and an unchanged passing 100-question grounded-answer benchmark.

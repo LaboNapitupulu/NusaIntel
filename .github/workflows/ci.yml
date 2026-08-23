@@ -44,6 +44,13 @@ jobs:
       - run: ruff check app tests migrations
       - run: ruff format --check app tests migrations
       - run: mypy app
+      - name: Validate public-beta production configuration contract
+        env:
+          APP_ENV: production
+          CORS_ORIGINS: '["https://app.example.test"]'
+          ALLOWED_HOSTS: '["api.example.test","localhost"]'
+          NEXT_PUBLIC_API_BASE_URL: https://api.example.test
+        run: python ../scripts/verify_public_beta_config.py
       - run: alembic upgrade head
       - run: alembic current
       - name: Test critical business logic with branch coverage gate

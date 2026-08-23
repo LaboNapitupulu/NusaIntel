@@ -1,6 +1,6 @@
 # Phase 9 status — Grounded answers and RegulasiLens beta
 
-- Status: Complete — local exit gate passed
+- Status: Complete — merged through PR #23; all hosted checks passed
 - Date completed: 2026-08-23
 - Branch: `codex/phase-9-grounded-answers`
 - Baseline: Phase 8 merge commit on `main`
@@ -21,5 +21,5 @@ Recall@10 0.8917; citation correctness and coverage 1.0; refusal accuracy 0.95; 
 citations 0%; version-sensitive accuracy 0.90; openable citations 1.0; p95 0.0242 seconds.
 
 Known expected-section misses remain visible in the benchmark artifact and documentation.
-Phase 9 is ready for hosted CI and review; it must not be merged if CI weakens any release
-gate or if a citation cannot open its stored source context.
+Phase 9 was merged to `main` as commit `6bd5c87`. Future changes must preserve every release
+gate and keep all cited source context openable.

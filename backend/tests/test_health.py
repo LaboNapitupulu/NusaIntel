@@ -25,6 +25,13 @@ async def get_health(probe: DatabaseProbe, request_id: str | None = None):  # ty
         return await client.get("/api/v1/health", headers=headers)
 
 
+async def get_system_endpoint(probe: DatabaseProbe, path: str):  # type: ignore[no-untyped-def]
+    app = create_app(Settings(app_env="test"), database_probe=probe)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        return await client.get(path)
+
+
 @pytest.mark.asyncio
 async def test_health_is_healthy_when_database_is_ready() -> None:
     response = await get_health(healthy_probe, request_id="test-correlation-id")
@@ -42,3 +49,22 @@ async def test_health_is_degraded_when_database_is_unavailable() -> None:
     assert response.status_code == 503
     assert response.json()["status"] == "degraded"
     assert response.json()["dependencies"]["database"]["status"] == "unavailable"
+
+
+@pytest.mark.asyncio
+async def test_liveness_does_not_depend_on_database_readiness() -> None:
+    response = await get_system_endpoint(unavailable_probe, "/api/v1/live")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "alive"
+    assert response.json()["version"] == "0.7.0"
+    assert response.headers["Cache-Control"] == "no-store"
+
+
+@pytest.mark.asyncio
+async def test_readiness_fails_closed_when_database_is_unavailable() -> None:
+    response = await get_system_endpoint(unavailable_probe, "/api/v1/ready")
+
+    assert response.status_code == 503
+    assert response.json()["status"] == "degraded"
+    assert response.headers["Cache-Control"] == "no-store"
