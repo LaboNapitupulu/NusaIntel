@@ -651,6 +651,13 @@ Liveness/readiness terpisah, trusted hosts, HTTPS-only production configuration,
 headers, application rate limit, deployment preflight, dan runbook rollback. Hosting provider,
 domain, budget, RPO, dan RTO tetap memerlukan keputusan deployment owner.
 
+### Release 0.8 — Deployment blueprint
+
+Production-only Compose, automatic HTTPS, private database/network boundaries, immutable
+candidate tags, public-edge route restrictions, dan machine-checked topology contract.
+Provisioning tetap ditahan sampai provider, domain, budget, owner, recovery targets, dan
+rotated credentials disetujui.
+
 ## 21. Open decisions
 
 Keputusan berikut harus diselesaikan melalui spike/ADR:
@@ -663,7 +670,7 @@ Keputusan berikut harus diselesaikan melalui spike/ADR:
 - Metode similarity dan clustering final.
 - Domain pertama RegulasiLens.
 - Embedding model, reranker, dan generation provider.
-- Strategi deployment portfolio dengan biaya minimum.
+- Provider/region deployment nyata, domain publik, budget ceiling, owner, RPO, dan RTO.
 
 ## 22. Definition of product success
 

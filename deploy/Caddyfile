@@ -1,0 +1,41 @@
+{
+	admin off
+}
+
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+}
+
+{$APP_DOMAIN} {
+	import security_headers
+	encode zstd gzip
+	log
+	reverse_proxy web:3000
+}
+
+{$API_DOMAIN} {
+	import security_headers
+	encode zstd gzip
+	log
+
+	request_body {
+		max_size 2MB
+	}
+
+	@administrative_mutation {
+		method POST PATCH PUT DELETE
+		path /api/v1/datasets/*/exceptions /api/v1/incidents/*
+	}
+	respond @administrative_mutation 404
+
+	@internal_schema path /api/docs* /api/openapi.json
+	respond @internal_schema 404
+
+	reverse_proxy api:8000
+}

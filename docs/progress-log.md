@@ -369,3 +369,16 @@
 - Local release verification passes with 92 backend tests, 88.83% critical coverage, 10
   component tests, production build, 6 E2E journeys, clean dependency audits, container probe
   smoke, and an unchanged passing 100-question grounded-answer benchmark.
+
+## Phase 11 — 2026-08-23
+
+### Provider-neutral deployment blueprint
+
+- Added a standalone production Compose topology with Caddy as the only port-published service;
+  PostgreSQL, API, worker, web, and migrations stay on private container networks.
+- Added automatic HTTPS, a public body-size ceiling, blocked administrative mutations/schema
+  routes, pinned edge image, commit-tagged application images, and hardened container defaults.
+- Added a secret-safe rendered-topology validator and hosted CI Caddy syntax gate.
+- Recorded provider/cost trade-offs and a concrete DNS, backup/restore, smoke, and rollback gate.
+- No infrastructure was purchased or exposed; provider, domain, budget, owner, RPO/RTO, and BPS
+  key rotation remain explicit go-live blockers.

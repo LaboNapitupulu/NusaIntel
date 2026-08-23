@@ -1,0 +1,176 @@
+name: nusa-intel-production
+
+x-backend-environment: &backend-environment
+  APP_ENV: production
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@db:5432/${POSTGRES_DB:-nusa_intel}
+  CORS_ORIGINS: '["https://${APP_DOMAIN:?APP_DOMAIN is required}"]'
+  ALLOWED_HOSTS: '["${API_DOMAIN:?API_DOMAIN is required}","localhost","127.0.0.1"]'
+  BPS_API_KEY: ${BPS_API_KEY:-}
+  BPS_SCHEDULE_ENABLED: ${BPS_SCHEDULE_ENABLED:-false}
+  BPS_SCHEDULE_INDICATOR: ${BPS_SCHEDULE_INDICATOR:-tpt}
+  BPS_SCHEDULE_INTERVAL_SECONDS: ${BPS_SCHEDULE_INTERVAL_SECONDS:-86400}
+  REGULATION_ANSWER_TIMEOUT_SECONDS: ${REGULATION_ANSWER_TIMEOUT_SECONDS:-9}
+  REGULATION_MAXIMUM_CONCURRENT_ANSWERS: ${REGULATION_MAXIMUM_CONCURRENT_ANSWERS:-8}
+  REGULATION_ANSWER_RATE_LIMIT_REQUESTS: ${REGULATION_ANSWER_RATE_LIMIT_REQUESTS:-10}
+  REGULATION_ANSWER_RATE_LIMIT_WINDOW_SECONDS: ${REGULATION_ANSWER_RATE_LIMIT_WINDOW_SECONDS:-60}
+
+x-backend-service: &backend-service
+  image: nusa-intel-api:${IMAGE_TAG:?IMAGE_TAG is required}
+  build:
+    context: ./backend
+  environment: *backend-environment
+  restart: unless-stopped
+  read_only: true
+  tmpfs:
+    - /tmp:size=64m,mode=1777
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-nusa_intel}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:?POSTGRES_USER is required} -d ${POSTGRES_DB:-nusa_intel}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - data
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  migrate:
+    <<: *backend-service
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - data
+    restart: "no"
+
+  api:
+    <<: *backend-service
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/ready', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    expose:
+      - "8000"
+    networks:
+      - edge
+      - data
+
+  worker:
+    <<: *backend-service
+    command: ["python", "-m", "app.worker"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - data
+      - egress
+
+  web:
+    image: nusa-intel-web:${IMAGE_TAG:?IMAGE_TAG is required}
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_BASE_URL: https://${API_DOMAIN:?API_DOMAIN is required}
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: https://${API_DOMAIN:?API_DOMAIN is required}
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    expose:
+      - "3000"
+    networks:
+      - edge
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  proxy:
+    image: caddy:2.11.4-alpine
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?APP_DOMAIN is required}
+      API_DOMAIN: ${API_DOMAIN:?API_DOMAIN is required}
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - edge
+      - egress
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+
+networks:
+  edge:
+    internal: true
+  data:
+    internal: true
+  egress: {}
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
