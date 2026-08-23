@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { DataScene } from "@/components/data-scene";
-import { LegacyHashRedirect } from "@/components/legacy-hash-redirect";
 import { SystemStatus } from "@/components/system-status";
 
 const products = [
@@ -46,7 +45,6 @@ const products = [
 export default function Home() {
   return (
     <main className="home-page">
-      <LegacyHashRedirect />
       <section className="landing-hero" aria-labelledby="home-title">
         <div className="landing-copy">
           <p className="kicker">Evidence-first intelligence for Indonesia</p>

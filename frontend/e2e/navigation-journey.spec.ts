@@ -21,6 +21,16 @@ test.beforeEach(async ({ page }) => {
   await mockShellApi(page);
 });
 
+test("legacy hashes remain on the landing page until a workspace is chosen", async ({ page }) => {
+  await page.goto("/#control-tower");
+
+  await expect(page).toHaveURL(/\/#control-tower$/);
+  await expect(
+    page.getByRole("heading", { name: "Dari data publik menjadi keputusan yang bisa dibuktikan." }),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Keadaan data, tanpa area abu-abu." })).toHaveCount(0);
+});
+
 test("launchpad exposes 3D workspace navigation without overflow", async ({ page }) => {
   await page.goto("/");
 
