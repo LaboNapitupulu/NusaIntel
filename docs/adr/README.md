@@ -10,6 +10,7 @@
 | [0006](0006-versioned-local-retrieval-baseline.md) | Accepted | Versioned deterministic hybrid retrieval before answer generation |
 | [0007](0007-evidence-extractive-grounded-answers.md) | Accepted | Evidence-extractive answers with fail-closed citation validation |
 | [0008](0008-public-beta-operational-boundaries.md) | Accepted | Layer application guardrails below a trusted public edge |
+| [0009](0009-single-host-public-beta-blueprint.md) | Accepted | Single-host Compose with Caddy as the only public service |
 
 New decisions use the next four-digit number and record context, decision, consequences,
 status, and date. Superseded records remain in history and link to their replacement.

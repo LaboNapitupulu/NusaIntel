@@ -337,6 +337,20 @@ adds security headers and a bounded per-process answer rate limiter; a public de
 requires TLS termination and distributed edge rate limiting. See
 `docs/public-beta-deployment.md` before exposing any port publicly.
 
+The repository also contains a standalone production candidate in `compose.production.yaml`.
+It places pinned Caddy in front of the web/API, publishes only 80/443, keeps PostgreSQL private,
+and requires commit-tagged application images. Validate its rendered isolation contract without
+printing values:
+
+```powershell
+docker compose --env-file .env.production -f compose.production.yaml config --format json |
+  .\backend\.venv\Scripts\python.exe .\scripts\verify_production_compose.py
+```
+
+Copy `.env.production.example` to the ignored `.env.production` only on the deployment host.
+The provider, domains, operator, budget, recovery objectives, backup evidence, and rotated BPS
+key remain mandatory go-live decisions.
+
 ## Repository layout
 
 ```text
@@ -347,6 +361,7 @@ docs/          Product, architecture, source, and progress evidence
 scripts/       Local configuration and verification helpers
 tests/         Cross-project source fixtures
 compose.yaml   Local PostgreSQL and application stack
+compose.production.yaml  Isolated single-host public-beta candidate
 ```
 
 ## License

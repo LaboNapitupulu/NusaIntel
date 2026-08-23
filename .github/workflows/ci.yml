@@ -114,4 +114,24 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: docker compose config --quiet
+      - name: Validate production Compose isolation contract
+        env:
+          APP_DOMAIN: app.example.test
+          API_DOMAIN: api.example.test
+          IMAGE_TAG: ${{ github.sha }}
+          POSTGRES_USER: nusa_intel
+          POSTGRES_PASSWORD: ci_only_url_safe_password_123456
+        run: >-
+          docker compose -f compose.production.yaml config --format json
+          | python3 scripts/verify_production_compose.py
+      - name: Validate production Caddy configuration
+        env:
+          APP_DOMAIN: app.example.test
+          API_DOMAIN: api.example.test
+          IMAGE_TAG: ${{ github.sha }}
+          POSTGRES_USER: nusa_intel
+          POSTGRES_PASSWORD: ci_only_url_safe_password_123456
+        run: >-
+          docker compose -f compose.production.yaml run --rm --no-deps proxy
+          caddy validate --config /etc/caddy/Caddyfile
       - run: docker compose build

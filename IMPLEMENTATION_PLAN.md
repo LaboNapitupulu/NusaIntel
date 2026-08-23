@@ -709,6 +709,44 @@ does not yet exist.
 The final two deployment items require an explicit infrastructure decision and credentials;
 they are not inferred from local readiness.
 
+## 15.2 Phase 11 — Deployment blueprint
+
+**Goal:** Turn the deployment gate into a reproducible production topology without provisioning
+paid infrastructure or weakening public-beta controls.
+
+### Production topology
+
+- [x] Add a standalone production Compose file; do not inherit local host-port exposure.
+- [x] Publish only the TLS reverse proxy on 80/TCP, 443/TCP, and 443/UDP.
+- [x] Keep PostgreSQL, API, worker, migrations, and web on private container networks.
+- [x] Give outbound access only to components that need BPS or ACME.
+- [x] Pin the edge image and require commit-derived application image tags.
+- [x] Persist PostgreSQL and certificate state.
+
+### Edge and container controls
+
+- [x] Enable automatic HTTPS and compression.
+- [x] Enforce a 2 MB public request-body ceiling.
+- [x] Deny public quality-exception and incident mutations.
+- [x] Hide interactive API schema endpoints at the public edge.
+- [x] Use read-only application roots, temporary filesystems, dropped capabilities, and
+  disabled privilege escalation.
+
+### Verification and operations
+
+- [x] Machine-check the rendered topology without printing environment values.
+- [x] Validate Caddy syntax in hosted CI.
+- [x] Document provider trade-offs, DNS prerequisites, backup, smoke, and rollback procedure.
+- [ ] Select provider/region, domains, owner, monthly ceiling, RPO, and RTO.
+- [ ] Rotate the BPS key and store the replacement only in the deployment secret boundary.
+- [ ] Provision, restore-test, deploy, and capture real HTTPS smoke evidence.
+
+### Exit gate
+
+- [x] Local rendered topology contract passes with non-secret candidate values.
+- [ ] Hosted CI passes on the candidate branch.
+- [ ] Real go-live blockers remain explicit rather than being recorded as completed.
+
 ## 16. Test strategy
 
 ### 16.1 Unit tests
@@ -894,7 +932,6 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 
 ## 22. Immediate next actions
 
-Phase 9 is complete on `codex/phase-9-grounded-answers` pending hosted CI and merge.
-The next milestone after merge is release hardening: improve the remaining expected-section
-misses, add another reviewed regulation version for live comparison, and prepare the public
-beta deployment without weakening the evidence-only contract.
+Phase 11 implements the provider-neutral deployment blueprint. After its hosted CI and merge,
+the next action is an owner decision for provider/region, domains, budget, RPO, and RTO,
+followed by BPS key rotation and a real restore/deploy/smoke run.
