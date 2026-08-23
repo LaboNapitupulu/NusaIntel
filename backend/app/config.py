@@ -36,6 +36,8 @@ class Settings(BaseSettings):
         "tpt",
     ] = "tpt"
     bps_schedule_interval_seconds: int = Field(default=86400, ge=300, le=604800)
+    regulation_answer_timeout_seconds: float = Field(default=9.0, gt=0, le=10)
+    regulation_maximum_concurrent_answers: int = Field(default=8, ge=1, le=64)
 
     @model_validator(mode="after")
     def validate_production_configuration(self) -> Self:

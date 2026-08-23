@@ -52,6 +52,11 @@ RegulasiLens retrieval chunks and indexes are also derived in memory from the cu
 published `document_versions` and `sections`. Their deterministic index/chunker/retriever
 versions are returned as provenance rather than persisted as legal facts.
 
+Grounded answers, citations, surrounding-context windows, and structured version diffs are
+also derived responses. Citations carry `document_id`, immutable `document_version_id`,
+member `section_ids`, heading, verbatim quote, official source URL/anchor, document status,
+and status-check date. They are validated against the exact retrieved evidence before return.
+
 ## RegulasiLens corpus
 
 | Table/model | Layer | Grain | Important fields and invariants |

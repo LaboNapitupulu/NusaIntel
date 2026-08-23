@@ -1,0 +1,362 @@
+"use client";
+
+import { FormEvent, useEffect, useState } from "react";
+
+interface Version {
+  id: string;
+  manifest_version: string;
+  retrieved_at: string;
+  parser_status: string;
+  section_count: number;
+  published: boolean;
+}
+
+interface Regulation {
+  document_id: string;
+  document_type: string;
+  number: string;
+  year: number;
+  title: string;
+  status: string;
+  status_checked_at: string;
+  source_page_url: string;
+  latest_version: Version | null;
+}
+
+interface Citation {
+  citation_id: string;
+  section_ids: string[];
+  document_id: string;
+  document_version_id: string;
+  document_title: string;
+  document_status: string;
+  heading: string;
+  quote: string;
+  source_url: string;
+  source_anchor: string;
+  status_checked_at: string | null;
+}
+
+interface Answer {
+  answerable: boolean;
+  answer: string;
+  confidence: "high" | "medium" | "low";
+  evidence_coverage: number;
+  refusal_reason: string | null;
+  citations: Citation[];
+  disclaimer: string;
+  pipeline_version: string;
+  provenance: {
+    corpus_version: string;
+    index_version: string;
+    retrieved_evidence_count: number;
+  };
+}
+
+interface SectionContext {
+  selected_section_id: string;
+  document_title: string;
+  document_status: string;
+  status_checked_at: string;
+  source_url: string;
+  sections: Array<{
+    section_id: string;
+    heading: string;
+    text: string;
+    source_anchor: string;
+  }>;
+}
+
+interface Comparison {
+  comparison_version: string;
+  counts: { added: number; removed: number; modified: number };
+  unchanged_count: number;
+  disclaimer: string;
+  changes: Array<{
+    change_type: "added" | "removed" | "modified";
+    heading: string;
+    summary: string;
+    base: { text: string; source_anchor: string } | null;
+    target: { text: string; source_anchor: string } | null;
+  }>;
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+
+async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, { cache: "no-store", ...init });
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(body?.detail ?? `Request failed: ${response.status}`);
+  }
+  return (await response.json()) as T;
+}
+
+function dateLabel(value: string | null | undefined): string {
+  if (!value) return "Tanggal belum tersedia";
+  return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(new Date(value));
+}
+
+export function RegulationLens() {
+  const [documents, setDocuments] = useState<Regulation[]>([]);
+  const [question, setQuestion] = useState("Apa hak akses dan salinan Data Pribadi?");
+  const [answer, setAnswer] = useState<Answer | null>(null);
+  const [context, setContext] = useState<SectionContext | null>(null);
+  const [documentId, setDocumentId] = useState("");
+  const [versions, setVersions] = useState<Version[]>([]);
+  const [baseVersion, setBaseVersion] = useState("");
+  const [targetVersion, setTargetVersion] = useState("");
+  const [comparison, setComparison] = useState<Comparison | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [running, setRunning] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void fetchJson<{ items: Regulation[] }>("/api/v1/regulations")
+      .then((payload) => {
+        if (!active) return;
+        setDocuments(payload.items);
+        setDocumentId(payload.items[0]?.document_id ?? "");
+      })
+      .catch(() => active && setMessage("Corpus regulasi belum dapat dimuat."))
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!documentId) return;
+    let active = true;
+    void fetchJson<{ items: Version[] }>(`/api/v1/regulations/${documentId}/versions`)
+      .then((payload) => {
+        if (!active) return;
+        setVersions(payload.items);
+        setBaseVersion(payload.items[1]?.id ?? "");
+        setTargetVersion(payload.items[0]?.id ?? "");
+        setComparison(null);
+      })
+      .catch(() => active && setVersions([]));
+    return () => {
+      active = false;
+    };
+  }, [documentId]);
+
+  async function ask(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (question.trim().length < 8) return;
+    setRunning(true);
+    setMessage(null);
+    setAnswer(null);
+    setContext(null);
+    try {
+      const result = await fetchJson<Answer>("/api/v1/regulations/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, maximum_citations: 5 }),
+      });
+      setAnswer(result);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Jawaban tidak dapat dibuat.");
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  async function openContext(citation: Citation) {
+    const sectionId = citation.section_ids[0];
+    if (!sectionId) return;
+    setMessage(null);
+    try {
+      const result = await fetchJson<SectionContext>(
+        `/api/v1/regulations/${citation.document_id}/sections/${sectionId}/context?` +
+          new URLSearchParams({ version_id: citation.document_version_id, before: "2", after: "2" }),
+      );
+      setContext(result);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Konteks citation tidak dapat dibuka.");
+    }
+  }
+
+  async function compare() {
+    if (!documentId || !baseVersion || !targetVersion || baseVersion === targetVersion) return;
+    setMessage(null);
+    try {
+      const query = new URLSearchParams({
+        document_id: documentId,
+        base_version_id: baseVersion,
+        target_version_id: targetVersion,
+      });
+      setComparison(await fetchJson<Comparison>(`/api/v1/regulations/compare?${query}`));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Versi tidak dapat dibandingkan.");
+    }
+  }
+
+  return (
+    <section className="regulation-shell" id="regulasilens" aria-labelledby="regulation-title">
+      <div className="regulation-header">
+        <div>
+          <p className="kicker">Release 0.6 / RegulasiLens beta</p>
+          <h2 id="regulation-title">Jawaban hukum berhenti ketika buktinya berhenti.</h2>
+          <p>
+            Setiap klaim berasal dari evidence retrieval, setiap citation dapat dibuka, dan pertanyaan
+            di luar corpus akan ditolak.
+          </p>
+        </div>
+        <div className="regulation-gate" aria-label="Grounding guarantees">
+          <strong>0%</strong>
+          <span>fabricated citation pada benchmark</span>
+          <small>evidence-extractive-id-v1</small>
+        </div>
+      </div>
+
+      <div className="regulation-catalog" aria-label="Corpus regulasi">
+        {loading && <p>Memuat corpus...</p>}
+        {!loading && !documents.length && <p>Belum ada dokumen terpublikasi.</p>}
+        {documents.map((document) => (
+          <article key={document.document_id}>
+            <span className="regulation-status">{document.status}</span>
+            <h3>{document.document_type} {document.number}/{document.year}</h3>
+            <p>{document.title}</p>
+            <small>
+              Status diperiksa {dateLabel(document.status_checked_at)} · corpus {document.latest_version?.manifest_version ?? "—"}
+            </small>
+          </article>
+        ))}
+      </div>
+
+      <div className="regulation-workspace">
+        <form className="answer-panel" onSubmit={ask}>
+          <label htmlFor="regulation-question">Pertanyaan berbasis corpus</label>
+          <textarea
+            id="regulation-question"
+            value={question}
+            minLength={8}
+            maxLength={500}
+            onChange={(event) => setQuestion(event.target.value)}
+          />
+          <div className="answer-actions">
+            <small>{question.length}/500 karakter · maksimum 5 citation</small>
+            <button type="submit" disabled={running || question.trim().length < 8}>
+              {running ? "Memeriksa evidence..." : "Jawab dengan bukti"}
+            </button>
+          </div>
+        </form>
+
+        <div className="answer-output" aria-live="polite">
+          {!answer && !message && <p className="empty-copy">Jawaban dan refusal akan muncul di sini.</p>}
+          {message && <p className="error-copy">{message}</p>}
+          {answer && (
+            <>
+              <div className="answer-meta">
+                <span>{answer.answerable ? "ANSWERABLE" : "REFUSED"}</span>
+                <span>confidence {answer.confidence}</span>
+                <span>coverage {Math.round(answer.evidence_coverage * 100)}%</span>
+              </div>
+              <div className={answer.answerable ? "grounded-answer" : "refusal-answer"}>
+                {answer.answer.split("\n").map((line) => <p key={line}>{line}</p>)}
+                {answer.refusal_reason && <small>{answer.refusal_reason}</small>}
+              </div>
+              <p className="regulation-disclaimer">{answer.disclaimer}</p>
+              <small className="provenance-line">
+                Corpus {answer.provenance.corpus_version} · index {answer.provenance.index_version}
+              </small>
+            </>
+          )}
+        </div>
+      </div>
+
+      {answer?.citations.length ? (
+        <div className="citation-grid" aria-label="Citation evidence">
+          {answer.citations.map((citation) => (
+            <article key={citation.citation_id}>
+              <div className="citation-heading">
+                <strong>[{citation.citation_id}] {citation.heading}</strong>
+                <span>{citation.document_status}</span>
+              </div>
+              <blockquote>{citation.quote}</blockquote>
+              <p>{citation.document_title}</p>
+              <small>Status diperiksa {dateLabel(citation.status_checked_at)}</small>
+              <div className="citation-actions">
+                <button type="button" onClick={() => void openContext(citation)}>Buka konteks</button>
+                <a href={citation.source_url} target="_blank" rel="noreferrer">Dokumen resmi</a>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
+
+      {context && (
+        <aside className="context-viewer" aria-labelledby="context-title">
+          <div className="context-heading">
+            <div>
+              <p className="kicker">Surrounding context</p>
+              <h3 id="context-title">{context.document_title}</h3>
+            </div>
+            <button type="button" onClick={() => setContext(null)}>Tutup konteks</button>
+          </div>
+          {context.sections.map((section) => (
+            <article className={section.section_id === context.selected_section_id ? "selected" : ""} key={section.section_id}>
+              <strong>{section.heading}</strong>
+              <p>{section.text}</p>
+              <small>{section.source_anchor}</small>
+            </article>
+          ))}
+        </aside>
+      )}
+
+      <div className="version-compare">
+        <div>
+          <p className="kicker">Structured version comparison</p>
+          <h3>Perubahan hanya diringkas jika teks sumber tersedia.</h3>
+        </div>
+        <div className="compare-controls">
+          <label>Dokumen
+            <select value={documentId} onChange={(event) => setDocumentId(event.target.value)}>
+              {documents.map((document) => <option key={document.document_id} value={document.document_id}>{document.document_id}</option>)}
+            </select>
+          </label>
+          <label>Versi dasar
+            <select value={baseVersion} onChange={(event) => setBaseVersion(event.target.value)}>
+              <option value="">Pilih versi</option>
+              {versions.map((version) => <option key={version.id} value={version.id}>{dateLabel(version.retrieved_at)}</option>)}
+            </select>
+          </label>
+          <label>Versi target
+            <select value={targetVersion} onChange={(event) => setTargetVersion(event.target.value)}>
+              <option value="">Pilih versi</option>
+              {versions.map((version) => <option key={version.id} value={version.id}>{dateLabel(version.retrieved_at)}</option>)}
+            </select>
+          </label>
+          <button type="button" onClick={() => void compare()} disabled={!baseVersion || !targetVersion || baseVersion === targetVersion}>
+            Bandingkan versi
+          </button>
+        </div>
+        {versions.length < 2 && <p className="empty-copy">Perbandingan aktif setelah sedikitnya dua versi dokumen tersimpan.</p>}
+        {comparison && (
+          <div className="comparison-result">
+            <div className="comparison-counts">
+              <span>{comparison.counts.added} ditambah</span>
+              <span>{comparison.counts.removed} dihapus</span>
+              <span>{comparison.counts.modified} diubah</span>
+              <span>{comparison.unchanged_count} tetap</span>
+            </div>
+            {comparison.changes.map((change, index) => (
+              <article key={`${change.heading}-${index}`}>
+                <strong>{change.change_type.toUpperCase()} · {change.heading}</strong>
+                <p>{change.summary}</p>
+                <div className="comparison-texts">
+                  <pre>{change.base?.text ?? "— tidak ada pada versi dasar —"}</pre>
+                  <pre>{change.target?.text ?? "— tidak ada pada versi target —"}</pre>
+                </div>
+              </article>
+            ))}
+            <p className="regulation-disclaimer">{comparison.disclaimer}</p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}

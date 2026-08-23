@@ -60,6 +60,32 @@ class StubCorpusService:
     async def retrieval_manifest(self, **_: Any) -> dict[str, Any]:
         return {"index_version": "index-v1", "chunk_count": 1}
 
+    async def answer(self, question: str, **_: Any) -> dict[str, Any]:
+        return {
+            "question": question,
+            "answerable": True,
+            "answer": "Hak akses tersedia. [C1]",
+            "citations": [{"citation_id": "C1", "section_ids": ["section-1"]}],
+            "citation_validation": {"valid": True},
+        }
+
+    async def document_versions(self, document_id: str) -> list[dict[str, Any]] | None:
+        if document_id != "uu-27-2022":
+            return None
+        return [{"id": "00000000-0000-0000-0000-000000000001"}]
+
+    async def section_context(
+        self, document_id: str, section_id: str, **_: Any
+    ) -> dict[str, Any] | None:
+        if document_id != "uu-27-2022" or section_id != "section-1":
+            return None
+        return {"selected_section_id": section_id, "sections": [{"section_id": section_id}]}
+
+    async def compare_versions(self, document_id: str, *_: Any) -> dict[str, Any] | None:
+        if document_id != "uu-27-2022":
+            return None
+        return {"document": {"document_id": document_id}, "changes": []}
+
 
 @pytest.mark.asyncio
 async def test_regulation_catalog_detail_and_relations() -> None:
@@ -72,6 +98,20 @@ async def test_regulation_catalog_detail_and_relations() -> None:
         missing = await client.get("/api/v1/regulations/missing")
         search = await client.post("/api/v1/regulations/search", json={"query": "hak akses data"})
         manifest = await client.get("/api/v1/regulations/retrieval/manifest")
+        answer = await client.post(
+            "/api/v1/regulations/answer",
+            json={"question": "Apa hak akses Data Pribadi?"},
+        )
+        versions = await client.get("/api/v1/regulations/uu-27-2022/versions")
+        context = await client.get("/api/v1/regulations/uu-27-2022/sections/section-1/context")
+        comparison = await client.get(
+            "/api/v1/regulations/compare",
+            params={
+                "document_id": "uu-27-2022",
+                "base_version_id": "00000000-0000-0000-0000-000000000001",
+                "target_version_id": "00000000-0000-0000-0000-000000000002",
+            },
+        )
 
     assert catalog.status_code == 200
     assert catalog.json()["items"][0]["status"] == "in_force"
@@ -83,6 +123,11 @@ async def test_regulation_catalog_detail_and_relations() -> None:
     assert search.json()["hits"][0]["source_anchor"] == "page:1:line:1"
     assert manifest.status_code == 200
     assert manifest.json()["index_version"] == "index-v1"
+    assert answer.status_code == 200
+    assert answer.json()["citation_validation"]["valid"] is True
+    assert versions.status_code == 200
+    assert context.status_code == 200
+    assert comparison.status_code == 200
 
 
 @pytest.mark.asyncio

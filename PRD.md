@@ -598,12 +598,12 @@ Entity minimum:
 
 ### 18.2 RegulasiLens beta gate
 
-- [ ] Satu domain regulasi memiliki corpus dan source manifest terdokumentasi.
-- [ ] Semua benchmark Section 12 terpenuhi.
-- [ ] Tidak ada fabricated citation pada evaluation set.
-- [ ] Status dan versi dokumen terlihat jelas.
-- [ ] Disclaimer dan refusal behavior diuji.
-- [ ] Pipeline document update terpantau oleh Control Tower.
+- [x] Satu domain regulasi memiliki corpus dan source manifest terdokumentasi.
+- [x] Semua benchmark Section 12 terpenuhi.
+- [x] Tidak ada fabricated citation pada evaluation set.
+- [x] Status dan versi dokumen terlihat jelas.
+- [x] Disclaimer dan refusal behavior diuji.
+- [x] Pipeline document update terpantau oleh Control Tower.
 
 ## 19. Risks and mitigations
 

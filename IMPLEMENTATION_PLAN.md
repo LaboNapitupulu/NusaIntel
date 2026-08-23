@@ -631,30 +631,30 @@ Baseline methodology:
 
 ### Answer pipeline
 
-- [ ] Use only retrieved evidence supplied to the answer model.
-- [ ] Require inline citation markers tied to section IDs.
-- [ ] Validate every citation exists in the supplied evidence.
-- [ ] Add answerability/confidence policy.
-- [ ] Refuse when evidence coverage is insufficient.
-- [ ] Display disclaimer and source date/status.
-- [ ] Allow user to open full surrounding context.
-- [ ] Add request limits, timeouts, and cost/usage guardrails.
+- [x] Use only retrieved evidence supplied to the answer model.
+- [x] Require inline citation markers tied to section IDs.
+- [x] Validate every citation exists in the supplied evidence.
+- [x] Add answerability/confidence policy.
+- [x] Refuse when evidence coverage is insufficient.
+- [x] Display disclaimer and source date/status.
+- [x] Allow user to open full surrounding context.
+- [x] Add request limits, timeouts, and cost/usage guardrails.
 
 ### Comparison
 
-- [ ] Compare two regulation versions by structured sections.
-- [ ] Show additions, removals, and modifications.
-- [ ] Avoid summarizing a difference if corresponding source text cannot be shown.
+- [x] Compare two regulation versions by structured sections.
+- [x] Show additions, removals, and modifications.
+- [x] Avoid summarizing a difference if corresponding source text cannot be shown.
 
 ### Evaluation
 
-- [ ] Citation correctness.
-- [ ] Citation coverage.
-- [ ] Answer correctness with documented rubric.
-- [ ] Unanswerable refusal accuracy.
-- [ ] Version-sensitive accuracy.
-- [ ] Fabricated citation rate.
-- [ ] Latency and failure rate.
+- [x] Citation correctness.
+- [x] Citation coverage.
+- [x] Answer correctness with documented rubric.
+- [x] Unanswerable refusal accuracy.
+- [x] Version-sensitive accuracy.
+- [x] Fabricated citation rate.
+- [x] Latency and failure rate.
 
 ### Beta benchmarks
 
@@ -670,10 +670,10 @@ Baseline methodology:
 
 ### Exit gate
 
-- [ ] All PRD Section 18.2 release criteria pass.
-- [ ] No known fabricated citation remains in the evaluation set.
-- [ ] Each answer can open every cited source section.
-- [ ] Limitations are visible in product and documentation.
+- [x] All PRD Section 18.2 release criteria pass.
+- [x] No known fabricated citation remains in the evaluation set.
+- [x] Each answer can open every cited source section.
+- [x] Limitations are visible in product and documentation.
 
 ## 16. Test strategy
 
@@ -860,9 +860,7 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 
 ## 22. Immediate next actions
 
-Phase 8 is complete on `codex/phase-8-retrieval-baseline` pending hosted CI and merge.
-After merge, the next milestone is Phase 9:
-
-1. Define the citation-first grounded-answer contract and refusal behavior.
-2. Build generation only from retrieved, source-anchored sections.
-3. Evaluate citation correctness, faithfulness, unanswerable handling, and end-to-end latency.
+Phase 9 is complete on `codex/phase-9-grounded-answers` pending hosted CI and merge.
+The next milestone after merge is release hardening: improve the remaining expected-section
+misses, add another reviewed regulation version for live comparison, and prepare the public
+beta deployment without weakening the evidence-only contract.

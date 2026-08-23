@@ -338,3 +338,19 @@
   fixed-1,600 chunker: Recall@5 0.8083, Recall@10 0.8917, p95 0.0448 seconds, and 100% anchors.
 - Added search/index-manifest APIs, validation/unit/API tests, and database integration
   assertions that published sections remain source-anchored and version reproducible.
+
+## Phase 9 — 2026-08-23
+
+### Grounded answers and RegulasiLens beta
+
+- Added a deterministic evidence-extractive answer pipeline with validated inline citations,
+  answerability/confidence policy, explicit refusal, source status/date, immutable provenance,
+  request bounds, timeout, and concurrency guardrails.
+- Added openable surrounding context plus source-preserving structured version comparison for
+  additions, removals, and modifications.
+- Added the RegulasiLens product surface with responsive auto-fit layouts and no horizontal
+  overflow at the tested 1440×1000 and 360×800 viewports.
+- The 100-question gate passes: Recall@10 0.8917, citation correctness 1.0, coverage 1.0,
+  refusal accuracy 0.95, fabricated citation rate 0, version accuracy 0.90, and p95 0.0242s.
+- Component, API, grounding, comparison, desktop/mobile E2E, accessibility, and production
+  build checks cover the critical answer/refusal/context journeys.

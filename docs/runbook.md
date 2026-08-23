@@ -55,6 +55,23 @@ Do not remove failed evaluation cases after tuning. Update the versioned evaluat
 after manual corpus review, and issue a new evaluation version when expected references or
 wording materially change.
 
+## RegulasiLens grounded answers
+
+1. Run `python scripts/benchmark_regulation_answers.py`; release only when the JSON result has
+   `passed: true` and fabricated citation rate remains exactly zero.
+2. Confirm retrieval Recall@10 ≥0.85, citation correctness ≥0.95, citation coverage ≥0.90,
+   refusal accuracy ≥0.90, version-sensitive accuracy ≥0.85, and end-to-end p95 <10 seconds.
+3. Ask an answerable question in `#regulasilens`, open every citation's surrounding context,
+   and verify its official source link, document status, and status-check date.
+4. Ask an out-of-domain question and verify a refusal with no citation.
+5. Compare two stored versions only when both source texts are present. A single-version
+   corpus must show an explicit unavailable state instead of manufacturing a difference.
+
+Do not rewrite or delete failing evaluation cases to make a release pass. The diagnostic
+`answer_supported_by_expected_section` rubric remains visible even though it is not a beta
+threshold. A timeout returns HTTP 504; repeated saturation should be investigated before
+raising `REGULATION_MAXIMUM_CONCURRENT_ANSWERS`.
+
 ## Scheduled connector
 
 Set `BPS_SCHEDULE_ENABLED=true`, one `BPS_SCHEDULE_INDICATOR`, and an interval between 300

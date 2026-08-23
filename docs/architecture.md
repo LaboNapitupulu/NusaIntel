@@ -69,7 +69,8 @@ evidence.
   regional reports.
 - `app/regulasilens`: approved-manifest ingestion, immutable legal-document storage,
   deterministic structural parsing, BM25/dense/hybrid retrieval with source-preserving
-  reranking, quality gates, and evidenced relation graph.
+  reranking, evidence-only extractive answers, citation validation, structured version
+  comparison, quality gates, and evidenced relation graph.
 - `frontend/components`: client-side product surfaces consuming versioned API responses.
 
 Core calculation modules are pure/deterministic and tested separately from SQL/service
@@ -83,6 +84,9 @@ Pydantic schemas and map domain errors to stable HTTP responses.
 - External payloads are size/retry bounded, checksummed, typed, and quarantined on failure.
 - Missing analytical values remain null; no zero-fill or cross-period substitution occurs.
 - Expensive analysis inputs have strict feature, seed, candidate, and result limits.
+- Grounded-answer requests have bounded input/citations, a sub-10-second timeout, and an
+  in-process concurrency semaphore; the deterministic baseline makes zero external model
+  calls and reports that fact in provenance.
 - Request IDs and structured logs support diagnosis without logging API keys.
 - Database unavailability degrades health and product states instead of returning false
   success.

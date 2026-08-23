@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nusaintel.local/schemas/answer-evaluation.v1.json",
+  "title": "NusaIntel RegulasiLens Answer Evaluation Configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evaluation_id",
+    "evaluation_version",
+    "retrieval_suite",
+    "pipeline_version",
+    "rubric",
+    "targets"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "evaluation_id": {"type": "string", "minLength": 3},
+    "evaluation_version": {"type": "string", "minLength": 1},
+    "retrieval_suite": {"type": "string", "minLength": 3},
+    "pipeline_version": {"type": "string", "minLength": 3},
+    "rubric": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "minLength": 10}
+    },
+    "targets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "retrieval_recall_at_10_minimum",
+        "citation_correctness_minimum",
+        "citation_coverage_minimum",
+        "refusal_accuracy_minimum",
+        "fabricated_citation_rate_maximum",
+        "version_sensitive_accuracy_minimum",
+        "end_to_end_p95_seconds_maximum"
+      ],
+      "properties": {
+        "retrieval_recall_at_10_minimum": {"type": "number", "minimum": 0, "maximum": 1},
+        "citation_correctness_minimum": {"type": "number", "minimum": 0, "maximum": 1},
+        "citation_coverage_minimum": {"type": "number", "minimum": 0, "maximum": 1},
+        "refusal_accuracy_minimum": {"type": "number", "minimum": 0, "maximum": 1},
+        "fabricated_citation_rate_maximum": {"type": "number", "minimum": 0, "maximum": 1},
+        "version_sensitive_accuracy_minimum": {"type": "number", "minimum": 0, "maximum": 1},
+        "end_to_end_p95_seconds_maximum": {"type": "number", "exclusiveMinimum": 0}
+      }
+    }
+  }
+}
