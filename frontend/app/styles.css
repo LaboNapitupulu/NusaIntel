@@ -2214,6 +2214,226 @@ footer {
   }
 }
 
+/* Theme polish — smooth switching and explicit contrast */
+
+:root {
+  --coral: #f05a3b;
+  --mint: #67d8ae;
+  --deep-teal: #082f2e;
+  color-scheme: light;
+}
+
+html,
+body {
+  background: var(--paper);
+}
+
+html[data-theme="day"] {
+  color-scheme: light;
+}
+
+html[data-theme="night"] {
+  color-scheme: dark;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  min-width: 118px;
+  min-height: 38px;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-color: color-mix(in srgb, var(--line) 82%, var(--gold));
+  color: var(--ink);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%);
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+  border-color: var(--gold);
+  color: var(--ink);
+  background: color-mix(in srgb, var(--surface) 84%, var(--gold));
+  box-shadow: 0 8px 22px rgb(2 31 30 / 13%);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.theme-toggle-icon {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border-radius: 50%;
+  color: #102a2a;
+  background: var(--gold);
+  font-size: 0.78rem;
+  line-height: 1;
+  transform: rotate(0deg);
+  transition: transform 420ms var(--motion-spring), background-color 360ms ease;
+}
+
+html[data-theme="night"] .theme-toggle-icon {
+  color: #edf5f1;
+  background: #0e6b62;
+  transform: rotate(18deg);
+}
+
+.theme-toggle-label::after {
+  content: "Tema terang";
+}
+
+html[data-theme="night"] .theme-toggle-label::after {
+  content: "Tema gelap";
+}
+
+html.theme-transitioning,
+html.theme-transitioning body,
+html.theme-transitioning .site-header,
+html.theme-transitioning .site-footer,
+html.theme-transitioning .home-page,
+html.theme-transitioning .module-page,
+html.theme-transitioning .module-card-content,
+html.theme-transitioning .opportunity-results > section,
+html.theme-transitioning .ranking-card,
+html.theme-transitioning .distribution-card,
+html.theme-transitioning .stability-grid article,
+html.theme-transitioning .workspace-tabs,
+html.theme-transitioning .workspace-empty,
+html.theme-transitioning .methodology-drawer,
+html.theme-transitioning .site-nav a,
+html.theme-transitioning .theme-toggle {
+  transition-duration: 420ms !important;
+  transition-property: background-color, border-color, color, box-shadow !important;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+::view-transition-old(root) {
+  animation: theme-fade-out 420ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+::view-transition-new(root) {
+  animation: theme-reveal-in 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes theme-fade-out {
+  to { opacity: 0.35; filter: saturate(0.8); }
+}
+
+@keyframes theme-reveal-in {
+  from { opacity: 0; clip-path: circle(0 at calc(100% - 150px) 38px); }
+  to { opacity: 1; clip-path: circle(150% at calc(100% - 150px) 38px); }
+}
+
+html[data-theme="night"] .module-page .opportunity-results,
+html[data-theme="night"] .module-page .opportunity-results > section,
+html[data-theme="night"] .module-page .methodology-drawer,
+html[data-theme="night"] .module-page .workspace-empty {
+  color: var(--ink);
+}
+
+html[data-theme="night"] .module-page .opportunity-results > section,
+html[data-theme="night"] .module-page .methodology-drawer,
+html[data-theme="night"] .module-page .workspace-empty,
+html[data-theme="night"] .module-page .workspace-tabs {
+  border-color: #42635d;
+  background: #163837;
+}
+
+html[data-theme="night"] .ranking-card,
+html[data-theme="night"] .ranking-card[data-eligible="false"] {
+  border-color: #52766f;
+  color: #edf5f1;
+  background: #1c4441;
+}
+
+html[data-theme="night"] .ranking-card h4,
+html[data-theme="night"] .ranking-card > strong {
+  color: #f7fbf8;
+}
+
+html[data-theme="night"] .ranking-card small {
+  color: #b9cec8;
+}
+
+html[data-theme="night"] .rank-mark,
+html[data-theme="night"] .opportunity-results th {
+  color: #83e4bd;
+}
+
+.module-page .opportunity-header .secondary-button {
+  border-color: #6f958d;
+  color: #edf5f1;
+  background: rgb(255 255 255 / 5%);
+}
+
+.module-page .opportunity-header .secondary-button:hover,
+.module-page .opportunity-header .secondary-button:focus-visible {
+  border-color: var(--gold);
+  color: #fff8e6;
+  background: rgb(217 164 65 / 12%);
+}
+
+.module-page .opportunity-header .secondary-button:disabled {
+  color: #91aaa3;
+  opacity: 0.7;
+}
+
+html[data-theme="night"] .module-page .scenario-actions .secondary-button,
+html[data-theme="night"] .module-page .opportunity-header .secondary-button {
+  border-color: #6f958d;
+  color: #edf5f1;
+  background: rgb(255 255 255 / 5%);
+}
+
+html[data-theme="night"] .module-page .scenario-actions .secondary-button:hover,
+html[data-theme="night"] .module-page .scenario-actions .secondary-button:focus-visible,
+html[data-theme="night"] .module-page .opportunity-header .secondary-button:hover,
+html[data-theme="night"] .module-page .opportunity-header .secondary-button:focus-visible {
+  border-color: var(--gold);
+  color: #fff8e6;
+  background: rgb(217 164 65 / 12%);
+}
+
+html[data-theme="night"] .module-page .secondary-button:disabled {
+  color: #91aaa3;
+  opacity: 0.7;
+}
+
+html[data-theme="night"] .distribution-card,
+html[data-theme="night"] .stability-grid article,
+html[data-theme="night"] .methodology-grid > div,
+html[data-theme="night"] .map-live-inspector,
+html[data-theme="night"] .diff-stage {
+  border-color: #42635d;
+  color: var(--ink);
+  background: #1a403e;
+}
+
+html[data-theme="night"] .site-nav .phase-label {
+  color: #a9bdb8;
+}
+
+@media (max-width: 920px) {
+  .theme-toggle {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+
+  html.theme-transitioning,
+  html.theme-transitioning * {
+    transition-duration: 0.01ms !important;
+  }
+}
+
 html[data-theme="night"] .module-page .opportunity-results > section,
 html[data-theme="night"] .module-page .methodology-drawer {
   color: var(--ink);

@@ -4,7 +4,7 @@ import { ControlTower } from "@/components/control-tower";
 
 export const metadata: Metadata = {
   title: "Control Tower · NusaIntel",
-  description: "Pantau kualitas, freshness, lineage, dan insiden dataset NusaIntel.",
+  description: "Periksa keterbaruan, kualitas, dan kendala pada data NusaIntel.",
 };
 
 export default function ControlTowerPage() {

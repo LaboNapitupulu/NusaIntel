@@ -82,11 +82,11 @@ describe("RegulationLens", () => {
 
     render(<RegulationLens />);
     expect(await screen.findByText(/UU 27\/2022/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Jawab dengan bukti" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cari jawaban" }));
 
-    expect(await screen.findByText("ANSWERABLE")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Buka citation C1" }));
-    expect(screen.getByRole("tab", { name: /Evidence/ })).toHaveAttribute("aria-selected", "true");
+    expect(await screen.findByText("SUMBER TERSEDIA")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Buka sumber C1" }));
+    expect(screen.getByRole("tab", { name: /Sumber/ })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText(/\[C1\] Pasal 7/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Dokumen resmi" })).toHaveAttribute(
       "href",
@@ -95,7 +95,7 @@ describe("RegulationLens", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Buka konteks" }));
     expect(await screen.findByRole("heading", { name: "Pelindungan Data Pribadi" })).toBeInTheDocument();
-    expect(screen.getByText("page:4:line:10")).toBeInTheDocument();
+    expect(screen.getByText("Halaman 4, baris 10")).toBeInTheDocument();
   });
 
   it("shows a refusal without fabricated citations", async () => {
@@ -116,10 +116,11 @@ describe("RegulationLens", () => {
 
     render(<RegulationLens />);
     await screen.findByText(/UU 27\/2022/);
-    fireEvent.click(screen.getByRole("button", { name: "Jawab dengan bukti" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cari jawaban" }));
 
-    expect(await screen.findByText("REFUSED")).toBeInTheDocument();
-    expect(screen.getByText("Pertanyaan berada di luar corpus.")).toBeInTheDocument();
+    expect(await screen.findByText("SUMBER BELUM CUKUP")).toBeInTheDocument();
+    expect(screen.getAllByText(/Dokumen yang tersedia belum cukup/).length).toBeGreaterThan(0);
+    expect(screen.queryByText("Pertanyaan berada di luar corpus.")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Dokumen resmi" })).not.toBeInTheDocument();
   });
 });

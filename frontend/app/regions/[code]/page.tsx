@@ -9,7 +9,7 @@ export async function generateMetadata({
   const { code } = await params;
   return {
     title: `Bukti regional ${code} | NusaIntel`,
-    description: `Nilai indikator, sumber, periode, dan versi dataset untuk provinsi ${code}.`,
+    description: `Nilai indikator, periode, dan sumber resmi untuk provinsi ${code}.`,
   };
 }
 

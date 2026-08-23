@@ -156,13 +156,13 @@ describe("OpportunityEngine", () => {
     render(<OpportunityEngine />);
 
     fireEvent.click(await screen.findByRole("button", { name: "Hitung skenario" }));
-    expect(await screen.findByText("Kontribusi terlihat, coverage ditegakkan.")).toBeInTheDocument();
+    expect(await screen.findByText("Lihat wilayah terbaik dan alasannya.")).toBeInTheDocument();
     expect(screen.getAllByText("ACEH").length).toBeGreaterThan(0);
     expect(screen.getByText("80")).toBeInTheDocument();
     expect(screen.getByText("Tidak diranking")).toBeInTheDocument();
-    expect(screen.getByText("6 skenario")).toBeInTheDocument();
-    expect(screen.getByText(/not a confidence interval/)).toBeInTheDocument();
-    expect(screen.getByText(/reference 2025-08-01 · version version-hdi/)).toBeInTheDocument();
+    expect(screen.getByText("6 percobaan")).toBeInTheDocument();
+    expect(screen.getByText(/Gunakan sebagai bahan pertimbangan/)).toBeInTheDocument();
+    expect(screen.getAllByText("Lihat sumber resmi")).toHaveLength(3);
     expect(screen.getByText("Alternatif data tabel untuk distribusi")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /4Bobot/ }));
@@ -171,7 +171,7 @@ describe("OpportunityEngine", () => {
     });
     expect(screen.getByText(/Total bobot: 100%/)).toBeInTheDocument();
     await waitFor(
-      () => expect(screen.getByText(/Ranking live diperbarui/)).toBeInTheDocument(),
+      () => expect(screen.getByText(/Peringkat telah menyesuaikan/)).toBeInTheDocument(),
       { timeout: 2000 },
     );
     expect(vi.mocked(global.fetch).mock.calls.filter(([input]) => String(input).endsWith("/opportunity/score"))).toHaveLength(2);

@@ -204,6 +204,13 @@ function formatNumber(value: number | null, digits = 2): string {
   return new Intl.NumberFormat("id-ID", { maximumFractionDigits: digits }).format(value);
 }
 
+function qualityLabel(status: string): string {
+  if (status === "healthy") return "Data siap";
+  if (status === "warning") return "Perlu perhatian";
+  if (status === "critical") return "Belum siap";
+  return "Status belum tersedia";
+}
+
 function encodeScenario(scenario: ScenarioState): string {
   return btoa(JSON.stringify(scenario));
 }
@@ -420,9 +427,9 @@ export function OpportunityEngine() {
       setSensitivity(nextSensitivity);
       setLivePreview(false);
       setResultTab("ranking");
-      setMessage("Analisis selesai. Ranking dan evidence siap diperiksa.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Analisis gagal dijalankan.");
+      setMessage("Analisis selesai. Hasil perbandingan siap diperiksa.");
+    } catch {
+      setMessage("Analisis belum dapat dijalankan. Coba lagi.");
     } finally {
       setRunning(false);
     }
@@ -445,7 +452,7 @@ export function OpportunityEngine() {
           setResultTab("ranking");
           setLivePreview(true);
         })
-        .catch((error) => active && setMessage(error instanceof Error ? error.message : "Pratinjau ranking gagal diperbarui."))
+        .catch(() => active && setMessage("Peringkat belum dapat diperbarui. Coba lagi."))
         .finally(() => active && setPreviewing(false));
     }, 450);
     return () => {
@@ -513,19 +520,19 @@ export function OpportunityEngine() {
       link.download = `nusa-intel-scenario-${activeScenario.year}.json`;
       link.click();
       URL.revokeObjectURL(link.href);
-      setMessage("Laporan diekspor beserta konfigurasi dan dataset version.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Export gagal.");
+      setMessage("Hasil dan pilihan Anda berhasil diunduh.");
+    } catch {
+      setMessage("Hasil belum dapat diunduh. Coba lagi.");
     }
   }
 
   if (state === "loading") {
-    return <section className="opportunity-shell opportunity-state"><WorkspaceSkeleton label="Memuat Opportunity Engine" /></section>;
+    return <section className="opportunity-shell opportunity-state"><WorkspaceSkeleton label="Memuat perbandingan wilayah" /></section>;
   }
   if (state === "error") {
     return (
       <section className="opportunity-shell opportunity-state">
-        <p>Katalog regional belum dapat dimuat.</p>
+        <p>Data wilayah belum dapat dimuat.</p>
         <button type="button" onClick={() => void initialize()}>
           Coba lagi
         </button>
@@ -535,7 +542,7 @@ export function OpportunityEngine() {
   if (state === "empty") {
     return (
       <section className="opportunity-shell opportunity-state">
-        Jalankan pipeline BPS hingga Gold sebelum membuat skenario.
+        Belum ada data wilayah yang siap dibandingkan.
       </section>
     );
   }
@@ -544,11 +551,11 @@ export function OpportunityEngine() {
     <section className="opportunity-shell" id="opportunity" aria-labelledby="opportunity-title">
       <header className="opportunity-header">
         <div>
-          <p className="kicker">Release 0.3 / Regional Opportunity Engine</p>
+          <p className="kicker">Perbandingan peluang regional</p>
           <h2 id="opportunity-title">Bandingkan wilayah tanpa menyembunyikan asumsi.</h2>
           <p>
-            Skor adalah skenario Anda—bukan fakta objektif. Setiap hasil membawa nilai mentah,
-            normalisasi, kontribusi, kualitas, sumber, dan versi dataset.
+            Tentukan wilayah dan prioritas Anda. Hasil menunjukkan bagaimana setiap pilihan
+            memengaruhi urutan wilayah secara transparan.
           </p>
         </div>
         <div className="scenario-actions">
@@ -556,7 +563,7 @@ export function OpportunityEngine() {
             Salin skenario
           </button>
           <button type="button" className="secondary-button" onClick={() => void exportReport()} disabled={!score}>
-            Unduh laporan JSON
+            Unduh hasil
           </button>
         </div>
       </header>
@@ -573,7 +580,7 @@ export function OpportunityEngine() {
                 onClick={() => setSetupStep(step)}
               >
                 <span>{step}</span>
-                {step === 1 ? "Wilayah" : step === 2 ? "Indikator" : step === 3 ? "Periode" : "Bobot"}
+                {step === 1 ? "Wilayah" : step === 2 ? "Penilaian" : step === 3 ? "Periode" : "Bobot"}
               </button>
             ))}
           </div>
@@ -597,7 +604,7 @@ export function OpportunityEngine() {
           </fieldset>
 
           <fieldset hidden={setupStep !== 2}>
-            <legend>2. Pilih indikator</legend>
+            <legend>2. Pilih hal yang dinilai</legend>
             <div className="selector-list">
               {indicators.map((indicator) => (
                 <label key={indicator.code}>
@@ -609,7 +616,7 @@ export function OpportunityEngine() {
                   />
                   <span>
                     {indicator.name}
-                    <em data-health={indicator.quality_status}>{indicator.quality_status}</em>
+                    <em data-health={indicator.quality_status}>{qualityLabel(indicator.quality_status)}</em>
                   </span>
                 </label>
               ))}
@@ -617,9 +624,9 @@ export function OpportunityEngine() {
           </fieldset>
 
           <fieldset hidden={setupStep !== 3}>
-            <legend>3. Periode dan metode</legend>
+            <legend>3. Periode dan cara penilaian</legend>
             <label className="field-label">
-              Tahun analisis comparable
+              Tahun perbandingan
               <select
                 value={activeYear}
                 onChange={(event) =>
@@ -634,7 +641,7 @@ export function OpportunityEngine() {
               </select>
             </label>
             <label className="field-label">
-              Normalisasi
+              Cara menyetarakan nilai
               <select
                 value={scenario.normalization}
                 onChange={(event) =>
@@ -644,8 +651,8 @@ export function OpportunityEngine() {
                   }))
                 }
               >
-                <option value="min_max">Min–max</option>
-                <option value="percentile">Percentile rank</option>
+                <option value="min_max">Rentang nilai terendah–tertinggi</option>
+                <option value="percentile">Posisi relatif antarwilayah</option>
               </select>
             </label>
           </fieldset>
@@ -679,7 +686,7 @@ export function OpportunityEngine() {
                       />
                     </label>
                     <label>
-                      Arah favorable
+                      Hasil yang dianggap lebih baik
                       <select
                         value={item.direction}
                         onChange={(event) =>
@@ -721,7 +728,7 @@ export function OpportunityEngine() {
               Total bobot: {formatNumber(weightTotal)}%
             </p>
             <label className="field-label">
-              Coverage minimum ({Math.round(scenario.coverageThreshold * 100)}%)
+              Kelengkapan data minimum ({Math.round(scenario.coverageThreshold * 100)}%)
               <input
                 type="range"
                 min="0.5"
@@ -737,7 +744,7 @@ export function OpportunityEngine() {
               />
             </label>
             <label className="field-label">
-              Gangguan bobot sensitivitas ({Math.round(scenario.perturbation * 100)}%)
+              Besar perubahan untuk uji ketahanan ({Math.round(scenario.perturbation * 100)}%)
               <input
                 type="range"
                 min="0.05"
@@ -787,18 +794,18 @@ export function OpportunityEngine() {
         </aside>
 
         <div className="opportunity-results" aria-live="polite">
-          {running && <div className="analysis-progress" role="status"><i /><span>Menghitung ranking, distribusi, dan sensitivitas…</span></div>}
+          {running && <div className="analysis-progress" role="status"><i /><span>Menyusun peringkat dan perbandingan wilayah…</span></div>}
           {score && (
             <div className="live-preview-status" data-active={previewing} role="status">
               <i aria-hidden="true" />
-              <span>{previewing ? "Memperbarui ranking dari bobot terbaru…" : livePreview ? "Ranking live diperbarui · jalankan analisis penuh untuk sensitivity terbaru" : "Live what-if siap · geser bobot untuk melihat ranking berubah"}</span>
+              <span>{previewing ? "Memperbarui peringkat dari bobot terbaru…" : livePreview ? "Peringkat telah menyesuaikan pilihan terbaru" : "Geser bobot untuk melihat perubahan peringkat secara langsung"}</span>
             </div>
           )}
           {!score || !comparison || !sensitivity ? (
             <EmptyState
               eyebrow="Belum ada hasil"
               title="Bangun skenario pertama Anda"
-              description="Ikuti empat tahap konfigurasi. Hasil akan dipisahkan menjadi ranking, perbandingan, tren, dan sensitivitas."
+              description="Ikuti empat tahap singkat. Hasil akan menampilkan peringkat, perbandingan, tren, dan ketahanannya."
             />
           ) : (
             <>
@@ -807,20 +814,20 @@ export function OpportunityEngine() {
                 active={resultTab}
                 onChange={setResultTab}
                 tabs={[
-                  { id: "ranking", label: "Ranking", count: score.results.length },
+                  { id: "ranking", label: "Peringkat", count: score.results.length },
                   { id: "comparison", label: "Perbandingan", count: scenario.weights.length },
                   { id: "trend", label: "Tren", count: comparison.trends.length },
-                  { id: "sensitivity", label: "Sensitivity", count: sensitivity.scenario_count },
-                  { id: "methodology", label: "Metodologi" },
+                  { id: "sensitivity", label: "Ketahanan hasil", count: sensitivity.scenario_count },
+                  { id: "methodology", label: "Tentang hasil" },
                 ]}
               />
               <section className="ranking-panel" aria-labelledby="ranking-title" hidden={resultTab !== "ranking"}>
                 <div className="result-heading">
                   <div>
-                    <p className="kicker">Ranking skenario</p>
-                    <h3 id="ranking-title">Kontribusi terlihat, coverage ditegakkan.</h3>
+                    <p className="kicker">Peringkat pilihan Anda</p>
+                    <h3 id="ranking-title">Lihat wilayah terbaik dan alasannya.</h3>
                   </div>
-                  <span>{comparison.methodology_version}</span>
+                  <span>{activeYear}</span>
                 </div>
                 <div className="ranking-grid">
                   {score.results.map((row, index) => (
@@ -837,22 +844,22 @@ export function OpportunityEngine() {
                       <span className="rank-mark">{row.rank ? `#${row.rank}` : "Tidak diranking"}</span>
                       <h4>{row.region_name}</h4>
                       <strong>{row.score === null ? "—" : formatNumber(row.score)}</strong>
-                      <small>Coverage {Math.round(row.coverage * 100)}%</small>
+                      <small>Kelengkapan data {Math.round(row.coverage * 100)}%</small>
                       <span className="rank-meter" aria-hidden="true"><i /></span>
                     </article>
                   ))}
                 </div>
                 <div className="table-scroll">
                   <table className="responsive-table">
-                    <caption>Kontribusi indikator untuk reproduksi skor</caption>
+                    <caption>Rincian pembentuk nilai setiap wilayah</caption>
                     <thead>
                       <tr>
                         <th>Wilayah</th>
                         <th>Indikator</th>
-                        <th>Nilai mentah</th>
-                        <th>Normalisasi</th>
-                        <th>Bobot efektif</th>
-                        <th>Kontribusi</th>
+                        <th>Nilai asli</th>
+                        <th>Skor banding</th>
+                        <th>Bobot terpakai</th>
+                        <th>Sumbangan nilai</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -861,10 +868,10 @@ export function OpportunityEngine() {
                           <tr key={`${row.region_code}-${item.indicator_code}`}>
                             <td data-label="Wilayah">{row.region_name}</td>
                             <td data-label="Indikator">{indicators.find((indicator) => indicator.code === item.indicator_code)?.name ?? item.indicator_code}</td>
-                            <td data-label="Nilai mentah">{formatNumber(item.raw_value)}</td>
-                            <td data-label="Normalisasi">{formatNumber(item.normalized_value, 4)}</td>
-                            <td data-label="Bobot efektif">{item.effective_weight === null ? "—" : `${formatNumber(item.effective_weight)}%`}</td>
-                            <td data-label="Kontribusi">{formatNumber(item.contribution, 4)}</td>
+                            <td data-label="Nilai asli">{formatNumber(item.raw_value)}</td>
+                            <td data-label="Skor banding">{formatNumber(item.normalized_value, 4)}</td>
+                            <td data-label="Bobot terpakai">{item.effective_weight === null ? "—" : `${formatNumber(item.effective_weight)}%`}</td>
+                            <td data-label="Sumbangan nilai">{formatNumber(item.contribution, 4)}</td>
                           </tr>
                         )),
                       )}
@@ -876,8 +883,8 @@ export function OpportunityEngine() {
               <section className="comparison-panel" aria-labelledby="comparison-title" hidden={resultTab !== "comparison"}>
                 <div className="result-heading">
                   <div>
-                    <p className="kicker">Raw + normalized</p>
-                    <h3 id="comparison-title">Perbandingan pada periode yang sama.</h3>
+                    <p className="kicker">Perbandingan indikator</p>
+                    <h3 id="comparison-title">Nilai wilayah pada periode yang sama.</h3>
                   </div>
                   <span>{scenario.normalization === "min_max" ? "Min–max" : "Percentile rank"}</span>
                 </div>
@@ -888,14 +895,14 @@ export function OpportunityEngine() {
                     <article className="distribution-card" key={weight.code}>
                       <div>
                         <h4>{indicator?.name ?? weight.code}</h4>
-                        <p>{indicator?.unit} · favorable {weight.direction === "higher" ? "lebih tinggi" : "lebih rendah"}</p>
+                        <p>{indicator?.unit} · nilai {weight.direction === "higher" ? "lebih tinggi" : "lebih rendah"} dianggap lebih baik</p>
                       </div>
                       <div className="distribution-summary">
                         <span>Min {formatNumber(summary?.minimum ?? null)}</span>
                         <span>Median {formatNumber(summary?.median ?? null)}</span>
                         <span>Maks {formatNumber(summary?.maximum ?? null)}</span>
                       </div>
-                      <div className="distribution-bars" role="img" aria-label={`Distribusi ternormalisasi ${indicator?.name}`}>
+                      <div className="distribution-bars" role="img" aria-label={`Grafik perbandingan ${indicator?.name}`}>
                         {comparison.regions.map((region) => {
                           const value = region.values.find((item) => item.indicator_code === weight.code);
                           return (
@@ -913,7 +920,7 @@ export function OpportunityEngine() {
                 <div className="table-scroll">
                   <table>
                     <caption>Alternatif data tabel untuk distribusi</caption>
-                    <thead><tr><th>Wilayah</th><th>Indikator</th><th>Periode referensi</th><th>Nilai</th><th>Normalisasi</th><th>Unit</th></tr></thead>
+                    <thead><tr><th>Wilayah</th><th>Indikator</th><th>Periode</th><th>Nilai</th><th>Skor banding</th><th>Unit</th></tr></thead>
                     <tbody>
                       {comparison.regions.flatMap((region) =>
                         region.values.map((item) => (
@@ -929,7 +936,7 @@ export function OpportunityEngine() {
               </section>
 
               <section className="trend-panel" aria-labelledby="trend-title" hidden={resultTab !== "trend"}>
-                <div className="result-heading"><div><p className="kicker">Trend</p><h3 id="trend-title">Riwayat nilai tanpa mencampur unit.</h3></div></div>
+                <div className="result-heading"><div><p className="kicker">Perubahan dari waktu ke waktu</p><h3 id="trend-title">Lihat arah perkembangan setiap wilayah.</h3></div></div>
                 <div className="table-scroll">
                   <table>
                     <caption>Tren historis untuk wilayah terpilih</caption>
@@ -940,21 +947,20 @@ export function OpportunityEngine() {
               </section>
 
               <section className="sensitivity-panel" aria-labelledby="sensitivity-title" hidden={resultTab !== "sensitivity"}>
-                <div className="result-heading"><div><p className="kicker">Sensitivity</p><h3 id="sensitivity-title">Apakah ranking stabil ketika bobot bergeser?</h3></div><span>{sensitivity.scenario_count} skenario</span></div>
+                <div className="result-heading"><div><p className="kicker">Ketahanan hasil</p><h3 id="sensitivity-title">Apakah peringkat tetap stabil saat prioritas berubah?</h3></div><span>{sensitivity.scenario_count} percobaan</span></div>
                 <div className="stability-grid">
                   {sensitivity.stability.map((row) => <article key={row.region_code}><h4>{row.region_name}</h4><strong>{formatNumber(row.unchanged_percent, 0)}%</strong><span>peringkat tetap</span><small>Rentang #{row.min_rank ?? "—"}–#{row.max_rank ?? "—"} · pergeseran maks {row.max_absolute_shift ?? "—"}</small></article>)}
                 </div>
-                <p className="method-warning">{sensitivity.disclaimer}</p>
+                <p className="method-warning">Hasil ini menunjukkan seberapa mudah peringkat berubah ketika prioritas Anda sedikit digeser. Gunakan sebagai bahan pertimbangan, bukan kepastian.</p>
               </section>
 
               <details className="methodology-drawer" open hidden={resultTab !== "methodology"}>
-                <summary>Sumber, versi data, dan metodologi</summary>
-                <p>Skor = jumlah normalisasi × bobot efektif. Missing value tidak pernah menjadi nol; bobot tersedia hanya dinormalisasi ulang bila coverage masih memenuhi threshold.</p>
+                <summary>Cara membaca hasil dan sumber data</summary>
+                <p>Nilai akhir menggabungkan hasil perbandingan tiap indikator sesuai bobot pilihan Anda. Wilayah dengan data yang tidak cukup tidak dimasukkan ke peringkat.</p>
                 <ul>
                   {scenario.weights.map((weight) => {
                     const indicator = indicators.find((item) => item.code === weight.code);
-                    const version = comparison.dataset_versions[weight.code];
-                    return <li key={weight.code}><strong>{indicator?.name}</strong> — {indicator?.definition} <a href={indicator?.source_url} target="_blank" rel="noreferrer">Sumber resmi</a><br /><code>reference {version?.analysis_reference_period} · version {version?.version_id}</code></li>;
+                    return <li key={weight.code}><strong>{indicator?.name}</strong> — {indicator?.definition} <a href={indicator?.source_url} target="_blank" rel="noreferrer">Lihat sumber resmi</a></li>;
                   })}
                 </ul>
               </details>

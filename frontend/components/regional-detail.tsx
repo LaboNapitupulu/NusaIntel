@@ -51,15 +51,15 @@ export function RegionalDetail({ code, year }: { code: string; year: number }) {
   }, [code, year]);
 
   if (error) return <main className="detail-page"><p role="alert">{error}</p><Link href="/regional-analytics">Kembali ke analitik</Link></main>;
-  if (!detail) return <main className="detail-page">Memuat bukti regional...</main>;
+  if (!detail) return <main className="detail-page">Memuat rincian wilayah...</main>;
 
   return (
     <main className="detail-page">
       <nav aria-label="Breadcrumb"><Link href="/regional-analytics">NusaIntel / Regional Analytics</Link></nav>
       <header>
-        <p className="kicker">Regional evidence / {detail.year}</p>
+        <p className="kicker">Rincian wilayah · {detail.year}</p>
         <h1>{detail.region_name}</h1>
-        <p>Nilai berikut mempertahankan unit, periode referensi, sumber, dan versi dataset masing-masing.</p>
+        <p>Lihat nilai indikator, periode pengukuran, dan sumber resmi untuk wilayah ini.</p>
       </header>
       <section className="detail-indicator-grid" aria-label="Indikator regional">
         {detail.indicators.map((indicator) => (
@@ -70,7 +70,6 @@ export function RegionalDetail({ code, year }: { code: string; year: number }) {
             <p>{indicator.definition}</p>
             <dl>
               <div><dt>Periode referensi</dt><dd>{indicator.reference_period}</dd></div>
-              <div><dt>Versi dataset</dt><dd><code>{indicator.dataset_version.version_id}</code></dd></div>
               <div><dt>Sumber</dt><dd><a href={indicator.source.url} target="_blank" rel="noreferrer">{indicator.source.name}</a></dd></div>
             </dl>
           </article>

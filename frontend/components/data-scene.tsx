@@ -14,9 +14,9 @@ export function DataScene() {
       </div>
       <div className="scene-platform scene-platform-one" />
       <div className="scene-platform scene-platform-two" />
-      <span className="scene-label scene-label-trust">TRUST</span>
-      <span className="scene-label scene-label-evidence">EVIDENCE</span>
-      <span className="scene-label scene-label-action">ACTION</span>
+      <span className="scene-label scene-label-trust">DATA</span>
+      <span className="scene-label scene-label-evidence">SUMBER</span>
+      <span className="scene-label scene-label-action">WAWASAN</span>
     </div>
   );
 }

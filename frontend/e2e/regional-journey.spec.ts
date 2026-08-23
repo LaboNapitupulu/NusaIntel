@@ -165,13 +165,13 @@ test.beforeEach(async ({ page }) => {
 
 test("regional report is usable, responsive, and has no serious accessibility violations", async ({ page }) => {
   await page.goto("/regional-analytics");
-  await expect(page.getByRole("heading", { name: /Temukan kemiripan/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Temukan wilayah dengan kondisi/ })).toBeVisible();
   await page.getByRole("button", { name: "Jalankan analisis" }).click();
 
-  await expect(page.getByText("fixture-feature-set-v1")).toBeVisible();
+  await expect(page.getByText("Wilayah dibandingkan")).toBeVisible();
   await expect(page.locator(".province-tile")).toHaveCount(38);
   await expect(page.getByRole("button", { name: "ACEH, 3 Persen" })).toBeVisible();
-  await expect(page.getByText(/not official administrative boundaries/)).toBeVisible();
+  await expect(page.locator(".map-disclaimer")).toContainText("bukan batas wilayah administratif resmi");
 
   await page.getByText("Alternatif tabel aksesibel (38 provinsi)").click();
   await expect(page.getByRole("table", { name: "Nilai yang sama dengan peta tile." })).toBeVisible();
@@ -193,11 +193,11 @@ test("regional report is usable, responsive, and has no serious accessibility vi
 test("regional report links to a source-aware regional detail page", async ({ page }) => {
   await page.goto("/regional-analytics");
   await page.getByRole("button", { name: "Jalankan analisis" }).click();
-  await page.getByRole("tab", { name: /Similarity/ }).click();
+  await page.getByRole("tab", { name: /Wilayah serupa/ }).click();
   await page.getByRole("link", { name: "Buka detail ACEH" }).click();
 
   await expect(page).toHaveURL(/\/regions\/1100\?year=2024$/);
   await expect(page.getByRole("heading", { level: 1, name: "ACEH" })).toBeVisible();
-  await expect(page.getByText("version-hdi")).toBeVisible();
+  await expect(page.getByText("Periode referensi").first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Badan Pusat Statistik" }).first()).toHaveAttribute("href", "https://www.bps.go.id/");
 });

@@ -4,7 +4,7 @@ import { RegulationLens } from "@/components/regulation-lens";
 
 export const metadata: Metadata = {
   title: "RegulasiLens · NusaIntel",
-  description: "Telusuri dan bandingkan regulasi Indonesia dengan bukti yang dapat dibuka.",
+  description: "Pahami dan bandingkan regulasi Indonesia melalui kutipan dokumen resmi.",
 };
 
 export default function RegulationsPage() {

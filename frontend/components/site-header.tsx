@@ -4,10 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+type Theme = "day" | "night";
+
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (callback: () => void) => { finished: Promise<void> };
+};
+
 const navigation = [
-  { href: "/control-tower", label: "Control Tower" },
-  { href: "/opportunity", label: "Opportunity" },
-  { href: "/regional-analytics", label: "Regional" },
+  { href: "/control-tower", label: "Kualitas Data" },
+  { href: "/opportunity", label: "Peluang" },
+  { href: "/regional-analytics", label: "Analisis Wilayah" },
   { href: "/regulations", label: "RegulasiLens" },
 ];
 
@@ -16,10 +22,23 @@ export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   function toggleTheme() {
-    const current = document.documentElement.dataset.theme;
-    const next = current === "night" ? "day" : "night";
-    document.documentElement.dataset.theme = next;
-    window.localStorage.setItem("nusa-intel-theme", next);
+    const root = document.documentElement;
+    const next: Theme = root.dataset.theme === "night" ? "day" : "night";
+    const applyTheme = () => {
+      root.dataset.theme = next;
+      window.localStorage.setItem("nusa-intel-theme", next);
+    };
+    const transitionDocument = document as ViewTransitionDocument;
+
+    root.classList.add("theme-transitioning");
+    if (transitionDocument.startViewTransition) {
+      const transition = transitionDocument.startViewTransition(applyTheme);
+      void transition.finished.finally(() => root.classList.remove("theme-transitioning"));
+      return;
+    }
+
+    applyTheme();
+    window.setTimeout(() => root.classList.remove("theme-transitioning"), 480);
   }
 
   return (
@@ -65,10 +84,17 @@ export function SiteHeader() {
               </Link>
             );
           })}
-          <button className="theme-toggle" type="button" onClick={toggleTheme}>
-            Ganti tema
+          <button
+            className="theme-toggle"
+            type="button"
+            onClick={toggleTheme}
+            aria-label="Ganti tema tampilan"
+            title="Ganti tema tampilan"
+          >
+            <span className="theme-toggle-icon" aria-hidden="true">◐</span>
+            <span className="theme-toggle-label" aria-hidden="true" />
           </button>
-          <span className="phase-label">Release 0.7</span>
+          <span className="phase-label">NusaIntel</span>
         </nav>
       </div>
     </header>

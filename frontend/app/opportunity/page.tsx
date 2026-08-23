@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { OpportunityEngine } from "@/components/opportunity-engine";
 
 export const metadata: Metadata = {
-  title: "Opportunity Engine · NusaIntel",
-  description: "Bandingkan peluang regional melalui skenario yang transparan dan dapat diaudit.",
+  title: "Peluang Regional · NusaIntel",
+  description: "Bandingkan provinsi berdasarkan indikator dan prioritas pilihan Anda.",
 };
 
 export default function OpportunityPage() {

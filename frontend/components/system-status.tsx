@@ -12,10 +12,10 @@ interface HealthPayload {
 }
 
 const labels: Record<Status, string> = {
-  loading: "Memeriksa sistem",
-  healthy: "Semua sistem siap",
-  degraded: "Database belum siap",
-  offline: "Backend tidak tersedia",
+  loading: "Memeriksa kesiapan layanan",
+  healthy: "Semua fitur siap digunakan",
+  degraded: "Sebagian fitur belum siap",
+  offline: "Layanan sedang tidak tersedia",
 };
 
 async function fetchHealth(apiBaseUrl: string): Promise<Status> {
@@ -57,7 +57,7 @@ export function SystemStatus() {
         <span>{labels[status]}</span>
       </div>
       <p>
-        Endpoint <code>/api/v1/health</code> memeriksa API dan kesiapan PostgreSQL.
+        Anda dapat mulai menjelajahi data, membandingkan wilayah, dan mencari regulasi.
       </p>
       {(status === "degraded" || status === "offline") && (
         <button type="button" onClick={checkHealth}>

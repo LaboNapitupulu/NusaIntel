@@ -21,7 +21,7 @@ describe("SystemStatus", () => {
 
     render(<SystemStatus />);
 
-    expect(await screen.findByText("Semua sistem siap")).toBeInTheDocument();
+    expect(await screen.findByText("Semua fitur siap digunakan")).toBeInTheDocument();
   });
 
   it("offers a retry when the backend is unavailable", async () => {
@@ -29,7 +29,7 @@ describe("SystemStatus", () => {
 
     render(<SystemStatus />);
 
-    await waitFor(() => expect(screen.getByText("Backend tidak tersedia")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Layanan sedang tidak tersedia")).toBeInTheDocument());
     expect(screen.getByRole("button", { name: "Periksa ulang" })).toBeInTheDocument();
   });
 });

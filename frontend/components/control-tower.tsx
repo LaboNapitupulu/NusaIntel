@@ -1,13 +1,12 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { AnimatedNumber, EmptyState, WorkspaceSkeleton, WorkspaceTabs, WorkspaceToast } from "./workspace-ui";
 
 type Health = "healthy" | "warning" | "critical" | "unknown";
 type LoadState = "loading" | "ready" | "empty" | "error";
-type TowerTab = "overview" | "quality" | "lineage" | "operations" | "incidents";
+type TowerTab = "overview" | "quality" | "incidents";
 
 interface DatasetSummary {
   id: string;
@@ -47,15 +46,6 @@ interface QualityCheck {
   created_at: string;
 }
 
-interface PipelineRun {
-  id: string;
-  dataset_code: string | null;
-  status: string;
-  started_at: string;
-  finished_at: string | null;
-  error_category: string | null;
-}
-
 interface Incident {
   id: string;
   dataset_code: string;
@@ -66,27 +56,33 @@ interface Incident {
   created_at: string;
 }
 
-interface LineagePayload {
-  nodes: Array<{
-    version_id: string;
-    dataset_code: string;
-    layer: string;
-    status: string;
-  }>;
-  edges: Array<{
-    id: string;
-    upstream_version_id: string;
-    downstream_version_id: string;
-    transformation_version: string;
-  }>;
-}
-
 const healthLabels: Record<Health, string> = {
   healthy: "Sehat",
   warning: "Perlu perhatian",
   critical: "Kritis",
   unknown: "Belum ada data",
 };
+
+const freshnessLabels: Record<DatasetSummary["freshness"]["status"], string> = {
+  fresh: "Terkini",
+  stale: "Perlu diperbarui",
+  unknown: "Belum diketahui",
+};
+
+const checkStatusLabels: Record<QualityCheck["status"], string> = {
+  passed: "Lulus",
+  failed: "Perlu diperiksa",
+  waived: "Dikecualikan",
+};
+
+function readableCheckName(value: string): string {
+  const label = value.replaceAll("_", " ").replaceAll("-", " ").trim();
+  return label ? label.charAt(0).toLocaleUpperCase("id-ID") + label.slice(1) : "Pemeriksaan data";
+}
+
+function displayDatasetName(value: string): string {
+  return value.replace(/\s+(raw|normalized|curated)$/i, "").trim();
+}
 
 function formatTime(value: string | null): string {
   if (!value) return "Belum tersedia";
@@ -106,7 +102,6 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 async function fetchOverview(apiBaseUrl: string) {
   return Promise.all([
     fetchJson<{ items: DatasetSummary[] }>(`${apiBaseUrl}/api/v1/datasets`),
-    fetchJson<{ items: PipelineRun[] }>(`${apiBaseUrl}/api/v1/pipeline-runs?limit=12`),
     fetchJson<{ items: Incident[] }>(`${apiBaseUrl}/api/v1/incidents?limit=12`),
   ]);
 }
@@ -122,9 +117,7 @@ export function ControlTower() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<DatasetDetail | null>(null);
   const [quality, setQuality] = useState<QualityCheck[]>([]);
-  const [runs, setRuns] = useState<PipelineRun[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
-  const [lineage, setLineage] = useState<LineagePayload>({ nodes: [], edges: [] });
   const [severityFilter, setSeverityFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [resolutionNotes, setResolutionNotes] = useState<Record<string, string>>({});
@@ -132,13 +125,11 @@ export function ControlTower() {
   const [datasetQuery, setDatasetQuery] = useState("");
   const [healthFilter, setHealthFilter] = useState<Health | "all">("all");
   const [toast, setToast] = useState<string | null>(null);
-  const [focusedLineageVersion, setFocusedLineageVersion] = useState<string | null>(null);
 
   const loadOverview = useCallback(async () => {
     try {
-      const [datasetPayload, runPayload, incidentPayload] = await fetchOverview(apiBaseUrl);
+      const [datasetPayload, incidentPayload] = await fetchOverview(apiBaseUrl);
       setDatasets(datasetPayload.items);
-      setRuns(runPayload.items);
       setIncidents(incidentPayload.items);
       setSelectedId((current) => current ?? preferredDatasetId(datasetPayload.items));
       setState(datasetPayload.items.length ? "ready" : "empty");
@@ -150,10 +141,9 @@ export function ControlTower() {
   useEffect(() => {
     let active = true;
     void fetchOverview(apiBaseUrl)
-      .then(([datasetPayload, runPayload, incidentPayload]) => {
+      .then(([datasetPayload, incidentPayload]) => {
         if (!active) return;
         setDatasets(datasetPayload.items);
-        setRuns(runPayload.items);
         setIncidents(incidentPayload.items);
         setSelectedId(preferredDatasetId(datasetPayload.items));
         setState(datasetPayload.items.length ? "ready" : "empty");
@@ -176,14 +166,11 @@ export function ControlTower() {
       fetchJson<{ items: QualityCheck[] }>(
         `${apiBaseUrl}/api/v1/datasets/${selectedId}/quality?limit=100`,
       ),
-      fetchJson<LineagePayload>(`${apiBaseUrl}/api/v1/lineage/${selectedId}`),
     ])
-      .then(([nextDetail, qualityPayload, lineagePayload]) => {
+      .then(([nextDetail, qualityPayload]) => {
         if (!active) return;
         setDetail(nextDetail);
         setQuality(qualityPayload.items);
-        setLineage(lineagePayload);
-        setFocusedLineageVersion(lineagePayload.nodes.at(-1)?.version_id ?? null);
       })
       .catch(() => {
         if (active) setDetail(null);
@@ -221,17 +208,6 @@ export function ControlTower() {
     [datasets],
   );
 
-  const focusedLineage = useMemo(
-    () => lineage.nodes.find((node) => node.version_id === focusedLineageVersion) ?? lineage.nodes.at(-1) ?? null,
-    [focusedLineageVersion, lineage.nodes],
-  );
-  const focusedEdges = useMemo(
-    () => lineage.edges.filter(
-      (edge) => edge.upstream_version_id === focusedLineage?.version_id || edge.downstream_version_id === focusedLineage?.version_id,
-    ),
-    [focusedLineage, lineage.edges],
-  );
-
   const resolveIncident = async (incident: Incident) => {
     const note = resolutionNotes[incident.id]?.trim();
     if (!note) return;
@@ -252,21 +228,21 @@ export function ControlTower() {
     <section className="control-tower" id="control-tower" aria-labelledby="tower-title">
       <div className="tower-heading">
         <div>
-          <p className="kicker">Release 0.2 / Control Tower Lite</p>
-          <h2 id="tower-title">Keadaan data, tanpa area abu-abu.</h2>
+          <p className="kicker">Pusat kualitas data</p>
+          <h2 id="tower-title">Ketahui data yang siap Anda gunakan.</h2>
         </div>
         <p>
-          Kontrak, freshness, pemeriksaan, lineage, dan insiden berada dalam satu jejak audit.
-          Kegagalan kritis menghentikan publish tanpa menghapus versi terakhir yang baik.
+          Lihat keterbaruan, hasil pemeriksaan, dan kendala pada setiap sumber data dalam satu
+          tampilan yang mudah dipahami.
         </p>
       </div>
 
       {state === "ready" && (
         <section className="health-overview" aria-label="Ringkasan kesehatan data">
-          <article data-health="healthy" data-tilt data-reveal><span>Dataset sehat</span><strong><AnimatedNumber value={healthSummary.healthy} initialFrom={0} /></strong><small>siap digunakan</small></article>
+          <article data-health="healthy" data-tilt data-reveal><span>Data siap</span><strong><AnimatedNumber value={healthSummary.healthy} initialFrom={0} /></strong><small>dapat digunakan</small></article>
           <article data-health="warning" data-tilt data-reveal><span>Perlu perhatian</span><strong><AnimatedNumber value={healthSummary.warning} initialFrom={0} /></strong><small>periksa kualitas</small></article>
-          <article data-health="critical" data-tilt data-reveal><span>Kritis</span><strong><AnimatedNumber value={healthSummary.critical} initialFrom={0} /></strong><small>publish diblokir</small></article>
-          <article data-health="incidents" data-tilt data-reveal><span>Insiden terbuka</span><strong><AnimatedNumber value={incidents.filter((item) => item.status === "open").length} initialFrom={0} /></strong><small>perlu tindak lanjut</small></article>
+          <article data-health="critical" data-tilt data-reveal><span>Belum dapat digunakan</span><strong><AnimatedNumber value={healthSummary.critical} initialFrom={0} /></strong><small>menunggu perbaikan</small></article>
+          <article data-health="incidents" data-tilt data-reveal><span>Kendala aktif</span><strong><AnimatedNumber value={incidents.filter((item) => item.status === "open").length} initialFrom={0} /></strong><small>sedang ditindaklanjuti</small></article>
         </section>
       )}
 
@@ -278,22 +254,22 @@ export function ControlTower() {
         </div>
       )}
       {state === "empty" && (
-        <p className="tower-state">Belum ada dataset. Jalankan pipeline BPS untuk mengisi katalog.</p>
+        <p className="tower-state">Belum ada data yang dapat ditampilkan saat ini.</p>
       )}
 
       {state === "ready" && (
         <div className="tower-shell">
-          <aside className="dataset-catalog" aria-label="Katalog dataset">
+          <aside className="dataset-catalog" aria-label="Daftar sumber data">
             <div className="panel-title">
-              <span>Dataset catalog</span>
+              <span>Daftar data</span>
               <strong>{datasets.length}</strong>
             </div>
             <div className="catalog-toolbar">
               <label>
-                <span className="sr-only">Cari dataset</span>
+                <span className="sr-only">Cari data</span>
                 <input
                   type="search"
-                  placeholder="Cari dataset atau kode…"
+                  placeholder="Cari nama data…"
                   value={datasetQuery}
                   onChange={(event) => setDatasetQuery(event.target.value)}
                 />
@@ -324,14 +300,14 @@ export function ControlTower() {
                   <span className={`health-pill health-${dataset.health}`}>
                     {healthLabels[dataset.health]}
                   </span>
-                  <strong>{dataset.name}</strong>
-                  <span>{dataset.layer} · {dataset.owner}</span>
+                  <strong>{displayDatasetName(dataset.name)}</strong>
+                  <span>Dikelola oleh {dataset.owner}</span>
                 </button>
               ))}
               {!filteredDatasets.length && (
                 <EmptyState
                   eyebrow="Tidak ditemukan"
-                  title="Tidak ada dataset yang cocok"
+                  title="Tidak ada data yang cocok"
                   description="Ubah kata pencarian atau tampilkan kembali semua status."
                 />
               )}
@@ -343,19 +319,17 @@ export function ControlTower() {
               <>
                 <section className="dataset-overview" aria-labelledby="dataset-title">
                   <div>
-                    <p className="card-eyebrow">{detail.layer} / {detail.code}</p>
-                    <h3 id="dataset-title">{detail.name}</h3>
-                    <p className="version-note">
-                      Last-known-good: {detail.last_known_good_version_id?.slice(0, 8) ?? "belum ada"}
-                    </p>
+                    <p className="card-eyebrow">Ringkasan data</p>
+                    <h3 id="dataset-title">{displayDatasetName(detail.name)}</h3>
+                    <p className="version-note">Status saat ini: {healthLabels[detail.health]}</p>
                   </div>
                   <div className="metric-grid">
-                    <div><span>Freshness</span><strong>{detail.freshness.status}</strong></div>
-                    <div><span>Reference period</span><strong>{formatTime(detail.freshness.source_reference_at)}</strong></div>
-                    <div><span>Retrieved</span><strong>{formatTime(detail.freshness.retrieved_at)}</strong></div>
-                    <div><span>Processed</span><strong>{formatTime(detail.freshness.processed_at)}</strong></div>
-                    <div><span>Contract</span><strong>v{detail.contract?.version ?? "–"}</strong></div>
-                    <div><span>Open incidents</span><strong>{detail.open_incident_count}</strong></div>
+                    <div><span>Keterbaruan</span><strong>{freshnessLabels[detail.freshness.status]}</strong></div>
+                    <div><span>Periode data</span><strong>{formatTime(detail.freshness.source_reference_at)}</strong></div>
+                    <div><span>Terakhir diperbarui</span><strong>{formatTime(detail.freshness.retrieved_at)}</strong></div>
+                    <div><span>Siap digunakan sejak</span><strong>{formatTime(detail.freshness.processed_at)}</strong></div>
+                    <div><span>Temuan kualitas</span><strong>{detail.failed_check_count}</strong></div>
+                    <div><span>Kendala aktif</span><strong>{detail.open_incident_count}</strong></div>
                   </div>
                 </section>
 
@@ -364,111 +338,63 @@ export function ControlTower() {
                   active={activeTab}
                   onChange={setActiveTab}
                   tabs={[
-                    { id: "overview", label: "Overview" },
-                    { id: "quality", label: "Quality", count: quality.filter((item) => item.status === "failed").length },
-                    { id: "lineage", label: "Lineage", count: lineage.nodes.length },
-                    { id: "operations", label: "Pipeline", count: runs.length },
-                    { id: "incidents", label: "Insiden", count: incidents.filter((item) => item.status === "open").length },
+                    { id: "overview", label: "Ringkasan" },
+                    { id: "quality", label: "Pemeriksaan", count: quality.filter((item) => item.status === "failed").length },
+                    { id: "incidents", label: "Kendala", count: incidents.filter((item) => item.status === "open").length },
                   ]}
                 />
 
-                <div className="tower-grid" hidden={activeTab === "operations" || activeTab === "incidents"}>
+                <div className="tower-grid" hidden={activeTab === "incidents"}>
                   <section className="tower-panel quality-panel" aria-labelledby="quality-title" hidden={activeTab !== "quality"}>
                     <div className="panel-title">
-                      <span id="quality-title">Quality checks</span>
+                      <span id="quality-title">Hasil pemeriksaan</span>
                       <strong>{filteredQuality.length}</strong>
                     </div>
                     <div className="filter-row">
-                      <label>Severity
+                      <label>Tingkat perhatian
                         <select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value)}>
-                          <option value="all">Semua</option><option value="critical">Critical</option>
-                          <option value="warning">Warning</option><option value="info">Info</option>
+                          <option value="all">Semua</option><option value="critical">Mendesak</option>
+                          <option value="warning">Perlu perhatian</option><option value="info">Informasi</option>
                         </select>
                       </label>
                       <label>Status
                         <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-                          <option value="all">Semua</option><option value="failed">Failed</option>
-                          <option value="passed">Passed</option><option value="waived">Waived</option>
+                          <option value="all">Semua</option><option value="failed">Perlu diperiksa</option>
+                          <option value="passed">Lulus</option><option value="waived">Dikecualikan</option>
                         </select>
                       </label>
                     </div>
                     <div className="check-list">
                       {filteredQuality.slice(0, 12).map((check) => (
                         <article className="check-row" key={check.id}>
-                          <span className={`check-status check-${check.status}`}>{check.status}</span>
-                          <div><strong>{check.check_code}</strong><span>{check.severity} · contract v{check.contract_version ?? "–"}</span></div>
+                          <span className={`check-status check-${check.status}`}>{checkStatusLabels[check.status]}</span>
+                          <div><strong>{readableCheckName(check.check_code)}</strong><span>{check.severity === "critical" ? "Mendesak" : check.severity === "warning" ? "Perlu perhatian" : "Informasi"}</span></div>
                         </article>
                       ))}
-                      {!filteredQuality.length && <p className="empty-copy">Tidak ada check pada filter ini.</p>}
+                      {!filteredQuality.length && <p className="empty-copy">Tidak ada hasil pemeriksaan pada filter ini.</p>}
                     </div>
                   </section>
 
                   <section className="tower-panel tower-overview-panel" aria-labelledby="drift-title" hidden={activeTab !== "overview"}>
-                    <div className="panel-title"><span id="drift-title">Schema drift</span><strong>{detail.schema_drift.length}</strong></div>
-                    {detail.schema_drift.length ? detail.schema_drift.slice(0, 8).map((drift) => (
-                      <article className="event-row" key={drift.id}><strong>{drift.column_name}</strong><span>{drift.change_type}</span></article>
-                    )) : <p className="empty-copy">Tidak ada perubahan schema terdeteksi.</p>}
-                  </section>
-
-                  <section className="tower-panel lineage-panel" aria-labelledby="lineage-title" hidden={activeTab !== "lineage"}>
-                    <div className="panel-title"><span id="lineage-title">Lineage</span><strong>{lineage.edges.length}</strong></div>
-                    <div className="lineage-stage">
-                      <ol className="lineage-list lineage-graph" aria-label="Alur versi dataset">
-                        {lineage.nodes.map((node, index) => (
-                          <li key={node.version_id} style={{ "--node-order": index } as CSSProperties}>
-                            <button
-                              type="button"
-                              className="lineage-node"
-                              data-active={focusedLineage?.version_id === node.version_id}
-                              aria-pressed={focusedLineage?.version_id === node.version_id}
-                              onClick={() => setFocusedLineageVersion(node.version_id)}
-                              onFocus={() => setFocusedLineageVersion(node.version_id)}
-                              onPointerEnter={() => setFocusedLineageVersion(node.version_id)}
-                            >
-                              <i aria-hidden="true" />
-                              <span>{node.layer}</span>
-                              <strong>{node.dataset_code}</strong>
-                              <small>{node.status}</small>
-                            </button>
-                          </li>
-                        ))}
-                      </ol>
-                      {focusedLineage && (
-                        <aside className="lineage-inspector" aria-live="polite">
-                          <span>Node aktif · {focusedLineage.layer}</span>
-                          <strong>{focusedLineage.dataset_code}</strong>
-                          <small>{focusedLineage.status} · {focusedEdges.length} koneksi · versi {focusedLineage.version_id.slice(0, 8)}</small>
-                          <div className="signal-track" aria-hidden="true"><i /></div>
-                        </aside>
-                      )}
-                    </div>
-                    {!lineage.nodes.length && <p className="empty-copy">Lineage belum tersedia untuk versi ini.</p>}
+                    <div className="panel-title"><span id="drift-title">Konsistensi format</span><strong>{detail.schema_drift.length}</strong></div>
+                    {detail.schema_drift.length
+                      ? <p className="empty-copy">Ada {detail.schema_drift.length} perubahan format yang perlu diperiksa sebelum data digunakan.</p>
+                      : <p className="empty-copy">Format data konsisten dengan pembaruan sebelumnya.</p>}
                   </section>
                 </div>
               </>
-            ) : <p className="tower-state">Memuat detail dataset…</p>}
+            ) : <p className="tower-state">Memuat rincian data…</p>}
           </div>
         </div>
       )}
 
-      {state === "ready" && (activeTab === "operations" || activeTab === "incidents") && (
+      {state === "ready" && activeTab === "incidents" && (
       <div className="operations-grid operations-focus">
-        <section className="tower-panel" aria-labelledby="runs-title" hidden={activeTab !== "operations"}>
-          <div className="panel-title"><span id="runs-title">Pipeline runs</span><strong>{runs.length}</strong></div>
-          {runs.map((run) => (
-            <article className="event-row" key={run.id}>
-              <div><strong>{run.dataset_code ?? "unassigned"}</strong><span>{formatTime(run.started_at)}</span></div>
-              <span className={`check-status check-${run.status}`}>{run.status}</span>
-            </article>
-          ))}
-          {!runs.length && <p className="empty-copy">Belum ada histori pipeline.</p>}
-        </section>
-
         <section className="tower-panel" aria-labelledby="incident-title" hidden={activeTab !== "incidents"}>
-          <div className="panel-title"><span id="incident-title">Incidents</span><strong>{incidents.length}</strong></div>
+          <div className="panel-title"><span id="incident-title">Kendala data</span><strong>{incidents.length}</strong></div>
           {incidents.map((incident) => (
             <article className="incident-row" key={incident.id}>
-              <div><strong>{incident.title}</strong><span>{incident.dataset_code} · {incident.status}</span></div>
+              <div><strong>{readableCheckName(incident.check_code)}</strong><span>{displayDatasetName(datasets.find((item) => item.code === incident.dataset_code)?.name ?? "Data terkait")} · {incident.status === "open" ? "Dalam penanganan" : "Selesai"}</span></div>
               {incident.status !== "resolved" && incident.status !== "ignored-with-reason" ? (
                 <div className="resolution-form">
                   <label htmlFor={`note-${incident.id}`}>Catatan resolusi</label>

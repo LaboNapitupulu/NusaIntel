@@ -6,36 +6,36 @@ import { SystemStatus } from "@/components/system-status";
 const products = [
   {
     number: "01",
-    eyebrow: "Trust",
-    title: "Data Reliability Control Tower",
-    description: "Pantau freshness, kontrak, lineage, dan insiden sebelum data dipublikasikan.",
+    eyebrow: "Kualitas",
+    title: "Pusat Kualitas Data",
+    description: "Lihat data mana yang siap digunakan dan mana yang masih perlu diperiksa.",
     href: "/control-tower",
-    metric: "21 dataset",
+    metric: "21 sumber data",
     tone: "teal",
   },
   {
     number: "02",
-    eyebrow: "Compare",
-    title: "Regional Opportunity Engine",
-    description: "Bangun ranking provinsi dengan bobot, coverage, dan asumsi yang dapat diaudit.",
+    eyebrow: "Bandingkan",
+    title: "Peluang Regional",
+    description: "Bandingkan provinsi berdasarkan prioritas dan indikator pilihan Anda.",
     href: "/opportunity",
     metric: "38 provinsi",
     tone: "coral",
   },
   {
     number: "03",
-    eyebrow: "Discover",
-    title: "Regional Analytics",
-    description: "Temukan wilayah serupa, cluster tervalidasi, dan bukti pembentuk profilnya.",
+    eyebrow: "Temukan",
+    title: "Analisis Regional",
+    description: "Temukan wilayah dengan kondisi serupa dan pahami faktor pembandingnya.",
     href: "/regional-analytics",
     metric: "Analisis spasial",
     tone: "gold",
   },
   {
     number: "04",
-    eyebrow: "Understand",
+    eyebrow: "Pahami",
     title: "RegulasiLens ID",
-    description: "Telusuri regulasi berbasis versi dengan jawaban yang selalu kembali ke sumber.",
+    description: "Ajukan pertanyaan tentang regulasi dan periksa kutipan dari dokumen resminya.",
     href: "/regulations",
     metric: "3 dokumen resmi",
     tone: "mint",
@@ -47,15 +47,15 @@ export default function Home() {
     <main className="home-page">
       <section className="landing-hero" aria-labelledby="home-title">
         <div className="landing-copy">
-          <p className="kicker">Evidence-first intelligence for Indonesia</p>
+          <p className="kicker">Wawasan publik untuk Indonesia</p>
           <h1 id="home-title">Dari data publik menjadi keputusan yang bisa dibuktikan.</h1>
           <p className="lede">
-            Empat ruang kerja, satu rantai bukti. Pilih modul yang Anda perlukan tanpa harus
-            menelusuri satu halaman yang panjang.
+            Pilih kebutuhan Anda, bandingkan informasi, lalu periksa sumbernya dalam alur yang
+            ringkas dan mudah dipahami.
           </p>
           <div className="landing-actions">
-            <Link className="landing-primary" href="/control-tower">Mulai dari kualitas data</Link>
-            <Link className="landing-secondary" href="/opportunity">Buka opportunity engine</Link>
+            <Link className="landing-primary" href="/control-tower">Periksa kualitas data</Link>
+            <Link className="landing-secondary" href="/opportunity">Bandingkan wilayah</Link>
           </div>
           <SystemStatus />
         </div>
@@ -65,12 +65,12 @@ export default function Home() {
       <section className="module-launchpad" aria-labelledby="modules-title">
         <div className="launchpad-heading">
           <div>
-            <p className="kicker">Workspace</p>
-            <h2 id="modules-title">Satu tujuan per halaman.</h2>
+            <p className="kicker">Pilih kebutuhan</p>
+            <h2 id="modules-title">Mulai dari pertanyaan Anda.</h2>
           </div>
           <p>
-            Navigasi kini mempertahankan konteks setiap alat, sementara halaman beranda berfungsi
-            sebagai pintu masuk—bukan tumpukan seluruh dashboard.
+            Setiap halaman dibuat untuk satu kebutuhan, sehingga Anda dapat fokus pada hasil yang
+            ingin dipahami tanpa menghadapi tampilan yang terlalu padat.
           </p>
         </div>
 
@@ -101,13 +101,13 @@ export default function Home() {
       </section>
 
       <section className="evidence-strip" aria-label="Alur kerja NusaIntel">
-        <span>01 · Observe</span>
+        <span>01 · Amati</span>
         <i aria-hidden="true" />
-        <span>02 · Validate</span>
+        <span>02 · Periksa</span>
         <i aria-hidden="true" />
-        <span>03 · Compare</span>
+        <span>03 · Bandingkan</span>
         <i aria-hidden="true" />
-        <span>04 · Decide</span>
+        <span>04 · Putuskan</span>
       </section>
     </main>
   );

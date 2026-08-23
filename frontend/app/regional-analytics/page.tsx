@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { RegionalAnalytics } from "@/components/regional-analytics";
 
 export const metadata: Metadata = {
-  title: "Regional Analytics · NusaIntel",
-  description: "Analisis kemiripan, cluster, dan profil indikator antarprovinsi.",
+  title: "Analisis Wilayah · NusaIntel",
+  description: "Temukan wilayah dengan kondisi serupa berdasarkan indikator pilihan Anda.",
 };
 
 export default function RegionalAnalyticsPage() {

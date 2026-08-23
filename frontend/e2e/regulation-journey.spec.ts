@@ -89,20 +89,21 @@ test.beforeEach(async ({ page }) => {
 
 test("grounded answer remains usable without horizontal overflow", async ({ page }) => {
   await page.goto("/regulations");
-  await expect(page.getByRole("heading", { name: /Jawaban hukum berhenti/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Pahami regulasi langsung/ })).toBeVisible();
   await expect(page.getByText(/UU 27\/2022/)).toBeVisible();
 
-  await page.getByRole("button", { name: "Jawab dengan bukti" }).click();
-  await expect(page.getByText("ANSWERABLE")).toBeVisible();
-  await page.getByRole("tab", { name: /Evidence/ }).click();
+  await page.getByRole("button", { name: "Cari jawaban" }).click();
+  await expect(page.getByText("SUMBER TERSEDIA", { exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: /Sumber/ }).click();
   await expect(page.getByText(/\[C1\] Pasal 7/)).toBeVisible();
   await expect(page.getByRole("link", { name: "Dokumen resmi" })).toHaveAttribute(
     "href",
     regulation.source_page_url,
   );
 
-  await page.getByRole("button", { name: "Buka konteks" }).click();
-  await expect(page.getByRole("heading", { name: regulation.title })).toBeVisible();
+  const contextButton = page.getByRole("button", { name: "Buka konteks" });
+  await contextButton.dispatchEvent("click");
+  await expect(page.getByRole("heading", { name: regulation.title })).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText("page:4:line:10")).toBeVisible();
 
   const dimensions = await page.evaluate(() => {

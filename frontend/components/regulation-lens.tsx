@@ -101,6 +101,28 @@ function dateLabel(value: string | null | undefined): string {
   return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(new Date(value));
 }
 
+function documentStatusLabel(status: string): string {
+  if (status === "in_force") return "Berlaku";
+  if (status === "repealed") return "Dicabut";
+  if (status === "amended") return "Telah diubah";
+  if (status === "draft") return "Rancangan";
+  return status.replaceAll("_", " ");
+}
+
+function confidenceLabel(confidence: Answer["confidence"]): string {
+  if (confidence === "high") return "tinggi";
+  if (confidence === "medium") return "sedang";
+  return "rendah";
+}
+
+function sourceLocationLabel(anchor: string): string {
+  const page = anchor.match(/page:(\d+)/i)?.[1];
+  const line = anchor.match(/line:(\d+)/i)?.[1];
+  if (page && line) return `Halaman ${page}, baris ${line}`;
+  if (page) return `Halaman ${page}`;
+  return anchor;
+}
+
 export function RegulationLens() {
   const [documents, setDocuments] = useState<Regulation[]>([]);
   const [question, setQuestion] = useState("Apa hak akses dan salinan Data Pribadi?");
@@ -142,7 +164,7 @@ export function RegulationLens() {
         setDocuments(payload.items);
         setDocumentId(payload.items[0]?.document_id ?? "");
       })
-      .catch(() => active && setMessage("Corpus regulasi belum dapat dimuat."))
+      .catch(() => active && setMessage("Koleksi regulasi belum dapat dimuat."))
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
@@ -182,9 +204,9 @@ export function RegulationLens() {
       setAnswer(result);
       setActiveCitationId(result.citations[0]?.citation_id ?? null);
       setActiveTab("answer");
-      setMessage(result.answerable ? "Jawaban selesai. Evidence citation tersedia pada tab Evidence." : "Pertanyaan ditolak sesuai batas corpus.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Jawaban tidak dapat dibuat.");
+      setMessage(result.answerable ? "Jawaban selesai. Kutipan sumber tersedia pada tab Sumber." : "Dokumen yang tersedia belum cukup untuk menjawab pertanyaan ini.");
+    } catch {
+      setMessage("Jawaban belum dapat dibuat. Coba lagi.");
     } finally {
       setRunning(false);
     }
@@ -202,8 +224,8 @@ export function RegulationLens() {
       setContext(result);
       setActiveCitationId(citation.citation_id);
       setActiveTab("evidence");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Konteks citation tidak dapat dibuka.");
+    } catch {
+      setMessage("Konteks kutipan belum dapat dibuka. Coba lagi.");
     }
   }
 
@@ -219,8 +241,8 @@ export function RegulationLens() {
       setComparison(await fetchJson<Comparison>(`/api/v1/regulations/compare?${query}`));
       setSelectedChangeIndex(0);
       setMessage("Perbandingan versi selesai.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Versi tidak dapat dibandingkan.");
+    } catch {
+      setMessage("Dokumen belum dapat dibandingkan. Coba lagi.");
     }
   }
 
@@ -267,7 +289,7 @@ export function RegulationLens() {
               onClick={() => showCitation(citationId)}
               onPointerEnter={() => setActiveCitationId(citationId)}
               onFocus={() => setActiveCitationId(citationId)}
-              aria-label={`Buka citation ${citationId}`}
+              aria-label={`Buka sumber ${citationId}`}
             >{part}</button>
           ) : part;
         })}
@@ -279,37 +301,37 @@ export function RegulationLens() {
     <section className="regulation-shell" id="regulasilens" aria-labelledby="regulation-title">
       <div className="regulation-header">
         <div>
-          <p className="kicker">Release 0.6 / RegulasiLens beta</p>
-          <h2 id="regulation-title">Jawaban hukum berhenti ketika buktinya berhenti.</h2>
+          <p className="kicker">Pencarian regulasi bersumber</p>
+          <h2 id="regulation-title">Pahami regulasi langsung dari dokumen resminya.</h2>
           <p>
-            Setiap klaim berasal dari evidence retrieval, setiap citation dapat dibuka, dan pertanyaan
-            di luar corpus akan ditolak.
+            Ajukan pertanyaan dengan bahasa sehari-hari. Setiap jawaban menyertakan kutipan yang
+            dapat Anda buka dan periksa kembali.
           </p>
         </div>
-        <div className="regulation-gate" aria-label="Grounding guarantees">
-          <strong>0%</strong>
-          <span>fabricated citation pada benchmark</span>
-          <small>evidence-extractive-id-v1</small>
+        <div className="regulation-gate" aria-label="Jaminan sumber jawaban">
+          <strong>100%</strong>
+          <span>jawaban diarahkan kembali ke dokumen resmi</span>
+          <small>Sumber dapat diperiksa</small>
         </div>
       </div>
 
       <div className="workspace-config-toggle corpus-toggle">
-        <div><span>Corpus aktif</span><strong>{documents.length} dokumen · status dan versi terlacak</strong></div>
+        <div><span>Koleksi regulasi</span><strong>{documents.length} dokumen resmi tersedia</strong></div>
         <button type="button" onClick={() => setCorpusOpen((current) => !current)} aria-expanded={corpusOpen}>
-          {corpusOpen ? "Sembunyikan corpus" : "Lihat corpus"}
+          {corpusOpen ? "Sembunyikan dokumen" : "Lihat dokumen"}
         </button>
       </div>
 
-      <div className="regulation-catalog" aria-label="Corpus regulasi" hidden={!corpusOpen}>
-        {loading && <WorkspaceSkeleton label="Memuat corpus regulasi" />}
-        {!loading && !documents.length && <p>Belum ada dokumen terpublikasi.</p>}
+      <div className="regulation-catalog" aria-label="Koleksi regulasi" hidden={!corpusOpen}>
+        {loading && <WorkspaceSkeleton label="Memuat koleksi regulasi" />}
+        {!loading && !documents.length && <p>Belum ada dokumen yang dapat ditampilkan.</p>}
         {documents.map((document) => (
           <article key={document.document_id}>
-            <span className="regulation-status">{document.status}</span>
+            <span className="regulation-status">{documentStatusLabel(document.status)}</span>
             <h3>{document.document_type} {document.number}/{document.year}</h3>
             <p>{document.title}</p>
             <small>
-              Status diperiksa {dateLabel(document.status_checked_at)} · corpus {document.latest_version?.manifest_version ?? "—"}
+              Status diperiksa {dateLabel(document.status_checked_at)}
             </small>
           </article>
         ))}
@@ -320,15 +342,15 @@ export function RegulationLens() {
         active={activeTab}
         onChange={setActiveTab}
         tabs={[
-          { id: "answer", label: "Pencarian & Jawaban" },
-          { id: "evidence", label: "Evidence", count: answer?.citations.length ?? 0 },
-          { id: "compare", label: "Perbandingan", count: versions.length },
+          { id: "answer", label: "Tanya regulasi" },
+          { id: "evidence", label: "Sumber", count: answer?.citations.length ?? 0 },
+          { id: "compare", label: "Perubahan dokumen", count: versions.length },
         ]}
       />
 
       <div className="regulation-workspace" hidden={activeTab !== "answer"}>
         <form className="answer-panel" onSubmit={ask}>
-          <label htmlFor="regulation-question">Pertanyaan berbasis corpus</label>
+          <label htmlFor="regulation-question">Apa yang ingin Anda ketahui?</label>
           <textarea
             id="regulation-question"
             value={question}
@@ -337,31 +359,29 @@ export function RegulationLens() {
             onChange={(event) => setQuestion(event.target.value)}
           />
           <div className="answer-actions">
-            <small>{question.length}/500 karakter · maksimum 5 citation</small>
+            <small>{question.length}/500 karakter · hingga 5 kutipan sumber</small>
             <button type="button" className="secondary-button" onClick={() => void shareQuestion()} disabled={question.trim().length < 8}>Salin pertanyaan</button>
             <button type="submit" disabled={running || question.trim().length < 8}>
-              {running ? "Memeriksa evidence..." : "Jawab dengan bukti"}
+              {running ? "Mencari jawaban..." : "Cari jawaban"}
             </button>
           </div>
         </form>
 
         <div className="answer-output" aria-live="polite">
-          {!answer && !message && <p className="empty-copy">Jawaban dan refusal akan muncul di sini.</p>}
+          {!answer && !message && <p className="empty-copy">Jawaban akan muncul di sini setelah Anda mengajukan pertanyaan.</p>}
           {answer && (
             <>
               <div className="answer-meta">
-                <span>{answer.answerable ? "ANSWERABLE" : "REFUSED"}</span>
-                <span>confidence {answer.confidence}</span>
-                <span>coverage {Math.round(answer.evidence_coverage * 100)}%</span>
+                <span>{answer.answerable ? "SUMBER TERSEDIA" : "SUMBER BELUM CUKUP"}</span>
+                <span>Keyakinan {confidenceLabel(answer.confidence)}</span>
+                <span>Kelengkapan sumber {Math.round(answer.evidence_coverage * 100)}%</span>
               </div>
               <div className={answer.answerable ? "grounded-answer" : "refusal-answer"}>
-                {answer.answer.split("\n").map(renderGroundedLine)}
-                {answer.refusal_reason && <small>{answer.refusal_reason}</small>}
+                {answer.answerable
+                  ? answer.answer.split("\n").map(renderGroundedLine)
+                  : <p>Dokumen yang tersedia belum cukup untuk menjawab pertanyaan ini. Coba gunakan kata yang lebih spesifik atau pilih regulasi lain.</p>}
               </div>
               <p className="regulation-disclaimer">{answer.disclaimer}</p>
-              <small className="provenance-line">
-                Corpus {answer.provenance.corpus_version} · index {answer.provenance.index_version}
-              </small>
             </>
           )}
         </div>
@@ -373,12 +393,12 @@ export function RegulationLens() {
         {activeCitation && (
           <div className="evidence-link-strip" aria-live="polite">
             <i aria-hidden="true" />
-            <span>Klaim aktif</span>
-            <strong>Citation {activeCitation.citation_id} · {activeCitation.heading}</strong>
+            <span>Kutipan aktif</span>
+            <strong>Sumber {activeCitation.citation_id} · {activeCitation.heading}</strong>
             <small>{activeCitation.document_title}</small>
           </div>
         )}
-        <div className="citation-grid" aria-label="Citation evidence">
+        <div className="citation-grid" aria-label="Kutipan sumber">
           {answer.citations.map((citation) => (
             <article
               key={citation.citation_id}
@@ -389,7 +409,7 @@ export function RegulationLens() {
             >
               <div className="citation-heading">
                 <strong>[{citation.citation_id}] {citation.heading}</strong>
-                <span>{citation.document_status}</span>
+                <span>{documentStatusLabel(citation.document_status)}</span>
               </div>
               <blockquote>{citation.quote}</blockquote>
               <p>{citation.document_title}</p>
@@ -404,9 +424,9 @@ export function RegulationLens() {
         </>
       ) : (
         <EmptyState
-          eyebrow="Belum ada evidence"
+          eyebrow="Belum ada sumber"
           title="Ajukan pertanyaan terlebih dahulu"
-          description="Citation, kutipan sumber, dan konteks pasal akan dikumpulkan di area ini."
+          description="Kutipan, dokumen resmi, dan konteks pasal akan ditampilkan di area ini."
         />
       )}
 
@@ -414,7 +434,7 @@ export function RegulationLens() {
         <aside className="context-viewer" aria-labelledby="context-title">
           <div className="context-heading">
             <div>
-              <p className="kicker">Surrounding context</p>
+              <p className="kicker">Konteks lengkap</p>
               <h3 id="context-title">{context.document_title}</h3>
             </div>
             <button type="button" onClick={() => setContext(null)}>Tutup konteks</button>
@@ -423,7 +443,7 @@ export function RegulationLens() {
             <article className={section.section_id === context.selected_section_id ? "selected" : ""} key={section.section_id}>
               <strong>{section.heading}</strong>
               <p>{section.text}</p>
-              <small>{section.source_anchor}</small>
+              <small>{sourceLocationLabel(section.source_anchor)}</small>
             </article>
           ))}
         </aside>
@@ -432,8 +452,8 @@ export function RegulationLens() {
 
       <div className="version-compare" hidden={activeTab !== "compare"}>
         <div>
-          <p className="kicker">Structured version comparison</p>
-          <h3>Perubahan hanya diringkas jika teks sumber tersedia.</h3>
+          <p className="kicker">Perubahan dokumen</p>
+          <h3>Lihat bagian yang ditambah, dihapus, atau diubah.</h3>
         </div>
         <div className="compare-controls">
           <label>Dokumen
@@ -499,7 +519,7 @@ export function RegulationLens() {
           </div>
         )}
       </div>
-      {running && <div className="analysis-progress" role="status"><i /><span>Menelusuri corpus dan memeriksa evidence…</span></div>}
+      {running && <div className="analysis-progress" role="status"><i /><span>Mencari bagian dokumen yang paling relevan…</span></div>}
       <WorkspaceToast message={message} tone={message?.toLowerCase().includes("tidak dapat") ? "error" : "info"} onDismiss={() => setMessage(null)} />
     </section>
   );

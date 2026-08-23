@@ -8,7 +8,7 @@ import "./styles.css";
 
 export const metadata: Metadata = {
   title: "NusaIntel",
-  description: "Evidence-first regional intelligence for Indonesia.",
+  description: "Data publik Indonesia yang lebih mudah dipahami dan dibandingkan.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
@@ -27,7 +27,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         {children}
         <footer className="site-footer">
           <span>NusaIntel © 2026</span>
-          <span>Data publik. Metodologi terbuka.</span>
+          <span>Data publik yang mudah dipahami.</span>
         </footer>
       </body>
     </html>

@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 describe("ControlTower", () => {
-  it("explains a blocked dataset while preserving last-known-good evidence", async () => {
+  it("explains data quality in plain language", async () => {
     vi.spyOn(global, "fetch").mockImplementation(async (input) => {
       const url = String(input);
       if (url.includes("/datasets/dataset-1/quality")) {
@@ -49,38 +49,11 @@ describe("ControlTower", () => {
           ],
         });
       }
-      if (url.includes("/lineage/dataset-1")) {
-        return response({
-          nodes: [
-            {
-              version_id: "version-1",
-              dataset_code: "tpt_silver",
-              layer: "silver",
-              status: "rejected",
-            },
-          ],
-          edges: [],
-        });
-      }
       if (url.endsWith("/datasets/dataset-1")) {
         return response({
           ...dataset,
           contract: { version: 2, checksum: "checksum" },
           schema_drift: [],
-        });
-      }
-      if (url.includes("/pipeline-runs")) {
-        return response({
-          items: [
-            {
-              id: "run-1",
-              dataset_code: "tpt_silver",
-              status: "failed",
-              started_at: "2026-08-11T01:00:00Z",
-              finished_at: "2026-08-11T01:00:03Z",
-              error_category: "quality_gate",
-            },
-          ],
         });
       }
       if (url.includes("/incidents")) {
@@ -104,20 +77,17 @@ describe("ControlTower", () => {
     render(<ControlTower />);
 
     expect(screen.getByRole("status")).toHaveTextContent("Memuat katalog data");
-    expect(await screen.findByText("Tingkat Pengangguran Terbuka normalized")).toBeInTheDocument();
-    expect(await screen.findByText("numeric_values_valid")).toBeInTheDocument();
-    expect(screen.getByText(/Last-known-good: good-ver/)).toBeInTheDocument();
-    expect(screen.getByText("Reference period")).toBeInTheDocument();
-    expect(screen.getByText("Contract")).toBeInTheDocument();
-    expect(screen.getByText("v2")).toBeInTheDocument();
+    expect(await screen.findByText("Tingkat Pengangguran Terbuka")).toBeInTheDocument();
+    expect(await screen.findByText("Numeric values valid")).toBeInTheDocument();
+    expect(screen.getByText("Status saat ini: Kritis")).toBeInTheDocument();
+    expect(screen.getByText("Periode data")).toBeInTheDocument();
+    expect(screen.getByText("Keterbaruan")).toBeInTheDocument();
+    expect(screen.queryByText(/Last-known-good/i)).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: /Lineage/ }));
-    const lineageNode = screen.getByRole("button", { name: /silver.*tpt_silver.*rejected/i });
-    expect(lineageNode).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByText(/versi version-/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: /Pemeriksaan/ }));
 
     fireEvent.change(screen.getByLabelText("Status"), { target: { value: "passed" } });
-    expect(screen.getByText("Tidak ada check pada filter ini.")).toBeInTheDocument();
+    expect(screen.getByText("Tidak ada hasil pemeriksaan pada filter ini.")).toBeInTheDocument();
   });
 
   it("offers retry when the API is unavailable", async () => {
@@ -128,6 +98,6 @@ describe("ControlTower", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("belum dapat dijangkau");
     fireEvent.click(screen.getByRole("button", { name: "Coba lagi" }));
 
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(6));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(4));
   });
 });
