@@ -2,83 +2,83 @@
 
 # NusaIntel
 
-### Intelijen data publik Indonesia yang transparan dan mudah dipahami
+### Transparent, evidence-driven intelligence for Indonesian public data
 
-NusaIntel membantu pengguna memeriksa kualitas data, membandingkan peluang antarwilayah,
-menemukan kemiripan regional, dan menelusuri regulasi langsung dari sumber resminya.
+NusaIntel helps users assess data quality, compare regional opportunities,
+identify similar provinces, and explore regulations through verifiable official sources.
 
 [![CI](https://github.com/LaboNapitupulu/NusaIntel/actions/workflows/ci.yml/badge.svg)](https://github.com/LaboNapitupulu/NusaIntel/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-f0b64d.svg)](LICENSE)
 [![Release](https://img.shields.io/badge/release-0.7-0c6f68.svg)](https://github.com/LaboNapitupulu/NusaIntel)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](compose.yaml)
 
-[Mulai cepat](#mulai-cepat) · [Fitur](#fitur-utama) · [Teknologi](#teknologi-yang-digunakan) · [Dokumentasi](#dokumentasi) · [Kontribusi](#pengembangan-dan-kontribusi)
+[Quick start](#quick-start) · [Features](#key-features) · [Technology](#technology-stack) · [Documentation](#documentation) · [Development](#development-and-validation)
 
 </div>
 
 ---
 
-## Tentang NusaIntel
+## Overview
 
-Data publik sering tersebar, sulit dibandingkan, dan tidak selalu mudah ditelusuri kembali
-ke sumbernya. NusaIntel menyatukan data statistik dan regulasi Indonesia ke dalam pengalaman
-yang lebih ramah bagi pengguna, tanpa menyembunyikan kualitas, sumber, maupun keterbatasannya.
+Public data is often fragmented, difficult to compare, and hard to trace back to its source.
+NusaIntel brings Indonesian statistics and regulations into one accessible product while
+keeping data quality, provenance, methodology, and limitations visible.
 
-Platform ini berfokus pada empat area:
+The platform is organized into four product areas:
 
-| Produk | Kegunaan |
+| Product | Purpose |
 |---|---|
-| **Pusat Kualitas Data** | Memeriksa keterbaruan, kelengkapan, konsistensi, dan kendala data. |
-| **Peluang Regional** | Membandingkan 2–5 provinsi dengan indikator dan bobot yang dapat diatur. |
-| **Analisis Wilayah** | Menemukan wilayah serupa, kelompok regional, dan faktor pembandingnya. |
-| **RegulasiLens ID** | Menjawab pertanyaan regulasi dengan kutipan dan tautan dokumen resmi. |
+| **Data Quality Center** | Review data freshness, completeness, consistency, and active issues. |
+| **Regional Opportunity** | Compare 2–5 provinces using configurable indicators and weights. |
+| **Regional Analytics** | Discover similar regions, regional groups, and their differentiating factors. |
+| **RegulasiLens ID** | Explore regulations with quotations and links to official documents. |
 
-> NusaIntel adalah alat eksplorasi data dan regulasi. Hasil analisis bukan fakta objektif,
-> rekomendasi investasi, atau nasihat hukum.
+> NusaIntel is an exploration tool for public data and regulations. Its outputs are not
+> objective facts, investment recommendations, or legal advice.
 
-## Tampilan aplikasi
+## Product preview
 
 <div align="center">
-  <img src="docs/assets/opportunity-engine-desktop.png" alt="Tampilan Peluang Regional NusaIntel" width="920" />
+  <img src="docs/assets/opportunity-engine-desktop.png" alt="NusaIntel Regional Opportunity interface" width="920" />
   <br />
-  <sub>Peluang Regional — skenario, peringkat, dan kontribusi indikator dalam satu tampilan.</sub>
+  <sub>Regional Opportunity — scenario configuration, ranking, and indicator contributions.</sub>
 </div>
 
 <br />
 
 <details>
-<summary><strong>Lihat tampilan lainnya</strong></summary>
+<summary><strong>View additional screens</strong></summary>
 
-### Pusat Kualitas Data
+### Data Quality Center
 
-![Pusat Kualitas Data NusaIntel](docs/assets/control-tower-desktop.jpg)
+![NusaIntel Data Quality Center](docs/assets/control-tower-desktop.jpg)
 
-### Analisis Wilayah pada perangkat seluler
+### Regional Analytics on mobile
 
-![Analisis Wilayah NusaIntel pada perangkat seluler](docs/assets/regional-analytics-mobile.jpg)
+![NusaIntel Regional Analytics on a mobile viewport](docs/assets/regional-analytics-mobile.jpg)
 
 </details>
 
-## Fitur utama
+## Key features
 
-- **Data statistik BPS terintegrasi** — TPT, TPAK, kemiskinan, PDRB per kapita,
-  pertumbuhan PDRB, dan IPM tingkat provinsi.
-- **Kualitas data yang terlihat** — status kesehatan, keterbaruan, pemeriksaan kualitas,
-  kendala aktif, dan versi terakhir yang dapat digunakan.
-- **Skenario perbandingan fleksibel** — pemilihan wilayah, indikator, tahun, arah penilaian,
-  bobot, normalisasi, dan ambang kelengkapan.
-- **Analisis regional yang dapat dijelaskan** — kemiripan wilayah, faktor pendorong,
-  kelompok regional, peta skematis, tabel aksesibel, unduhan JSON, dan tampilan cetak.
-- **Pencarian regulasi bersumber** — pencarian gabungan, jawaban ekstraktif, kutipan,
-  konteks pasal, status dokumen, dan perbandingan versi.
-- **Antarmuka responsif** — halaman terpisah, tema terang/gelap, transisi halus,
-  navigasi seluler, serta dukungan reduced motion.
-- **Siap dijalankan dengan Docker** — web, API, worker, migrasi, dan PostgreSQL dalam
-  satu konfigurasi Compose.
+- **Integrated BPS statistics** — provincial unemployment, labor-force participation,
+  poverty, GDP per capita, GDP growth, and Human Development Index data.
+- **Visible data quality** — health status, freshness, quality checks, active issues,
+  and the latest usable dataset version.
+- **Configurable comparison scenarios** — choose regions, indicators, year, scoring
+  direction, weights, normalization method, and minimum coverage.
+- **Explainable regional analytics** — similarity results, contributing factors,
+  regional groups, a schematic map, an accessible table, JSON export, and print layout.
+- **Source-grounded regulation search** — hybrid retrieval, extractive answers,
+  citations, surrounding context, document status, and version comparison.
+- **Responsive interface** — dedicated product pages, light and dark themes, smooth
+  transitions, mobile navigation, and reduced-motion support.
+- **Docker-based local environment** — web, API, worker, migrations, and PostgreSQL
+  are orchestrated through a single Compose configuration.
 
-## Teknologi yang digunakan
+## Technology stack
 
-### Bahasa pemrograman
+### Programming languages
 
 <p>
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white" />
@@ -88,130 +88,130 @@ Platform ini berfokus pada empat area:
   <img alt="SQL" src="https://img.shields.io/badge/SQL-PostgreSQL-4169E1?logo=postgresql&logoColor=white" />
 </p>
 
-### Framework dan library
+### Frameworks and libraries
 
-| Area | Teknologi | Peran |
+| Area | Technology | Role |
 |---|---|---|
-| Frontend | **Next.js 16**, **React 19** | App Router, rendering, routing, dan UI interaktif. |
-| Bahasa frontend | **TypeScript 5.9** | Kontrak tipe dan pengembangan frontend yang aman. |
-| Backend | **FastAPI**, **Uvicorn** | REST API asinkron dan server aplikasi. |
-| Validasi & konfigurasi | **Pydantic Settings** | Validasi konfigurasi dan environment aplikasi. |
-| Database | **PostgreSQL 17**, **SQLAlchemy 2**, **asyncpg** | Penyimpanan relasional dan akses database asinkron. |
-| Migrasi | **Alembic** | Perubahan skema database yang terlacak. |
-| Integrasi data | **HTTPX** | Pengambilan data dari layanan eksternal. |
-| Dokumen regulasi | **pypdf** | Ekstraksi dokumen PDF resmi. |
-| Observabilitas | **structlog** | Log aplikasi terstruktur. |
+| Frontend | **Next.js 16**, **React 19** | App Router, rendering, routing, and interactive UI. |
+| Frontend language | **TypeScript 5.9** | Static typing and reliable frontend contracts. |
+| Backend | **FastAPI**, **Uvicorn** | Asynchronous REST API and application server. |
+| Validation & configuration | **Pydantic Settings** | Runtime configuration and environment validation. |
+| Database | **PostgreSQL 17**, **SQLAlchemy 2**, **asyncpg** | Relational persistence and asynchronous data access. |
+| Migrations | **Alembic** | Version-controlled database schema changes. |
+| Data integration | **HTTPX** | Asynchronous access to external data services. |
+| Regulation documents | **pypdf** | Extraction of official PDF documents. |
+| Observability | **structlog** | Structured application logging. |
 
-### Tools pengembangan dan kualitas
+### Development and quality tools
 
-| Kategori | Tools |
+| Category | Tools |
 |---|---|
-| Container & deployment | Docker, Docker Compose, Caddy |
+| Containers & deployment | Docker, Docker Compose, Caddy |
 | Frontend testing | Vitest, Testing Library, Playwright, axe-core |
 | Backend testing | Pytest, pytest-asyncio, Coverage.py |
-| Lint & type checking | ESLint, TypeScript, Ruff, mypy |
-| Keamanan | Gitleaks, pip-audit, npm audit |
-| CI/CD | GitHub Actions |
+| Linting & type checking | ESLint, TypeScript, Ruff, mypy |
+| Security | Gitleaks, pip-audit, npm audit |
+| Continuous integration | GitHub Actions |
 
-## Arsitektur ringkas
+## Architecture at a glance
 
 ```mermaid
 flowchart LR
-    U[Pengguna] --> W[Next.js Web]
+    U[User] --> W[Next.js Web]
     W --> A[FastAPI]
     A --> D[(PostgreSQL)]
-    Q[Worker] --> S[BPS WebAPI dan dokumen resmi]
+    Q[Worker] --> S[BPS WebAPI and official documents]
     Q --> D
     M[Alembic] --> D
 ```
 
-| Komponen | Tanggung jawab |
+| Component | Responsibility |
 |---|---|
-| `web` | Antarmuka dan pengalaman pengguna berbasis Next.js. |
-| `api` | Data, analisis peluang, analisis regional, dan pencarian regulasi. |
-| `worker` | Pengambilan serta pemrosesan data terjadwal. |
-| `migrate` | Menyiapkan dan memperbarui skema database. |
-| `db` | Penyimpanan PostgreSQL persisten. |
+| `web` | Next.js interface and user experience. |
+| `api` | Data access, opportunity scoring, regional analytics, and regulation search. |
+| `worker` | Scheduled data retrieval and processing. |
+| `migrate` | Database initialization and schema upgrades. |
+| `db` | Persistent PostgreSQL storage. |
 
-## Mulai cepat
+## Quick start
 
-### Prasyarat
+### Prerequisites
 
 - Git
-- Docker Desktop dengan Docker Compose
-- BPS WebAPI key untuk mengambil data BPS secara langsung
+- Docker Desktop with Docker Compose
+- A BPS WebAPI key for live BPS ingestion
 
-### 1. Clone repository
+### 1. Clone the repository
 
 ```powershell
 git clone https://github.com/LaboNapitupulu/NusaIntel.git
 cd NusaIntel
 ```
 
-### 2. Siapkan konfigurasi
+### 2. Configure the environment
 
 ```powershell
 Copy-Item .env.example .env
 powershell -ExecutionPolicy Bypass -File .\scripts\configure_bps_key.ps1
 ```
 
-Script akan menyimpan BPS API key ke `.env` tanpa menampilkannya kembali. File tersebut
-telah diabaikan oleh Git.
+The script stores the BPS API key in `.env` without printing it back to the terminal.
+The file is excluded from Git.
 
-### 3. Jalankan seluruh aplikasi
+### 3. Start the full application
 
 ```powershell
 docker compose up -d --build
 ```
 
-### 4. Buka aplikasi
+### 4. Open the services
 
-| Layanan | URL |
+| Service | URL |
 |---|---|
-| Web NusaIntel | <http://localhost:3100> |
-| Dokumentasi API | <http://localhost:8000/api/docs> |
-| Status API | <http://localhost:8000/api/v1/health> |
+| NusaIntel web application | <http://localhost:3100> |
+| Interactive API documentation | <http://localhost:8000/api/docs> |
+| API health endpoint | <http://localhost:8000/api/v1/health> |
 
-Periksa status container:
+Check container status:
 
 ```powershell
 docker compose ps
 ```
 
-Hentikan layanan tanpa menghapus database:
+Stop the services without deleting the database:
 
 ```powershell
 docker compose down
 ```
 
-> Gunakan `docker compose down --volumes` hanya ketika Anda memang ingin menghapus
-> seluruh database lokal dan memulai dari awal.
+> Run `docker compose down --volumes` only when you intentionally want to delete the
+> local database and start from a clean state.
 
-## Mengisi data
+## Loading data
 
-Jalankan seluruh indikator BPS:
+Run all contracted BPS indicators:
 
 ```powershell
 .\scripts\run_bps_pipeline.ps1
 ```
 
-Untuk mencoba alur TPT tanpa mengambil data langsung dari BPS:
+Run the unemployment pipeline against the checked-in fixture without contacting BPS:
 
 ```powershell
 .\scripts\run_tpt_pipeline.ps1 -Fixture
 ```
 
-Setelah data tersedia, buka:
+Once data is available, explore:
 
-- [Pusat Kualitas Data](http://localhost:3100/control-tower)
-- [Peluang Regional](http://localhost:3100/opportunity)
-- [Analisis Wilayah](http://localhost:3100/regional-analytics)
+- [Data Quality Center](http://localhost:3100/control-tower)
+- [Regional Opportunity](http://localhost:3100/opportunity)
+- [Regional Analytics](http://localhost:3100/regional-analytics)
 - [RegulasiLens ID](http://localhost:3100/regulations)
 
-## Pengembangan dan kontribusi
+## Development and validation
 
-Pengembangan tanpa Docker membutuhkan **Python 3.11+** dan **Node.js 20.9+**
-(CI menggunakan Python 3.13 dan Node.js 24).
+Local development without Docker requires **Python 3.11+** and **Node.js 20.9+**.
+CI currently runs on Python 3.13 and Node.js 24.
 
 ### Backend
 
@@ -222,7 +222,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
-Pemeriksaan backend:
+Backend quality gates:
 
 ```powershell
 .\.venv\Scripts\python.exe -m ruff check app tests migrations
@@ -240,7 +240,7 @@ npm ci
 npm run dev
 ```
 
-Pemeriksaan frontend:
+Frontend quality gates:
 
 ```powershell
 npm run lint
@@ -250,80 +250,81 @@ npm run test:e2e
 npm run build
 ```
 
-### Verifikasi proyek
+### Full-project verification
 
 ```powershell
 .\scripts\verify_phase1.ps1
 .\scripts\verify_release.ps1
 ```
 
-Gunakan `-SkipDocker` untuk verifikasi statis, atau `-FullStack` pada
-`verify_release.ps1` untuk menyertakan seluruh layanan Compose.
+Use `-SkipDocker` for static checks only, or pass `-FullStack` to
+`verify_release.ps1` to include every Compose service.
 
-## Struktur repository
+## Repository structure
 
 ```text
 nusa-intel/
-├── backend/                  FastAPI, worker, model, migrasi, dan pengujian
-├── contracts/                Kontrak data portabel dan aturan versinya
-├── frontend/                 Aplikasi Next.js dan pengujian antarmuka
-├── regulations/              Manifest dan evaluasi dokumen regulasi
-├── docs/                     PRD teknis, arsitektur, metodologi, dan runbook
-├── scripts/                  Otomasi konfigurasi, pipeline, dan verifikasi
-├── tests/                    Fixture lintas komponen
-├── compose.yaml              Stack pengembangan lokal
-├── compose.production.yaml   Kandidat deployment produksi
-├── PRD.md                    Sasaran dan ruang lingkup produk
-└── IMPLEMENTATION_PLAN.md    Fase, tolok ukur, dan target implementasi
+├── backend/                  FastAPI, worker, models, migrations, and tests
+├── contracts/                Portable data contracts and versioning rules
+├── frontend/                 Next.js application and interface tests
+├── regulations/              Regulation manifests and evaluation suites
+├── docs/                     Architecture, methodology, operations, and evidence
+├── scripts/                  Configuration, pipeline, and verification automation
+├── tests/                    Cross-project fixtures
+├── compose.yaml              Local development stack
+├── compose.production.yaml   Production deployment candidate
+├── PRD.md                    Product scope, requirements, and success criteria
+└── IMPLEMENTATION_PLAN.md    Delivery phases, benchmarks, and implementation goals
 ```
 
-## Dokumentasi
+## Documentation
 
-| Dokumen | Isi |
+| Document | Contents |
 |---|---|
-| [PRD](PRD.md) | Visi, pengguna, kebutuhan, ruang lingkup, dan tolok ukur produk. |
-| [Implementation Plan](IMPLEMENTATION_PLAN.md) | Fase pengerjaan, target, dan kriteria selesai. |
-| [Architecture](docs/architecture.md) | Arsitektur aplikasi dan keputusan teknis utama. |
-| [Data Dictionary](docs/data-dictionary.md) | Definisi dataset dan field penting. |
-| [Methodology](docs/methodology.md) | Metode penilaian Peluang Regional. |
-| [Regional Analytics](docs/regional-analytics-methodology.md) | Metode kemiripan dan pengelompokan wilayah. |
-| [Runbook](docs/runbook.md) | Operasional, pemulihan, dan troubleshooting. |
-| [Privacy & Security](docs/privacy-and-security.md) | Batasan data, privasi, dan kontrol keamanan. |
-| [Public Beta Deployment](docs/public-beta-deployment.md) | Persiapan deployment publik. |
+| [Product Requirements](PRD.md) | Product vision, users, requirements, scope, and success criteria. |
+| [Implementation Plan](IMPLEMENTATION_PLAN.md) | Delivery phases, goals, benchmarks, and completion criteria. |
+| [Architecture](docs/architecture.md) | Application architecture and key technical decisions. |
+| [Data Dictionary](docs/data-dictionary.md) | Dataset and field definitions. |
+| [Opportunity Methodology](docs/methodology.md) | Regional Opportunity scoring methodology. |
+| [Regional Analytics Methodology](docs/regional-analytics-methodology.md) | Regional similarity and clustering methods. |
+| [Operations Runbook](docs/runbook.md) | Operations, recovery, and troubleshooting procedures. |
+| [Privacy & Security](docs/privacy-and-security.md) | Data boundaries, privacy, and security controls. |
+| [Public Beta Deployment](docs/public-beta-deployment.md) | Public deployment requirements and safeguards. |
 
-## Konfigurasi penting
+## Key configuration
 
-| Variabel | Wajib | Kegunaan |
+| Variable | Required | Purpose |
 |---|---|---|
-| `BPS_API_KEY` | Untuk data langsung | Token BPS WebAPI; hanya digunakan backend/worker. |
-| `DATABASE_URL` | Produksi | URL PostgreSQL untuk SQLAlchemy asinkron. |
-| `NEXT_PUBLIC_API_BASE_URL` | Tidak | Alamat API yang diakses browser. |
-| `WEB_PORT` | Tidak | Port web lokal; default `3100`. |
-| `API_PORT` | Tidak | Port API lokal; default `8000`. |
-| `BPS_SCHEDULE_ENABLED` | Tidak | Mengaktifkan pengambilan data terjadwal. |
-| `BPS_SCHEDULE_INTERVAL_SECONDS` | Jika terjadwal | Interval pengambilan data; default satu hari. |
+| `BPS_API_KEY` | Live ingestion | BPS WebAPI token; available only to the backend and worker. |
+| `DATABASE_URL` | Production | Asynchronous SQLAlchemy PostgreSQL URL. |
+| `NEXT_PUBLIC_API_BASE_URL` | No | API origin exposed to the browser. |
+| `WEB_PORT` | No | Local web port; defaults to `3100`. |
+| `API_PORT` | No | Local API port; defaults to `8000`. |
+| `BPS_SCHEDULE_ENABLED` | No | Enables scheduled data ingestion. |
+| `BPS_SCHEDULE_INTERVAL_SECONDS` | Scheduled ingestion | Retrieval interval; defaults to one day. |
 
-Daftar lengkap tersedia di [`.env.example`](.env.example) dan
-[`docs/public-beta-deployment.md`](docs/public-beta-deployment.md). Jangan pernah memasukkan
-secret asli ke dalam Git.
+The complete field list is available in [`.env.example`](.env.example) and
+[`docs/public-beta-deployment.md`](docs/public-beta-deployment.md). Never commit real
+credentials or production secrets.
 
-## Sumber data dan batasan
+## Data sources and limitations
 
-- Data statistik berasal dari **BPS WebAPI** dan tetap mengikuti atribusi serta ketentuan BPS.
-- Dokumen RegulasiLens berasal dari sumber resmi **JDIH BPK** yang dicatat dalam manifest.
-- Peta regional bersifat skematis dan bukan batas administratif resmi.
-- RegulasiLens membantu penelusuran dokumen dan bukan pengganti nasihat hukum profesional.
+- Statistical data is obtained through the **BPS WebAPI** and remains subject to BPS
+  attribution requirements and terms of use.
+- RegulasiLens documents are sourced from official **JDIH BPK** pages recorded in the manifest.
+- The regional map is schematic and does not represent official administrative boundaries.
+- RegulasiLens supports document exploration and is not a substitute for professional legal advice.
 
-Detail sumber dan lisensi tersedia di [`docs/source-inventory.md`](docs/source-inventory.md).
+See [`docs/source-inventory.md`](docs/source-inventory.md) for source and licensing details.
 
-## Lisensi
+## License
 
-Kode sumber NusaIntel dirilis menggunakan [MIT License](LICENSE).
+NusaIntel is released under the [MIT License](LICENSE).
 
 ---
 
 <div align="center">
 
-**Dibangun untuk membuat data publik Indonesia lebih mudah diperiksa, dibandingkan, dan dipahami.**
+**Built to make Indonesian public data easier to verify, compare, and understand.**
 
 </div>
