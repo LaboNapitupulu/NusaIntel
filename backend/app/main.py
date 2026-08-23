@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.router import api_router
 from app.config import Settings, get_settings
@@ -17,7 +18,11 @@ from app.db.session import (
     create_session_factory,
 )
 from app.logging import configure_logging
-from app.middleware import RequestContextMiddleware
+from app.middleware import (
+    AnswerRateLimitMiddleware,
+    RequestContextMiddleware,
+    SecurityHeadersMiddleware,
+)
 from app.opportunity.service import OpportunityService
 from app.regional_analytics.service import RegionalAnalyticsService
 from app.regulasilens.service import CorpusService
@@ -69,13 +74,30 @@ def create_app(
         if session_factory is not None
         else None
     )
+    application.add_middleware(TrustedHostMiddleware, allowed_hosts=active_settings.allowed_hosts)
+    application.add_middleware(
+        AnswerRateLimitMiddleware,
+        maximum_requests=active_settings.regulation_answer_rate_limit_requests,
+        window_seconds=active_settings.regulation_answer_rate_limit_window_seconds,
+    )
     application.add_middleware(RequestContextMiddleware)
+    application.add_middleware(
+        SecurityHeadersMiddleware,
+        production=active_settings.app_env == "production",
+    )
     application.add_middleware(
         CORSMiddleware,
         allow_origins=active_settings.cors_origins,
         allow_credentials=False,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization", "X-Request-ID"],
+        expose_headers=[
+            "Retry-After",
+            "X-RateLimit-Limit",
+            "X-RateLimit-Remaining",
+            "X-RateLimit-Window",
+            "X-Request-ID",
+        ],
     )
     application.include_router(api_router)
     return application

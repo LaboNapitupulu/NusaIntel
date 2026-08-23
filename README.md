@@ -304,6 +304,7 @@ exploration tool, not legal advice.
 | `DATABASE_URL` | Production | Async SQLAlchemy PostgreSQL URL |
 | `LOG_LEVEL` | No | Structured application log level |
 | `CORS_ORIGINS` | No | JSON array of allowed frontend origins |
+| `ALLOWED_HOSTS` | No | JSON array of accepted HTTP hostnames; explicit public host required in production |
 | `NEXT_PUBLIC_API_BASE_URL` | No | Browser-visible API origin |
 | `WEB_PORT` | No | Host port for the web container; defaults to `3100` |
 | `API_PORT` | No | Host port for the API container; defaults to `8000` |
@@ -313,10 +314,28 @@ exploration tool, not legal advice.
 | `BPS_SCHEDULE_INDICATOR` | Scheduled pipeline | One of the six contracted codes; default `tpt` |
 | `REGULATION_ANSWER_TIMEOUT_SECONDS` | No | Grounded-answer timeout, maximum 10 seconds; default `9` |
 | `REGULATION_MAXIMUM_CONCURRENT_ANSWERS` | No | In-process answer concurrency guard; default `8` |
+| `REGULATION_ANSWER_RATE_LIMIT_REQUESTS` | No | Per-process, per-direct-client answer quota; default `10` |
+| `REGULATION_ANSWER_RATE_LIMIT_WINDOW_SECONDS` | No | Answer quota window; default `60` seconds |
 | `BPS_SCHEDULE_INTERVAL_SECONDS` | Scheduled pipeline | Cadence from 300–604800 seconds; default `86400` |
 
 Real secrets belong only in `.env` or a deployment secret manager. `.env` and
 runtime datasets are ignored by Git.
+
+## Public beta preflight
+
+Use `.env.production.example` as a field list, not as deployable credentials. Production
+startup fails closed unless the database URL, explicit HTTPS browser origins, public API host,
+and public HTTPS frontend API URL are configured. Verify the environment without printing
+secret values:
+
+```powershell
+.\backend\.venv\Scripts\python.exe .\scripts\verify_public_beta_config.py
+```
+
+Use `/api/v1/live` for process liveness and `/api/v1/ready` for traffic readiness. The API
+adds security headers and a bounded per-process answer rate limiter; a public deployment still
+requires TLS termination and distributed edge rate limiting. See
+`docs/public-beta-deployment.md` before exposing any port publicly.
 
 ## Repository layout
 

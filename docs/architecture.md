@@ -88,6 +88,11 @@ Pydantic schemas and map domain errors to stable HTTP responses.
   in-process concurrency semaphore; the deterministic baseline makes zero external model
   calls and reports that fact in provenance.
 - Request IDs and structured logs support diagnosis without logging API keys.
+- `/live` reports process liveness without touching dependencies; `/ready` and the legacy
+  `/health` fail with 503 when PostgreSQL is unavailable.
+- Trusted hosts, explicit CORS, security headers, bounded answer concurrency, and a
+  per-process fixed-window answer limiter form the application layer. TLS and distributed
+  rate limiting remain responsibilities of the deployment edge.
 - Database unavailability degrades health and product states instead of returning false
   success.
 

@@ -72,6 +72,19 @@ Do not rewrite or delete failing evaluation cases to make a release pass. The di
 threshold. A timeout returns HTTP 504; repeated saturation should be investigated before
 raising `REGULATION_MAXIMUM_CONCURRENT_ANSWERS`.
 
+## Public beta readiness
+
+1. Regenerate any credential that appeared in terminal, CI, screenshot, or diagnostic output.
+2. Load secrets through the deployment secret manager and run
+   `python scripts/verify_public_beta_config.py`; it must exit zero without printing values.
+3. Use `/api/v1/live` for restart decisions and `/api/v1/ready` for load-balancer traffic.
+4. Confirm PostgreSQL has no public listener, TLS terminates at the trusted edge, and the edge
+   enforces a distributed answer rate limit no weaker than the documented application limit.
+5. Apply migrations as a one-shot job, verify readiness, run answer/refusal/context smokes,
+   and retain the prior immutable application image for rollback.
+6. Record deployment owner, domain, region, budget, backup location, RPO, and RTO before
+   accepting public traffic. Follow `docs/public-beta-deployment.md` for the full checklist.
+
 ## Scheduled connector
 
 Set `BPS_SCHEDULE_ENABLED=true`, one `BPS_SCHEDULE_INDICATOR`, and an interval between 300

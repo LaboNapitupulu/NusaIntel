@@ -645,6 +645,12 @@ Satu domain regulasi, structure-aware parsing, metadata, relations, dan retrieva
 
 Grounded answers, citations, comparison, evaluation harness, dan release gate.
 
+### Release 0.7 — Public beta hardening
+
+Liveness/readiness terpisah, trusted hosts, HTTPS-only production configuration, security
+headers, application rate limit, deployment preflight, dan runbook rollback. Hosting provider,
+domain, budget, RPO, dan RTO tetap memerlukan keputusan deployment owner.
+
 ## 21. Open decisions
 
 Keputusan berikut harus diselesaikan melalui spike/ADR:
