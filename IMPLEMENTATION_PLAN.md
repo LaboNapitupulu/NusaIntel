@@ -701,7 +701,7 @@ does not yet exist.
 ### Exit gate
 
 - [x] Full local release verification passes.
-- [ ] Hosted release verification passes.
+- [x] Hosted release verification passes.
 - [x] Grounded-answer benchmark remains above every Phase 9 threshold.
 - [x] No secret is committed or printed by release commands.
 - [x] Production preflight rejects unsafe configuration and accepts the reviewed template.

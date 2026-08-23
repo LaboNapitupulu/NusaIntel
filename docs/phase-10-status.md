@@ -1,6 +1,6 @@
 # Phase 10 status — Public beta hardening
 
-- Status: Local exit gate passed — hosted CI and infrastructure decisions pending
+- Status: Complete — local and hosted release gates passed
 - Date started: 2026-08-23
 - Branch: `codex/phase-10-public-beta-hardening`
 - Baseline: Phase 9 merge commit `6bd5c87`
@@ -13,9 +13,12 @@
 - Non-secret environment template and production configuration preflight.
 - Deployment, smoke, rollback, and edge-control contract.
 
-## Remaining gate
+## Hosted evidence
 
-- Pass hosted CI and merge.
+- PR #24 passes Backend, Frontend, Compose, and Security/Gitleaks checks with no merge conflict.
+
+## Remaining infrastructure gate
+
 - Rotate the exposed BPS key before any public deployment.
 - Select real provider/domain/owner/budget/RPO/RTO and execute post-deploy smoke; this is an
   infrastructure decision, not a local implementation assumption.
