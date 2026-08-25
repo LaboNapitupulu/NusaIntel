@@ -50,6 +50,6 @@ or committed, so no unexplained high/critical security finding remains.
 | First-use guidance and presets | Pass locally | Component tests cover persistence and preset weights; existing scenario URL/local storage remain identity-free |
 | Printable/shareable results | Pass locally | Opportunity print, JSON export, and scenario URL actions are explicit and tested |
 | Runtime diagnostics | Pass locally | Release-aware liveness and bounded metrics tests pass |
-| Dependency maintenance | Pass locally | Six Dependabot patch updates integrated as isolated commits |
-| Hosted CI on Phase 12 candidate | Pass | Run `32802818466` passed frontend, backend, Compose, and security for `c1df75a` |
+| Dependency maintenance | Pass | Eight Dependabot patch updates integrated as isolated commits, including Next.js and eslint-config-next 16.3.2 |
+| Hosted CI on Phase 12 candidate | Pass | Run `32804620985` passed frontend, backend, Compose, and security for `4a93169` |
 | Real public deployment | Blocked on owner decision | Provider/domain/budget/RPO/RTO, key rotation, and HTTPS restore/smoke remain open |

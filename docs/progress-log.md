@@ -387,7 +387,8 @@
 
 ### Release readiness and product safeguards
 
-- Integrated six patch-level dependency updates raised by Dependabot as isolated commits.
+- Integrated eight patch-level dependency updates raised by Dependabot as isolated commits,
+  including follow-up Next.js and eslint-config-next 16.3.2 releases.
 - Added first-use guidance, editable opportunity presets, printable reports, and a direct
   feedback entry point while keeping scenario persistence identity-free and local.
 - Added cross-theme Playwright baselines for desktop/mobile landing pages and every product
@@ -398,6 +399,8 @@
   with the merged Phase 11 state and explicit real-deployment blockers.
 - Stabilized landing-page visual baselines across Windows and Linux by using fixed viewports;
   hosted run `32802818466` then passed frontend, backend, Compose, and security for `c1df75a`.
+- Revalidated the 16.3.2 frontend follow-up locally, in Docker, and through all four hosted
+  jobs in run `32804620985` for `4a93169`.
 
 ### Remaining external gate
 

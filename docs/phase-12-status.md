@@ -2,8 +2,8 @@
 
 - Date: 2026-08-25
 - Branch: `main`
-- Candidate commit: `c1df75a`
-- Hosted CI: [run `32802818466`](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/32802818466)
+- Candidate commit: `4a93169`
+- Hosted CI: [run `32804620985`](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/32804620985)
 - Status: implementation and hosted CI complete; real deployment pending
 
 ## Delivered
@@ -16,7 +16,8 @@
   every product shell in light/dark themes.
 - Added bounded process-local runtime metrics with release identity, request/error totals,
   status distribution, in-flight count, uptime, and rolling p50/p95 latency.
-- Integrated the six patch-level dependency updates raised by Dependabot.
+- Integrated eight patch-level dependency updates raised by Dependabot, including the
+  follow-up Next.js and eslint-config-next 16.3.2 releases.
 
 ## Verification evidence
 
@@ -28,7 +29,7 @@
 - Docker Compose rebuilt all four application images; migration completed; database, API,
   worker, and web services started successfully; liveness, readiness, metrics, and web smoke
   checks passed.
-- Hosted frontend, backend, Compose, and security jobs all passed for `c1df75a`.
+- Hosted frontend, backend, Compose, and security jobs all passed for `4a93169`.
 
 ## Remaining external gate
 
