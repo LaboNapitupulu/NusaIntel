@@ -2,7 +2,7 @@
 
 - Date: 2026-08-23
 - Branch: `codex/phase-11-deployment-blueprint`
-- Status: implementation complete; hosted CI and merge pending
+- Status: complete; hosted CI passed and PR #25 merged as `962bfd3`
 
 ## Outcome
 
@@ -21,7 +21,7 @@ the interactive API schema are denied at the public edge.
 | Candidate identity | Explicit non-`latest` image tag | Pass |
 | Container hardening | Read-only app roots and no privilege escalation | Pass |
 | Edge controls | HTTPS, 2 MB body ceiling, admin mutations denied | Pass |
-| CI contract | Rendered Compose and Caddy syntax checked | Added; hosted run pending |
+| CI contract | Rendered Compose and Caddy syntax checked | Pass |
 | Real deployment | Provider/DNS/owner/budget/recovery approved | Pending owner decision |
 
 ## Boundaries

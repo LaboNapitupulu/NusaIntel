@@ -1,7 +1,7 @@
 # MVP release scorecard
 
 - Candidate branch: `codex/phase-6-mvp-hardening`
-- Evaluated: 2026-08-16
+- Evaluated: 2026-08-25
 - Status: pass — technical, security, and documentation gates are complete
 
 ## PRD Section 4.3
@@ -41,3 +41,15 @@ tests the logger threshold, and a second scheduled smoke confirms no request URL
 query appears. The deployment owner regenerated the affected BPS key on 2026-08-16,
 recreated the worker, and kept scheduling disabled. The replacement value was not displayed
 or committed, so no unexplained high/critical security finding remains.
+
+## Phase 12 release-readiness extension
+
+| Gate | Status | Evidence |
+|---|---|---|
+| Theme/layout regression protection | Pass locally | 12 Playwright cases; 8 executed and 4 intentional mobile shell skips, with 12 reviewed baselines |
+| First-use guidance and presets | Pass locally | Component tests cover persistence and preset weights; existing scenario URL/local storage remain identity-free |
+| Printable/shareable results | Pass locally | Opportunity print, JSON export, and scenario URL actions are explicit and tested |
+| Runtime diagnostics | Pass locally | Release-aware liveness and bounded metrics tests pass |
+| Dependency maintenance | Pass locally | Six Dependabot patch updates integrated as isolated commits |
+| Hosted CI on Phase 12 candidate | Pending | Must pass after push |
+| Real public deployment | Blocked on owner decision | Provider/domain/budget/RPO/RTO, key rotation, and HTTPS restore/smoke remain open |

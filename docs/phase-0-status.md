@@ -1,8 +1,8 @@
 # Phase 0 Status
 
 - Started: 2026-08-08
-- Last updated: 2026-08-08
-- Status: Phase 0 baseline complete; Phase 1 scaffolding may begin
+- Last updated: 2026-08-25
+- Status: complete; carried risks reconciled against Phases 2–12
 
 ## Decisions completed
 
@@ -31,7 +31,7 @@
 - [x] Configure it locally as `BPS_API_KEY` without committing it.
 - [x] Run authenticated domain/variable/period discovery for TPT.
 - [x] Capture one unchanged response-body fixture for an MVP indicator.
-- [ ] Record the six live BPS variable IDs and period IDs.
+- [x] Record the six live BPS variable IDs and period IDs.
 
 TPT is verified as variable `543`. Period IDs are 2023=`123`, 2024=`124`,
 and 2025=`125`; August is derived-period `190`. The annual derived period
@@ -48,15 +48,15 @@ provinces plus the Indonesia aggregate.
 | One API-shape fixture can be parsed without live network access | Pass | `tests/fixtures/bps/` and `spikes/parse_bps_fixture.py` |
 | No unresolved decision blocks Phase 1 scaffolding | Pass | ADR-0001 |
 
-## Remaining risks carried into Phase 1/2
+## Carried risks and disposition
 
-1. Five remaining indicator IDs and their dimensions still require live discovery during connector implementation.
+1. Five remaining indicator IDs and dimensions were verified and fixture-backed in Phase 2.
 2. Official rate-limit guidance was not visible in the rendered public documentation reviewed during Phase 0.
-3. A publishable province boundary GeoJSON and its license/version still need a dedicated source review before map implementation.
-4. The scoring engine needs an explicit historical-geography policy for the four missing 2023 Papua observations.
+3. Phase 5 selected a self-authored schematic tile map, avoiding unverified boundary redistribution.
+4. Missing 2023 Papua observations remain explicit nulls; scoring never silently imputes zero.
 
 ## Next gate
 
-Phase 1 may begin. Before Phase 2 is complete, live discovery and coverage tests
-must pass for the other five indicators, and the historical-geography policy
-must be implemented without hidden imputation.
+No historical Phase 0 item blocks the current release. Official BPS rate-limit guidance
+remains an external documentation dependency; the client retains conservative bounded
+throttling and retry defaults.

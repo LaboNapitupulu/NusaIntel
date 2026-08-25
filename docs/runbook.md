@@ -6,7 +6,8 @@
 2. Start the stack with `docker compose up --build --detach --wait`.
 3. Confirm `docker compose ps` reports `db`, `api`, and `web` healthy and `migrate`
    completed successfully.
-4. Check `http://localhost:8000/api/v1/health` and `http://localhost:3100`.
+4. Check `http://localhost:8000/api/v1/health`, `http://localhost:8000/api/v1/metrics`,
+   and `http://localhost:3100`.
 5. Run `scripts/verify_release.ps1 -SkipSecurityAudit` for deterministic local gates; omit
    the switch when registry access is available.
 
@@ -84,6 +85,18 @@ raising `REGULATION_MAXIMUM_CONCURRENT_ANSWERS`.
    and retain the prior immutable application image for rollback.
 6. Record deployment owner, domain, region, budget, backup location, RPO, and RTO before
    accepting public traffic. Follow `docs/public-beta-deployment.md` for the full checklist.
+
+### Runtime diagnostics
+
+- Set `RELEASE_SHA` locally; production Compose derives it from the required immutable
+  `IMAGE_TAG`.
+- `/api/v1/live` confirms process liveness and exposes the service/release identity.
+- `/api/v1/metrics` reports process-local request totals, server-error totals, in-flight
+  requests, status distribution, uptime, and bounded rolling latency p50/p95.
+- Metrics retain at most 512 latency samples and do not contain request bodies, query values,
+  client addresses, credentials, or user identity.
+- Treat process-local counters as diagnostics, not durable analytics. A real deployment still
+  needs an external uptime monitor and durable log/metrics destination selected by the owner.
 
 ## Scheduled connector
 

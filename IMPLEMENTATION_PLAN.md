@@ -744,8 +744,35 @@ paid infrastructure or weakening public-beta controls.
 ### Exit gate
 
 - [x] Local rendered topology contract passes with non-secret candidate values.
-- [ ] Hosted CI passes on the candidate branch.
-- [ ] Real go-live blockers remain explicit rather than being recorded as completed.
+- [x] Hosted CI passes on the candidate branch.
+- [x] Real go-live blockers remain explicit rather than being recorded as completed.
+
+## 15.3 Phase 12 — Release readiness and product safeguards
+
+**Goal:** Prevent visual regressions, make first-use workflows easier, and expose enough
+release diagnostics to operate the product responsibly before a real public deployment.
+
+### Product readiness
+
+- [x] Add persistent first-use guidance on the landing page.
+- [x] Add transparent opportunity presets without hiding editable weights.
+- [x] Preserve local auto-save and URL sharing without collecting user identity.
+- [x] Add printable Opportunity results and an explicit feedback entry point.
+
+### Regression and operations safeguards
+
+- [x] Add cross-theme visual baselines for desktop and mobile landing pages.
+- [x] Add light/dark product-shell baselines for every workspace.
+- [x] Add bounded process-local request, error, status, and latency metrics.
+- [x] Attach a deployment release identifier to liveness and metrics responses.
+- [x] Update patch-level frontend/backend dependencies represented by open Dependabot branches.
+
+### Exit gate
+
+- [x] Local backend and frontend quality gates pass.
+- [x] Visual baselines are deterministic in both configured Playwright projects.
+- [ ] Hosted CI passes with the new visual baselines.
+- [ ] Real provider/domain/recovery decisions and deployment evidence pass.
 
 ## 16. Test strategy
 
@@ -815,26 +842,26 @@ RegulasiLens critical paths:
 
 Every pull request should run:
 
-- [ ] Backend lint.
-- [ ] Backend typecheck.
-- [ ] Backend unit/integration tests.
-- [ ] Migration upgrade from empty database.
-- [ ] Frontend lint.
-- [ ] Frontend typecheck.
-- [ ] Frontend unit tests.
-- [ ] Frontend production build.
-- [ ] Fixture-based pipeline tests.
-- [ ] Contract validation.
-- [ ] Secret scanning.
-- [ ] Dependency audit.
+- [x] Backend lint.
+- [x] Backend typecheck.
+- [x] Backend unit/integration tests.
+- [x] Migration upgrade from empty database.
+- [x] Frontend lint.
+- [x] Frontend typecheck.
+- [x] Frontend unit tests.
+- [x] Frontend production build.
+- [x] Fixture-based pipeline tests.
+- [x] Contract validation.
+- [x] Secret scanning.
+- [x] Dependency audit.
 
 Release candidate additionally runs:
 
-- [ ] Docker Compose health test.
-- [ ] Playwright E2E.
-- [ ] Accessibility automation.
-- [ ] Performance smoke benchmark.
-- [ ] RegulasiLens evaluation suite when applicable.
+- [x] Docker Compose health test.
+- [x] Playwright E2E.
+- [x] Accessibility automation.
+- [x] Performance smoke benchmark.
+- [x] RegulasiLens evaluation suite when applicable.
 
 ## 18. Backlog prioritization
 
@@ -872,10 +899,10 @@ Update this table at the end of every milestone.
 | Regional user journeys | 15% | 100% | Comparison/scoring plus similarity, evidence-gated clustering, 38-province tile/table, detail, print, and JSON report pass hosted DB integration |
 | Testing and CI | 10% | 100% | 62 local backend/API and eight frontend tests pass; hosted PostgreSQL, frontend, Compose, and security jobs pass |
 | Performance and reliability | 10% | 100% | Five-run full analytics report remains below the enforced 500 ms p95 threshold in hosted PostgreSQL CI |
-| Accessibility and UX | 5% | 75% | Responsive 360 px CSS, keyboard-native tile buttons, no-data legend, semantic tables, and print layout; populated browser smoke pending |
+| Accessibility and UX | 5% | 100% | Desktop/mobile journeys, axe gates, semantic alternatives, onboarding, presets, print layout, and cross-theme visual baselines pass |
 | Security and privacy | 5% | 100% | Credential controls remain, exports contain public evidence only, untrusted input is strictly validated, and hosted security job passes |
 | Documentation and reproducibility | 10% | 100% | ADRs, methodology, phase status, immutable versions, export evidence, fixtures, and benchmarks are documented |
-| **Total** | **100%** | **98.75%** | Phase 5 implementation and hosted CI pass; optional populated browser smoke moves to Phase 6 hardening |
+| **Total** | **100%** | **100%** | MVP, RegulasiLens beta, public-beta hardening, and the provider-neutral deployment blueprint meet their local/hosted technical gates |
 
 Scoring rule:
 
@@ -932,6 +959,7 @@ A milestone is done only when its exit gate passes with reproducible evidence.
 
 ## 22. Immediate next actions
 
-Phase 11 implements the provider-neutral deployment blueprint. After its hosted CI and merge,
-the next action is an owner decision for provider/region, domains, budget, RPO, and RTO,
-followed by BPS key rotation and a real restore/deploy/smoke run.
+Phase 12 closes local visual-regression, onboarding, scenario-preset, printable-report,
+dependency, and release-diagnostics gaps. The remaining action is an owner decision for
+provider/region, domains, budget, RPO, and RTO, followed by BPS key rotation and a real
+restore/deploy/HTTPS smoke run.

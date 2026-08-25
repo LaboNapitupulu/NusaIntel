@@ -100,7 +100,7 @@ The platform is organized into four product areas:
 | Migrations | **Alembic** | Version-controlled database schema changes. |
 | Data integration | **HTTPX** | Asynchronous access to external data services. |
 | Regulation documents | **pypdf** | Extraction of official PDF documents. |
-| Observability | **structlog** | Structured application logging. |
+| Observability | **structlog**, bounded runtime metrics | Structured logs, release identity, uptime, request/error counts, and latency diagnostics. |
 
 ### Development and quality tools
 
@@ -296,6 +296,7 @@ nusa-intel/
 | Variable | Required | Purpose |
 |---|---|---|
 | `BPS_API_KEY` | Live ingestion | BPS WebAPI token; available only to the backend and worker. |
+| `RELEASE_SHA` | No | Release identifier exposed by local liveness and metrics endpoints. |
 | `DATABASE_URL` | Production | Asynchronous SQLAlchemy PostgreSQL URL. |
 | `NEXT_PUBLIC_API_BASE_URL` | No | API origin exposed to the browser. |
 | `WEB_PORT` | No | Local web port; defaults to `3100`. |

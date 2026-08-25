@@ -586,15 +586,15 @@ Entity minimum:
 
 ### 18.1 MVP release gate
 
-- [ ] Seluruh MVP success criteria pada Section 4.3 terpenuhi.
-- [ ] Minimal satu end-to-end BPS connector berjalan terjadwal.
-- [ ] Critical quality check menghentikan Gold publish.
-- [ ] Regional comparison, scoring, explanation, dan sensitivity tersedia.
-- [ ] Methodology dan source metadata terlihat di UI.
-- [ ] Backend, frontend, database, dan worker healthy melalui Docker Compose.
-- [ ] Unit, integration, E2E, lint, typecheck, migration, dan security checks lulus di CI.
-- [ ] Demo menggunakan data publik yang aman dipublikasikan.
-- [ ] README, architecture, data dictionary, dan limitations selesai.
+- [x] Seluruh MVP success criteria pada Section 4.3 terpenuhi.
+- [x] Minimal satu end-to-end BPS connector berjalan terjadwal.
+- [x] Critical quality check menghentikan Gold publish.
+- [x] Regional comparison, scoring, explanation, dan sensitivity tersedia.
+- [x] Methodology dan source metadata terlihat di UI.
+- [x] Backend, frontend, database, dan worker healthy melalui Docker Compose.
+- [x] Unit, integration, E2E, lint, typecheck, migration, dan security checks lulus di CI.
+- [x] Demo menggunakan data publik yang aman dipublikasikan.
+- [x] README, architecture, data dictionary, dan limitations selesai.
 
 ### 18.2 RegulasiLens beta gate
 
@@ -604,6 +604,16 @@ Entity minimum:
 - [x] Status dan versi dokumen terlihat jelas.
 - [x] Disclaimer dan refusal behavior diuji.
 - [x] Pipeline document update terpantau oleh Control Tower.
+
+### 18.3 Public beta launch gate
+
+- [x] Production topology and edge controls are reproducible without paid infrastructure.
+- [x] Release identity, process-local metrics, readiness, and structured request logs are available.
+- [x] Light/dark visual baselines cover the landing page and every product shell.
+- [x] First-use guidance, scenario presets, printable results, sharing, and feedback entry points exist.
+- [ ] Provider, region, domains, operations owner, monthly ceiling, RPO, and RTO are approved.
+- [ ] The BPS key is rotated into the deployment secret boundary.
+- [ ] Off-host backup restore and real HTTPS post-deploy smoke evidence pass.
 
 ## 19. Risks and mitigations
 

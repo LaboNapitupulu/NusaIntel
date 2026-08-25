@@ -382,3 +382,23 @@
 - Recorded provider/cost trade-offs and a concrete DNS, backup/restore, smoke, and rollback gate.
 - No infrastructure was purchased or exposed; provider, domain, budget, owner, RPO/RTO, and BPS
   key rotation remain explicit go-live blockers.
+
+## Phase 12 — 2026-08-25
+
+### Release readiness and product safeguards
+
+- Integrated six patch-level dependency updates raised by Dependabot as isolated commits.
+- Added first-use guidance, editable opportunity presets, printable reports, and a direct
+  feedback entry point while keeping scenario persistence identity-free and local.
+- Added cross-theme Playwright baselines for desktop/mobile landing pages and every product
+  shell; generated baselines were inspected and passed deterministic replay.
+- Added bounded process-local runtime diagnostics with release identity, uptime,
+  request/error totals, status counts, in-flight requests, and rolling latency p50/p95.
+- Reconciled PRD, implementation plan, release scorecard, architecture, and operations docs
+  with the merged Phase 11 state and explicit real-deployment blockers.
+
+### Remaining external gate
+
+- Approve provider, region, domains, owner, monthly ceiling, RPO, and RTO.
+- Rotate the BPS key into the deployment secret boundary.
+- Prove off-host restore, production deployment, and real HTTPS smoke behavior.

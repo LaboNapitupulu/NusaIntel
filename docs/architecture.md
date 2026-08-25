@@ -1,7 +1,7 @@
 # NusaIntel architecture
 
-- Status: Phase 6 release baseline
-- Updated: 2026-08-11
+- Status: Phase 12 release-readiness baseline
+- Updated: 2026-08-25
 
 ## System context
 
@@ -88,6 +88,8 @@ Pydantic schemas and map domain errors to stable HTTP responses.
   in-process concurrency semaphore; the deterministic baseline makes zero external model
   calls and reports that fact in provenance.
 - Request IDs and structured logs support diagnosis without logging API keys.
+- `/metrics` exposes bounded process-local uptime, request/error totals, status counts,
+  in-flight requests, and rolling p50/p95 latency together with the deployed release ID.
 - `/live` reports process liveness without touching dependencies; `/ready` and the legacy
   `/health` fail with 503 when PostgreSQL is unavailable.
 - Trusted hosts, explicit CORS, security headers, bounded answer concurrency, and a
