@@ -121,8 +121,47 @@ interface ScenarioState {
   perturbation: number;
 }
 
+interface ScenarioPreset {
+  id: string;
+  label: string;
+  description: string;
+  weights: Array<{ code: string; weight: number }>;
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 const preferredIndicators = ["tpt", "poverty_rate", "hdi"];
+const scenarioPresets: ScenarioPreset[] = [
+  {
+    id: "equity",
+    label: "Pemerataan",
+    description: "Utamakan pembangunan manusia, kemiskinan, dan pengangguran.",
+    weights: [
+      { code: "hdi", weight: 40 },
+      { code: "poverty_rate", weight: 35 },
+      { code: "tpt", weight: 25 },
+    ],
+  },
+  {
+    id: "growth",
+    label: "Pertumbuhan",
+    description: "Fokus pada pertumbuhan, pendapatan per kapita, dan partisipasi kerja.",
+    weights: [
+      { code: "grdp_growth_constant_2010", weight: 40 },
+      { code: "grdp_per_capita_current", weight: 35 },
+      { code: "tpak", weight: 25 },
+    ],
+  },
+  {
+    id: "workforce",
+    label: "Tenaga kerja",
+    description: "Bandingkan pengangguran, partisipasi kerja, dan pembangunan manusia.",
+    weights: [
+      { code: "tpt", weight: 40 },
+      { code: "tpak", weight: 35 },
+      { code: "hdi", weight: 25 },
+    ],
+  },
+];
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, { cache: "no-store", ...init });
@@ -491,6 +530,37 @@ export function OpportunityEngine() {
     });
   }
 
+  function applyScenarioPreset(preset: ScenarioPreset) {
+    const available = preset.weights.filter((item) =>
+      indicators.some((indicator) => indicator.code === item.code),
+    );
+    if (!available.length) {
+      setMessage("Indikator untuk preset ini belum tersedia.");
+      return;
+    }
+    const total = available.reduce((sum, item) => sum + item.weight, 0);
+    let assigned = 0;
+    const nextWeights = available.map((item, index) => {
+      const indicator = indicators.find((candidate) => candidate.code === item.code);
+      const isLast = index === available.length - 1;
+      const weight = isLast ? 100 - assigned : Math.round((item.weight / total) * 10000) / 100;
+      assigned += weight;
+      return {
+        code: item.code,
+        weight,
+        direction: indicator?.favorable_direction ?? "higher",
+      };
+    });
+    const nextYears = commonYears(nextWeights, indicators);
+    setScenario((current) => ({
+      ...current,
+      weights: nextWeights,
+      year: nextYears.includes(current.year) ? current.year : (nextYears[0] ?? 0),
+    }));
+    setSetupStep(4);
+    setMessage(`Preset ${preset.label} diterapkan. Anda tetap dapat mengubah bobotnya.`);
+  }
+
   async function shareScenario() {
     const parameters = new URLSearchParams(window.location.search);
     parameters.set("scenario", encodeScenario(activeScenario));
@@ -565,11 +635,33 @@ export function OpportunityEngine() {
           <button type="button" className="secondary-button" onClick={() => void exportReport()} disabled={!score}>
             Unduh hasil
           </button>
+          <button type="button" className="secondary-button" onClick={() => window.print()} disabled={!score}>
+            Cetak laporan
+          </button>
         </div>
       </header>
 
       <div className="opportunity-layout">
         <aside className="scenario-panel" aria-label="Konfigurasi skenario">
+          <div className="scenario-presets">
+            <div>
+              <span>Mulai cepat</span>
+              <small>Pilih preset atau susun prioritas Anda sendiri.</small>
+            </div>
+            <div className="preset-list">
+              {scenarioPresets.map((preset) => (
+                <button
+                  type="button"
+                  key={preset.id}
+                  title={preset.description}
+                  onClick={() => applyScenarioPreset(preset)}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+            <small>Pilihan terakhir tersimpan otomatis hanya di perangkat ini.</small>
+          </div>
           <div className="wizard-progress" aria-label="Tahapan konfigurasi">
             {([1, 2, 3, 4] as SetupStep[]).map((step) => (
               <button

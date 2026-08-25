@@ -60,6 +60,7 @@ afterEach(() => {
 
 describe("OpportunityEngine", () => {
   it("shows reproducible ranking, comparison, sensitivity, and evidence", async () => {
+    const print = vi.spyOn(window, "print").mockImplementation(() => undefined);
     vi.spyOn(global, "fetch").mockImplementation(async (input) => {
       const url = String(input);
       if (url.endsWith("/opportunity/indicators")) return response({ items: indicators });
@@ -155,7 +156,15 @@ describe("OpportunityEngine", () => {
 
     render(<OpportunityEngine />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Hitung skenario" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Pemerataan" }));
+    expect(screen.getByText(/Preset Pemerataan diterapkan/)).toBeInTheDocument();
+    expect(screen.getAllByLabelText("Bobot (%)").map((input) => (input as HTMLInputElement).value)).toEqual([
+      "40",
+      "35",
+      "25",
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Hitung skenario" }));
     expect(await screen.findByText("Lihat wilayah terbaik dan alasannya.")).toBeInTheDocument();
     expect(screen.getAllByText("ACEH").length).toBeGreaterThan(0);
     expect(screen.getByText("80")).toBeInTheDocument();
@@ -178,6 +187,8 @@ describe("OpportunityEngine", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Salin skenario" }));
     await waitFor(() => expect(window.location.search).toContain("scenario="));
+    fireEvent.click(screen.getByRole("button", { name: "Cetak laporan" }));
+    expect(print).toHaveBeenCalledOnce();
   });
 
   it("refuses to calculate when weights do not sum to 100 percent", async () => {

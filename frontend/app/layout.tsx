@@ -28,6 +28,13 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <footer className="site-footer">
           <span>NusaIntel © 2026</span>
           <span>Data publik yang mudah dipahami.</span>
+          <a
+            href="https://github.com/LaboNapitupulu/NusaIntel/issues/new?labels=feedback&title=Feedback%3A%20"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Berikan masukan
+          </a>
         </footer>
       </body>
     </html>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { DataScene } from "@/components/data-scene";
+import { GettingStartedGuide } from "@/components/getting-started-guide";
 import { SystemStatus } from "@/components/system-status";
 
 const products = [
@@ -61,6 +62,8 @@ export default function Home() {
         </div>
         <DataScene />
       </section>
+
+      <GettingStartedGuide />
 
       <section className="module-launchpad" aria-labelledby="modules-title">
         <div className="launchpad-heading">
