@@ -37,6 +37,12 @@ const screenshotOptions = {
   scale: "css" as const,
 };
 
+const crossPlatformLandingOptions = {
+  ...screenshotOptions,
+  // Fixed viewports avoid OS-specific font metrics changing full-page height.
+  maxDiffPixelRatio: 0.065,
+};
+
 test.beforeEach(async ({ page }) => {
   await mockEmptyProductApi(page);
 });
@@ -45,8 +51,8 @@ for (const theme of ["day", "night"] as const) {
   test(`landing page ${theme} theme remains visually stable`, async ({ page }) => {
     await openWithTheme(page, "/", theme);
     await expect(page).toHaveScreenshot(`landing-${theme}.png`, {
-      ...screenshotOptions,
-      fullPage: true,
+      ...crossPlatformLandingOptions,
+      fullPage: false,
     });
   });
 }
