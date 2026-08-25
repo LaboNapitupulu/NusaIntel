@@ -53,11 +53,18 @@ async def test_health_is_degraded_when_database_is_unavailable() -> None:
 
 @pytest.mark.asyncio
 async def test_liveness_does_not_depend_on_database_readiness() -> None:
-    response = await get_system_endpoint(unavailable_probe, "/api/v1/live")
+    app = create_app(
+        Settings(app_env="test", release_sha="test-release"),
+        database_probe=unavailable_probe,
+    )
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/api/v1/live")
 
     assert response.status_code == 200
     assert response.json()["status"] == "alive"
     assert response.json()["version"] == "0.7.0"
+    assert response.json()["release"] == "test-release"
     assert response.headers["Cache-Control"] == "no-store"
 
 
@@ -67,4 +74,28 @@ async def test_readiness_fails_closed_when_database_is_unavailable() -> None:
 
     assert response.status_code == 503
     assert response.json()["status"] == "degraded"
+    assert response.headers["Cache-Control"] == "no-store"
+
+
+@pytest.mark.asyncio
+async def test_runtime_metrics_are_bounded_and_release_aware() -> None:
+    app = create_app(
+        Settings(app_env="test", release_sha="metrics-release"),
+        database_probe=healthy_probe,
+    )
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        await client.get("/api/v1/live")
+        await client.get("/api/v1/does-not-exist")
+        response = await client.get("/api/v1/metrics")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["release"] == "metrics-release"
+    assert payload["total_requests"] == 2
+    assert payload["failed_requests"] == 0
+    assert payload["in_flight_requests"] == 0
+    assert payload["status_counts"] == {"200": 1, "404": 1}
+    assert payload["latency_ms"]["sample_count"] == 2
+    assert payload["latency_ms"]["p95"] is not None
     assert response.headers["Cache-Control"] == "no-store"

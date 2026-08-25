@@ -13,6 +13,8 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
+from app.observability import RuntimeMetrics
+
 logger = structlog.get_logger()
 
 
@@ -42,6 +44,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         if request.url.path in {
             "/api/v1/health",
             "/api/v1/live",
+            "/api/v1/metrics",
             "/api/v1/ready",
             "/api/v1/regulations/answer",
         }:
@@ -147,5 +150,38 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
             path=request.url.path,
             status_code=response.status_code,
             duration_ms=round((time.perf_counter() - started) * 1000, 2),
+        )
+        return response
+
+
+class RuntimeMetricsMiddleware(BaseHTTPMiddleware):
+    _metrics_path = "/api/v1/metrics"
+
+    def __init__(self, app: ASGIApp, *, metrics: RuntimeMetrics) -> None:
+        super().__init__(app)
+        self._metrics = metrics
+
+    async def dispatch(
+        self,
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
+        if request.url.path == self._metrics_path:
+            return await call_next(request)
+
+        await self._metrics.begin_request()
+        started = time.perf_counter()
+        try:
+            response = await call_next(request)
+        except Exception:
+            await self._metrics.finish_request(
+                status_code=500,
+                duration_ms=(time.perf_counter() - started) * 1000,
+            )
+            raise
+
+        await self._metrics.finish_request(
+            status_code=response.status_code,
+            duration_ms=(time.perf_counter() - started) * 1000,
         )
         return response

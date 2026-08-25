@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     app_name: str = "NusaIntel API"
     app_env: Literal["development", "test", "production"] = "development"
+    release_sha: str = Field(default="development", min_length=1, max_length=128)
     log_level: str = "INFO"
     database_url: str | None = None
     cors_origins: list[str] = ["http://localhost:3000"]

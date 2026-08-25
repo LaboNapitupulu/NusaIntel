@@ -21,8 +21,10 @@ from app.logging import configure_logging
 from app.middleware import (
     AnswerRateLimitMiddleware,
     RequestContextMiddleware,
+    RuntimeMetricsMiddleware,
     SecurityHeadersMiddleware,
 )
+from app.observability import RuntimeMetrics
 from app.opportunity.service import OpportunityService
 from app.regional_analytics.service import RegionalAnalyticsService
 from app.regulasilens.service import CorpusService
@@ -56,6 +58,7 @@ def create_app(
     )
     application.state.settings = active_settings
     application.state.database_probe = database_probe
+    application.state.runtime_metrics = RuntimeMetrics()
     application.state.control_tower_service = (
         ControlTowerService(session_factory) if session_factory is not None else None
     )
@@ -81,6 +84,10 @@ def create_app(
         window_seconds=active_settings.regulation_answer_rate_limit_window_seconds,
     )
     application.add_middleware(RequestContextMiddleware)
+    application.add_middleware(
+        RuntimeMetricsMiddleware,
+        metrics=application.state.runtime_metrics,
+    )
     application.add_middleware(
         SecurityHeadersMiddleware,
         production=active_settings.app_env == "production",

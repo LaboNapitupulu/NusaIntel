@@ -26,8 +26,30 @@ class LivenessResponse(BaseModel):
     status: Literal["alive"]
     service: str
     version: str
+    release: str
     environment: str
     timestamp: datetime
+
+
+class LatencyMetrics(BaseModel):
+    sample_count: int
+    p50: float | None
+    p95: float | None
+    maximum: float | None
+
+
+class RuntimeMetricsResponse(BaseModel):
+    service: str
+    version: str
+    release: str
+    environment: str
+    started_at: datetime
+    uptime_seconds: float
+    total_requests: int
+    failed_requests: int
+    in_flight_requests: int
+    status_counts: dict[str, int]
+    latency_ms: LatencyMetrics
 
 
 @router.get("/live", response_model=LivenessResponse)
@@ -36,8 +58,23 @@ async def live(request: Request) -> LivenessResponse:
         status="alive",
         service=request.app.state.settings.app_name,
         version=request.app.version,
+        release=request.app.state.settings.release_sha,
         environment=request.app.state.settings.app_env,
         timestamp=datetime.now(UTC),
+    )
+
+
+@router.get("/metrics", response_model=RuntimeMetricsResponse)
+async def metrics(request: Request) -> RuntimeMetricsResponse:
+    snapshot = await request.app.state.runtime_metrics.snapshot()
+    return RuntimeMetricsResponse.model_validate(
+        {
+            "service": request.app.state.settings.app_name,
+            "version": request.app.version,
+            "release": request.app.state.settings.release_sha,
+            "environment": request.app.state.settings.app_env,
+            **snapshot,
+        }
     )
 
 
