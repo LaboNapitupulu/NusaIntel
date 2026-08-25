@@ -396,6 +396,8 @@
   request/error totals, status counts, in-flight requests, and rolling latency p50/p95.
 - Reconciled PRD, implementation plan, release scorecard, architecture, and operations docs
   with the merged Phase 11 state and explicit real-deployment blockers.
+- Stabilized landing-page visual baselines across Windows and Linux by using fixed viewports;
+  hosted run `32802818466` then passed frontend, backend, Compose, and security for `c1df75a`.
 
 ### Remaining external gate
 

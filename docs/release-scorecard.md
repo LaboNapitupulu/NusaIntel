@@ -46,10 +46,10 @@ or committed, so no unexplained high/critical security finding remains.
 
 | Gate | Status | Evidence |
 |---|---|---|
-| Theme/layout regression protection | Pass locally | 12 Playwright cases; 8 executed and 4 intentional mobile shell skips, with 12 reviewed baselines |
+| Theme/layout regression protection | Pass | Full browser suite: 18 passed and 4 intentional mobile shell skips; 12 reviewed baselines |
 | First-use guidance and presets | Pass locally | Component tests cover persistence and preset weights; existing scenario URL/local storage remain identity-free |
 | Printable/shareable results | Pass locally | Opportunity print, JSON export, and scenario URL actions are explicit and tested |
 | Runtime diagnostics | Pass locally | Release-aware liveness and bounded metrics tests pass |
 | Dependency maintenance | Pass locally | Six Dependabot patch updates integrated as isolated commits |
-| Hosted CI on Phase 12 candidate | Pending | Must pass after push |
+| Hosted CI on Phase 12 candidate | Pass | Run `32802818466` passed frontend, backend, Compose, and security for `c1df75a` |
 | Real public deployment | Blocked on owner decision | Provider/domain/budget/RPO/RTO, key rotation, and HTTPS restore/smoke remain open |

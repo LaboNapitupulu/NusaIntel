@@ -771,7 +771,7 @@ release diagnostics to operate the product responsibly before a real public depl
 
 - [x] Local backend and frontend quality gates pass.
 - [x] Visual baselines are deterministic in both configured Playwright projects.
-- [ ] Hosted CI passes with the new visual baselines.
+- [x] Hosted CI passes with the new visual baselines.
 - [ ] Real provider/domain/recovery decisions and deployment evidence pass.
 
 ## 16. Test strategy

@@ -2,7 +2,9 @@
 
 - Date: 2026-08-25
 - Branch: `main`
-- Status: local implementation complete; hosted CI and real deployment pending
+- Candidate commit: `c1df75a`
+- Hosted CI: [run `32802818466`](https://github.com/LaboNapitupulu/NusaIntel/actions/runs/32802818466)
+- Status: implementation and hosted CI complete; real deployment pending
 
 ## Delivered
 
@@ -16,12 +18,17 @@
   status distribution, in-flight count, uptime, and rolling p50/p95 latency.
 - Integrated the six patch-level dependency updates raised by Dependabot.
 
-## Local evidence
+## Verification evidence
 
-- Backend Ruff, strict mypy, and health/metrics tests pass.
-- Frontend lint, typecheck, component tests, production build, and visual tests pass.
+- Backend Ruff, Ruff format, strict mypy, and all 93 tests pass (3 intentional skips).
+- Frontend lint, typecheck, 12 component tests, production build, and the full browser suite
+  pass (18 executed, 4 intentional mobile shell skips).
 - Visual baselines were manually inspected after generation.
 - Runtime metrics exclude their own scrape request and retain at most 512 latency samples.
+- Docker Compose rebuilt all four application images; migration completed; database, API,
+  worker, and web services started successfully; liveness, readiness, metrics, and web smoke
+  checks passed.
+- Hosted frontend, backend, Compose, and security jobs all passed for `c1df75a`.
 
 ## Remaining external gate
 
