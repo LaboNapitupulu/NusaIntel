@@ -104,7 +104,7 @@ test("grounded answer remains usable without horizontal overflow", async ({ page
   const contextButton = page.getByRole("button", { name: "Buka konteks" });
   await contextButton.dispatchEvent("click");
   await expect(page.getByRole("heading", { name: regulation.title })).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByText("page:4:line:10")).toBeVisible();
+  await expect(page.getByText("Halaman 4, baris 10")).toBeVisible();
 
   const dimensions = await page.evaluate(() => {
     const shell = document.querySelector<HTMLElement>("#regulasilens");
