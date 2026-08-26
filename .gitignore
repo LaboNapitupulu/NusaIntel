@@ -49,3 +49,7 @@ Thumbs.db
 # Local tooling
 .docker/
 debug.log
+
+# Local product planning
+PRD.md
+IMPLEMENTATION_PLAN.md
