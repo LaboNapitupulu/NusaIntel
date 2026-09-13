@@ -71,7 +71,7 @@ for (const [name, path] of productRoutes) {
       await openWithTheme(page, path, theme);
       await expect(page).toHaveScreenshot(`${name}-${theme}.png`, {
         ...screenshotOptions,
-        fullPage: true,
+        fullPage: false,
       });
     }
   });
