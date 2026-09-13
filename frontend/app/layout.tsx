@@ -61,6 +61,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       lang="id"
       data-scroll-behavior="smooth"
       className={`${inter.variable} ${dmSerifDisplay.variable}`}
+      suppressHydrationWarning
     >
       <head>
         <script
