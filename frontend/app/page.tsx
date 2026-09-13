@@ -45,7 +45,7 @@ const products = [
 
 export default function Home() {
   return (
-    <main className="home-page">
+    <main className="home-page" id="main-content">
       <section className="landing-hero" aria-labelledby="home-title">
         <div className="landing-copy">
           <p className="kicker">Wawasan publik untuk Indonesia</p>
