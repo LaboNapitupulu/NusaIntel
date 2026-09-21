@@ -32,7 +32,7 @@ x-backend-service: &backend-service
 
 services:
   db:
-    image: postgres:17-alpine
+    image: pgvector/pgvector:pg17
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-nusa_intel}
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
