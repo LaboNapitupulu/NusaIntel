@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { AnimatedNumber, EmptyState, WorkspaceSkeleton, WorkspaceTabs, WorkspaceToast } from "./workspace-ui";
+import { readPreference, writePreference } from "./preferences";
 
 type RegulationTab = "answer" | "evidence" | "compare";
 
@@ -125,7 +126,7 @@ function sourceLocationLabel(anchor: string): string {
 
 export function RegulationLens() {
   const [documents, setDocuments] = useState<Regulation[]>([]);
-  const [question, setQuestion] = useState("Apa hak akses dan salinan Data Pribadi?");
+  const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [context, setContext] = useState<SectionContext | null>(null);
   const [documentId, setDocumentId] = useState("");
@@ -140,10 +141,27 @@ export function RegulationLens() {
   const [corpusOpen, setCorpusOpen] = useState(true);
   const [activeCitationId, setActiveCitationId] = useState<string | null>(null);
   const [selectedChangeIndex, setSelectedChangeIndex] = useState(0);
+  const [catalogError, setCatalogError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [contextLoading, setContextLoading] = useState(false);
+  const [comparing, setComparing] = useState(false);
+  const [versionsLoading, setVersionsLoading] = useState(false);
+  const [versionsError, setVersionsError] = useState(false);
+  const [versionAttempt, setVersionAttempt] = useState(0);
+
+  function selectDocument(id: string) {
+    setDocumentId(id);
+    setVersionsLoading(Boolean(id));
+    setVersionsError(false);
+    setVersions([]);
+    setBaseVersion("");
+    setTargetVersion("");
+    setComparison(null);
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const storedQuestion = window.localStorage.getItem("nusa-intel-regulation-question");
+    const storedQuestion = readPreference("nusa-intel-regulation-question");
     const requestedQuestion = params.get("q") ?? storedQuestion;
     if (requestedQuestion && requestedQuestion.length >= 8 && requestedQuestion.length <= 500) {
       queueMicrotask(() => setQuestion(requestedQuestion));
@@ -152,7 +170,7 @@ export function RegulationLens() {
 
   useEffect(() => {
     if (question.trim().length >= 8) {
-      window.localStorage.setItem("nusa-intel-regulation-question", question);
+      writePreference("nusa-intel-regulation-question", question);
     }
   }, [question]);
 
@@ -162,14 +180,14 @@ export function RegulationLens() {
       .then((payload) => {
         if (!active) return;
         setDocuments(payload.items);
-        setDocumentId(payload.items[0]?.document_id ?? "");
+        selectDocument(payload.items[0]?.document_id ?? "");
       })
-      .catch(() => active && setMessage("Koleksi regulasi belum dapat dimuat."))
+      .catch(() => active && setCatalogError(true))
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
     };
-  }, []);
+  }, [attempt]);
 
   useEffect(() => {
     if (!documentId) return;
@@ -182,11 +200,12 @@ export function RegulationLens() {
         setTargetVersion(payload.items[0]?.id ?? "");
         setComparison(null);
       })
-      .catch(() => active && setVersions([]));
+      .catch(() => active && setVersionsError(true))
+      .finally(() => active && setVersionsLoading(false));
     return () => {
       active = false;
     };
-  }, [documentId]);
+  }, [documentId, versionAttempt]);
 
   async function ask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -214,7 +233,9 @@ export function RegulationLens() {
 
   async function openContext(citation: Citation) {
     const sectionId = citation.section_ids[0];
-    if (!sectionId) return;
+    if (!sectionId || contextLoading) return;
+    setContextLoading(true);
+    setContext(null);
     setMessage(null);
     try {
       const result = await fetchJson<SectionContext>(
@@ -226,12 +247,16 @@ export function RegulationLens() {
       setActiveTab("evidence");
     } catch {
       setMessage("Konteks kutipan belum dapat dibuka. Coba lagi.");
+    } finally {
+      setContextLoading(false);
     }
   }
 
   async function compare() {
-    if (!documentId || !baseVersion || !targetVersion || baseVersion === targetVersion) return;
+    if (!documentId || !baseVersion || !targetVersion || baseVersion === targetVersion || comparing) return;
     setMessage(null);
+    setComparing(true);
+    setComparison(null);
     try {
       const query = new URLSearchParams({
         document_id: documentId,
@@ -243,6 +268,8 @@ export function RegulationLens() {
       setMessage("Perbandingan versi selesai.");
     } catch {
       setMessage("Dokumen belum dapat dibandingkan. Coba lagi.");
+    } finally {
+      setComparing(false);
     }
   }
 
@@ -250,7 +277,8 @@ export function RegulationLens() {
     const query = new URLSearchParams({ q: question.trim() });
     window.history.replaceState(null, "", `${window.location.pathname}?${query}`);
     try {
-      await navigator.clipboard?.writeText(window.location.href);
+      if (!navigator.clipboard) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(window.location.href);
       setMessage("Tautan pertanyaan disalin.");
     } catch {
       setMessage("Pertanyaan tersimpan pada URL halaman.");
@@ -268,14 +296,15 @@ export function RegulationLens() {
     setActiveTab("evidence");
     window.setTimeout(() => {
       const card = document.querySelector<HTMLElement>(`[data-citation-id="${citationId}"]`);
-      card?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+      card?.focus();
+      card?.scrollIntoView?.({ block: "center" });
     }, 0);
   }
 
   function renderGroundedLine(line: string, lineIndex: number) {
     const parts = line.split(/(\[C\d+\])/g);
     return (
-      <p key={`${line}-${lineIndex}`} style={{ animationDelay: `${lineIndex * 90}ms` }}>
+      <p key={`${line}-${lineIndex}`}>
         {parts.map((part, index) => {
           const match = part.match(/^\[(C\d+)\]$/);
           if (!match) return part;
@@ -302,21 +331,16 @@ export function RegulationLens() {
       <div className="regulation-header">
         <div>
           <p className="kicker">Pencarian regulasi bersumber</p>
-          <h2 id="regulation-title">Pahami regulasi langsung dari dokumen resminya.</h2>
+          <h1 id="regulation-title">RegulasiLens</h1>
           <p>
-            Ajukan pertanyaan dengan bahasa sehari-hari. Setiap jawaban menyertakan kutipan yang
-            dapat Anda buka dan periksa kembali.
+            Ajukan pertanyaan dari koleksi regulasi yang tersedia. Periksa kutipan pasal dan
+            sumber dokumen untuk memahami jawabannya.
           </p>
-        </div>
-        <div className="regulation-gate" aria-label="Jaminan sumber jawaban">
-          <strong>100%</strong>
-          <span>jawaban diarahkan kembali ke dokumen resmi</span>
-          <small>Sumber dapat diperiksa</small>
         </div>
       </div>
 
       <div className="workspace-config-toggle corpus-toggle">
-        <div><span>Koleksi regulasi</span><strong>{documents.length} dokumen resmi tersedia</strong></div>
+        <div><span>Koleksi regulasi</span><strong>{loading ? "Memuat koleksi…" : catalogError ? "Koleksi belum tersedia" : `${documents.length} dokumen resmi tersedia`}</strong></div>
         <button type="button" onClick={() => setCorpusOpen((current) => !current)} aria-expanded={corpusOpen}>
           {corpusOpen ? "Sembunyikan dokumen" : "Lihat dokumen"}
         </button>
@@ -324,7 +348,8 @@ export function RegulationLens() {
 
       <div className="regulation-catalog" aria-label="Koleksi regulasi" hidden={!corpusOpen}>
         {loading && <WorkspaceSkeleton label="Memuat koleksi regulasi" />}
-        {!loading && !documents.length && <p>Belum ada dokumen yang dapat ditampilkan.</p>}
+        {catalogError && <div role="alert"><p>Koleksi regulasi belum dapat dimuat.</p><button type="button" onClick={() => { setLoading(true); setCatalogError(false); setAttempt((current) => current + 1); }}>Muat ulang koleksi</button></div>}
+        {!loading && !catalogError && !documents.length && <p>Belum ada dokumen yang dapat ditampilkan.</p>}
         {documents.map((document) => (
           <article key={document.document_id}>
             <span className="regulation-status">{documentStatusLabel(document.status)}</span>
@@ -333,6 +358,7 @@ export function RegulationLens() {
             <small>
               Status diperiksa {dateLabel(document.status_checked_at)}
             </small>
+            <a href={document.source_page_url} target="_blank" rel="noreferrer">Buka dokumen resmi</a>
           </article>
         ))}
       </div>
@@ -348,19 +374,21 @@ export function RegulationLens() {
         ]}
       />
 
-      <div className="regulation-workspace" hidden={activeTab !== "answer"}>
+      <div id="panel-answer" role="tabpanel" aria-labelledby="tab-answer" className="regulation-workspace" hidden={activeTab !== "answer"}>
         <form className="answer-panel" onSubmit={ask}>
           <label htmlFor="regulation-question">Apa yang ingin Anda ketahui?</label>
           <textarea
             id="regulation-question"
             value={question}
+            disabled={running}
+            placeholder="Contoh: Apa hak akses dan salinan Data Pribadi?"
             minLength={8}
             maxLength={500}
             onChange={(event) => setQuestion(event.target.value)}
           />
           <div className="answer-actions">
             <small>{question.length}/500 karakter · hingga 5 kutipan sumber</small>
-            <button type="button" className="secondary-button" onClick={() => void shareQuestion()} disabled={question.trim().length < 8}>Salin pertanyaan</button>
+            <button type="button" className="secondary-button" onClick={() => void shareQuestion()} disabled={question.trim().length < 8}>Salin tautan pertanyaan</button>
             <button type="submit" disabled={running || question.trim().length < 8}>
               {running ? "Mencari jawaban..." : "Cari jawaban"}
             </button>
@@ -372,7 +400,7 @@ export function RegulationLens() {
           {answer && (
             <>
               <div className="answer-meta">
-                <span>{answer.answerable ? "SUMBER TERSEDIA" : "SUMBER BELUM CUKUP"}</span>
+                <span>{answer.answerable ? "Sumber tersedia" : "Sumber belum cukup"}</span>
                 <span>Keyakinan {confidenceLabel(answer.confidence)}</span>
                 <span>Kelengkapan sumber {Math.round(answer.evidence_coverage * 100)}%</span>
               </div>
@@ -387,7 +415,7 @@ export function RegulationLens() {
         </div>
       </div>
 
-      <div className="evidence-workspace" hidden={activeTab !== "evidence"}>
+      <div id="panel-evidence" role="tabpanel" aria-labelledby="tab-evidence" className="evidence-workspace" hidden={activeTab !== "evidence"}>
       {answer?.citations.length ? (
         <>
         {activeCitation && (
@@ -403,8 +431,8 @@ export function RegulationLens() {
             <article
               key={citation.citation_id}
               data-citation-id={citation.citation_id}
+              tabIndex={-1}
               data-active={activeCitation?.citation_id === citation.citation_id}
-              data-tilt
               onPointerEnter={() => setActiveCitationId(citation.citation_id)}
             >
               <div className="citation-heading">
@@ -415,7 +443,7 @@ export function RegulationLens() {
               <p>{citation.document_title}</p>
               <small>Status diperiksa {dateLabel(citation.status_checked_at)}</small>
               <div className="citation-actions">
-                <button type="button" onClick={() => void openContext(citation)}>Buka konteks</button>
+                <button type="button" disabled={contextLoading} onClick={() => void openContext(citation)}>Buka konteks</button>
                 <a href={citation.source_url} target="_blank" rel="noreferrer">Dokumen resmi</a>
               </div>
             </article>
@@ -430,6 +458,7 @@ export function RegulationLens() {
         />
       )}
 
+      {contextLoading && <WorkspaceSkeleton label="Memuat konteks kutipan" />}
       {context && (
         <aside className="context-viewer" aria-labelledby="context-title">
           <div className="context-heading">
@@ -450,34 +479,36 @@ export function RegulationLens() {
       )}
       </div>
 
-      <div className="version-compare" hidden={activeTab !== "compare"}>
+      <div id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" className="version-compare" hidden={activeTab !== "compare"}>
         <div>
           <p className="kicker">Perubahan dokumen</p>
           <h3>Lihat bagian yang ditambah, dihapus, atau diubah.</h3>
         </div>
-        <div className="compare-controls">
+        <div className="compare-controls" inert={comparing}>
           <label>Dokumen
-            <select value={documentId} onChange={(event) => setDocumentId(event.target.value)}>
-              {documents.map((document) => <option key={document.document_id} value={document.document_id}>{document.document_id}</option>)}
+            <select value={documentId} onChange={(event) => selectDocument(event.target.value)}>
+              {documents.map((document) => <option key={document.document_id} value={document.document_id}>{document.document_type} {document.number}/{document.year}: {document.title}</option>)}
             </select>
           </label>
           <label>Versi dasar
-            <select value={baseVersion} onChange={(event) => setBaseVersion(event.target.value)}>
+            <select disabled={versionsLoading} value={baseVersion} onChange={(event) => { setBaseVersion(event.target.value); setComparison(null); }}>
               <option value="">Pilih versi</option>
-              {versions.map((version) => <option key={version.id} value={version.id}>{dateLabel(version.retrieved_at)}</option>)}
+              {versions.map((version) => <option key={version.id} value={version.id}>{version.manifest_version} · {dateLabel(version.retrieved_at)}</option>)}
             </select>
           </label>
           <label>Versi target
-            <select value={targetVersion} onChange={(event) => setTargetVersion(event.target.value)}>
+            <select disabled={versionsLoading} value={targetVersion} onChange={(event) => { setTargetVersion(event.target.value); setComparison(null); }}>
               <option value="">Pilih versi</option>
-              {versions.map((version) => <option key={version.id} value={version.id}>{dateLabel(version.retrieved_at)}</option>)}
+              {versions.map((version) => <option key={version.id} value={version.id}>{version.manifest_version} · {dateLabel(version.retrieved_at)}</option>)}
             </select>
           </label>
           <button type="button" onClick={() => void compare()} disabled={!baseVersion || !targetVersion || baseVersion === targetVersion}>
-            Bandingkan versi
+            {comparing ? "Membandingkan…" : "Bandingkan versi"}
           </button>
         </div>
-        {versions.length < 2 && <p className="empty-copy">Perbandingan aktif setelah sedikitnya dua versi dokumen tersimpan.</p>}
+        {versionsLoading && <WorkspaceSkeleton label="Memuat versi dokumen" />}
+        {versionsError && <div role="alert"><p>Versi dokumen belum dapat dimuat.</p><button type="button" onClick={() => { selectDocument(documentId); setVersionAttempt((current) => current + 1); }}>Muat ulang versi</button></div>}
+        {!versionsLoading && !versionsError && versions.length < 2 && <p className="empty-copy">Perbandingan aktif setelah sedikitnya dua versi dokumen tersimpan.</p>}
         {comparison && (
           <div className="comparison-result">
             <div className="comparison-counts">
@@ -498,19 +529,19 @@ export function RegulationLens() {
                       aria-pressed={selectedChangeIndex === index}
                       onClick={() => setSelectedChangeIndex(index)}
                     >
-                      <span>{change.change_type}</span>
+                      <span>{{ added: "Ditambah", removed: "Dihapus", modified: "Diubah" }[change.change_type]}</span>
                       <strong>{change.heading}</strong>
                     </button>
                   ))}
                 </nav>
                 <article className="diff-stage" data-change={activeChange.change_type}>
                   <div className="diff-stage-heading">
-                    <span>{activeChange.change_type.toUpperCase()}</span>
+                    <span>{{ added: "Ditambah", removed: "Dihapus", modified: "Diubah" }[activeChange.change_type]}</span>
                     <div><strong>{activeChange.heading}</strong><p>{activeChange.summary}</p></div>
                   </div>
                   <div className="comparison-texts">
-                    <section data-side="base"><span>Versi dasar</span><pre>{activeChange.base?.text ?? "— tidak ada pada versi dasar —"}</pre></section>
-                    <section data-side="target"><span>Versi target</span><pre>{activeChange.target?.text ?? "— tidak ada pada versi target —"}</pre></section>
+                    <section data-side="base"><span>Versi dasar</span><pre>{activeChange.base?.text ?? "Tidak ada pada versi dasar."}</pre></section>
+                    <section data-side="target"><span>Versi target</span><pre>{activeChange.target?.text ?? "Tidak ada pada versi target."}</pre></section>
                   </div>
                 </article>
               </div>

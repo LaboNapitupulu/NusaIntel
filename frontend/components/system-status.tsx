@@ -13,7 +13,7 @@ interface HealthPayload {
 
 const labels: Record<Status, string> = {
   loading: "Memeriksa kesiapan layanan",
-  healthy: "Semua fitur siap digunakan",
+  healthy: "Layanan data tersedia",
   degraded: "Sebagian fitur belum siap",
   offline: "Layanan sedang tidak tersedia",
 };
@@ -24,6 +24,7 @@ async function fetchHealth(apiBaseUrl: string): Promise<Status> {
       cache: "no-store",
       signal: AbortSignal.timeout(5000),
     });
+    if (!response.ok) return "offline";
     const payload = (await response.json()) as HealthPayload;
     return payload.status === "healthy" ? "healthy" : "degraded";
   } catch {
@@ -51,13 +52,16 @@ export function SystemStatus() {
   }, [apiBaseUrl]);
 
   return (
-    <aside className="status-panel" data-tilt data-reveal aria-live="polite">
+    <aside className="status-panel" aria-live="polite">
+      <p className="kicker">Status layanan</p>
       <div className="status-heading">
         <span className={`status-dot status-${status}`} aria-hidden="true" />
         <span>{labels[status]}</span>
       </div>
       <p>
-        Anda dapat mulai menjelajahi data, membandingkan wilayah, dan mencari regulasi.
+        {status === "healthy" ? "Koneksi ke layanan data aktif. Kualitas setiap sumber dapat diperiksa di katalog."
+          : status === "loading" ? "Menghubungi layanan data."
+          : "Data belum dapat dimuat sepenuhnya. Periksa ulang koneksi layanan untuk melanjutkan."}
       </p>
       {(status === "degraded" || status === "offline") && (
         <button type="button" onClick={checkHealth}>

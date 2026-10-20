@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { Inter, DM_Serif_Display } from "next/font/google";
 
 import { SiteHeader } from "@/components/site-header";
-import { MotionOrchestrator } from "@/components/motion-orchestrator";
 
 import "./styles.css";
 
@@ -31,11 +30,11 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "NusaIntel — Data Publik Indonesia",
+    default: "NusaIntel · Data Publik Indonesia",
     template: "%s · NusaIntel",
   },
   description:
-    "Platform wawasan data publik Indonesia. Bandingkan 38 provinsi, periksa kualitas data, dan pahami regulasi dengan bukti dari sumber resmi.",
+    "Periksa kualitas data publik Indonesia, bandingkan kondisi provinsi, dan telusuri regulasi beserta kutipan sumbernya.",
   keywords: ["data publik", "Indonesia", "analisis wilayah", "provinsi", "regulasi", "open data"],
   authors: [{ name: "Tim NusaIntel" }],
   creator: "NusaIntel",
@@ -44,13 +43,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "id_ID",
     siteName: "NusaIntel",
-    title: "NusaIntel — Data Publik Indonesia",
-    description: "Dari data publik menjadi keputusan yang bisa dibuktikan.",
+    title: "NusaIntel · Data Publik Indonesia",
+    description: "Kualitas data, perbandingan wilayah, dan pencarian regulasi bersumber.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "NusaIntel — Data Publik Indonesia",
-    description: "Dari data publik menjadi keputusan yang bisa dibuktikan.",
+    title: "NusaIntel · Data Publik Indonesia",
+    description: "Kualitas data, perbandingan wilayah, dan pencarian regulasi bersumber.",
   },
   robots: { index: true, follow: true },
 };
@@ -59,7 +58,6 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html
       lang="id"
-      data-scroll-behavior="smooth"
       className={`${inter.variable} ${dmSerifDisplay.variable}`}
       suppressHydrationWarning
     >
@@ -67,26 +65,25 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{document.documentElement.dataset.theme=localStorage.getItem('nusa-intel-theme')||'day'}catch(e){}",
+              "try{document.documentElement.dataset.theme=localStorage.getItem('nusa-intel-theme')==='night'?'night':'day'}catch(e){document.documentElement.dataset.theme='day'}",
           }}
         />
       </head>
       <body>
-        <MotionOrchestrator />
-        <SiteHeader />
         <a href="#main-content" className="skip-link">
           Lewati ke konten utama
         </a>
+        <SiteHeader />
         {children}
         <footer className="site-footer">
           <span>NusaIntel © 2026</span>
-          <span>Data publik yang mudah dipahami.</span>
+          <span>Periode, sumber, dan batasan tersedia bersama hasil.</span>
           <a
             href="https://github.com/LaboNapitupulu/NusaIntel/issues/new?labels=feedback&title=Feedback%3A%20"
             target="_blank"
             rel="noreferrer"
           >
-            Berikan masukan ↗
+            Berikan masukan
           </a>
         </footer>
       </body>

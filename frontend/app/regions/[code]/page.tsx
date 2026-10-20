@@ -8,7 +8,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { code } = await params;
   return {
-    title: `Bukti regional ${code} | NusaIntel`,
+    title: `Rincian wilayah ${code}`,
     description: `Nilai indikator, periode, dan sumber resmi untuk provinsi ${code}.`,
   };
 }
@@ -25,5 +25,5 @@ export default async function RegionPage({
   const year = Number.isInteger(requestedYear) && requestedYear >= 2000 && requestedYear <= 2100
     ? requestedYear
     : 2024;
-  return <RegionalDetail code={code} year={year} />;
+  return <RegionalDetail key={`${code}-${year}`} code={code} year={year} />;
 }

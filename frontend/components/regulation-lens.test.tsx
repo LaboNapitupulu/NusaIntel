@@ -81,10 +81,12 @@ describe("RegulationLens", () => {
     });
 
     render(<RegulationLens />);
-    expect(await screen.findByText(/UU 27\/2022/)).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "UU 27/2022" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cari jawaban" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Apa yang ingin Anda ketahui?"), { target: { value: "Apa hak akses dan salinan Data Pribadi?" } });
     fireEvent.click(screen.getByRole("button", { name: "Cari jawaban" }));
 
-    expect(await screen.findByText("SUMBER TERSEDIA")).toBeInTheDocument();
+    expect(await screen.findByText("Sumber tersedia")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Buka sumber C1" }));
     expect(screen.getByRole("tab", { name: /Sumber/ })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText(/\[C1\] Pasal 7/)).toBeInTheDocument();
@@ -115,10 +117,11 @@ describe("RegulationLens", () => {
     });
 
     render(<RegulationLens />);
-    await screen.findByText(/UU 27\/2022/);
+    await screen.findByRole("heading", { name: "UU 27/2022" });
+    fireEvent.change(screen.getByLabelText("Apa yang ingin Anda ketahui?"), { target: { value: "Apa isi dokumen yang tidak tersedia?" } });
     fireEvent.click(screen.getByRole("button", { name: "Cari jawaban" }));
 
-    expect(await screen.findByText("SUMBER BELUM CUKUP")).toBeInTheDocument();
+    expect(await screen.findByText("Sumber belum cukup")).toBeInTheDocument();
     expect(screen.getAllByText(/Dokumen yang tersedia belum cukup/).length).toBeGreaterThan(0);
     expect(screen.queryByText("Pertanyaan berada di luar corpus.")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Dokumen resmi" })).not.toBeInTheDocument();

@@ -1,7 +1,6 @@
 "use client";
 
 import type { KeyboardEvent, ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
 
 export interface WorkspaceTab<T extends string> {
   id: T;
@@ -41,6 +40,8 @@ export function WorkspaceTabs<T extends string>({
         <button
           type="button"
           role="tab"
+          id={`tab-${tab.id}`}
+          aria-controls={`panel-${tab.id}`}
           aria-selected={active === tab.id}
           tabIndex={active === tab.id ? 0 : -1}
           key={tab.id}
@@ -58,43 +59,18 @@ export function AnimatedNumber({
   value,
   digits = 0,
   suffix = "",
-  initialFrom,
 }: {
   value: number;
   digits?: number;
   suffix?: string;
   initialFrom?: number;
 }) {
-  const [display, setDisplay] = useState(initialFrom ?? value);
-  const previous = useRef(initialFrom ?? value);
-
-  useEffect(() => {
-    const from = previous.current;
-    previous.current = value;
-    const reducedMotion = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (from === value || reducedMotion) {
-      setDisplay(value);
-      return;
-    }
-    const startedAt = performance.now();
-    const duration = 680;
-    let frame = 0;
-    const tick = (now: number) => {
-      const progress = Math.min(1, (now - startedAt) / duration);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplay(from + (value - from) * eased);
-      if (progress < 1) frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [value]);
-
   return (
     <span className="animated-number" aria-label={`${value}${suffix}`}>
       {new Intl.NumberFormat("id-ID", {
         minimumFractionDigits: digits,
         maximumFractionDigits: digits,
-      }).format(display)}{suffix}
+      }).format(value)}{suffix}
     </span>
   );
 }
@@ -110,7 +86,7 @@ export function WorkspaceToast({
 }) {
   if (!message) return null;
   return (
-    <div className="workspace-toast" data-tone={tone} role="status">
+    <div className="workspace-toast" data-tone={/belum dapat|gagal|tidak dapat/i.test(message) ? "error" : tone} role={/belum dapat|gagal|tidak dapat/i.test(message) || tone === "error" ? "alert" : "status"}>
       <span>{message}</span>
       <button type="button" onClick={onDismiss} aria-label="Tutup notifikasi">×</button>
     </div>

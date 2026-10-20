@@ -33,7 +33,14 @@ async function mockRegulationApi(page: Page) {
       return fulfillJson(route, { items: [regulation], count: 1 });
     }
     if (url.pathname === "/api/v1/regulations/uu-27-2022/versions") {
-      return fulfillJson(route, { items: [version], count: 1 });
+      return fulfillJson(route, { items: [version, { ...version, id: "older-fixture", manifest_version: "2026-07-01.1", retrieved_at: "2026-07-01T00:00:00Z" }], count: 2 });
+    }
+    if (url.pathname === "/api/v1/regulations/compare") {
+      return fulfillJson(route, { comparison_version: "fixture", counts: { added: 1, removed: 1, modified: 1 }, unchanged_count: 2, disclaimer: "Data uji perbandingan antarmuka.", changes: [
+        { change_type: "modified", heading: "Pasal uji A", summary: "Kalimat diperbarui.", base: { text: "Kalimat dasar untuk pengujian." }, target: { text: "Kalimat target untuk pengujian." } },
+        { change_type: "added", heading: "Pasal uji B", summary: "Bagian ditambahkan.", base: null, target: { text: "Bagian tambahan untuk pengujian." } },
+        { change_type: "removed", heading: "Pasal uji C", summary: "Bagian dihapus.", base: { text: "Bagian lama untuk pengujian." }, target: null },
+      ] });
     }
     if (url.pathname === "/api/v1/regulations/answer") {
       return fulfillJson(route, {
@@ -89,14 +96,16 @@ test.beforeEach(async ({ page }) => {
 
 test("grounded answer remains usable without horizontal overflow", async ({ page }) => {
   await page.goto("/regulations");
-  await expect(page.getByRole("heading", { name: /Pahami regulasi langsung/ })).toBeVisible();
-  await expect(page.getByText(/UU 27\/2022/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "RegulasiLens", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "UU 27/2022" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Cari jawaban" })).toBeDisabled();
+  await page.getByLabel("Apa yang ingin Anda ketahui?").fill("Apa hak akses dan salinan Data Pribadi?");
 
   await page.getByRole("button", { name: "Cari jawaban" }).click();
-  await expect(page.getByText("SUMBER TERSEDIA", { exact: true })).toBeVisible();
+  await expect(page.getByText("Sumber tersedia", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: /Sumber/ }).click();
   await expect(page.getByText(/\[C1\] Pasal 7/)).toBeVisible();
-  await expect(page.getByRole("link", { name: "Dokumen resmi" })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "Dokumen resmi", exact: true })).toHaveAttribute(
     "href",
     regulation.source_page_url,
   );
@@ -119,4 +128,26 @@ test("grounded answer remains usable without horizontal overflow", async ({ page
 
   const accessibility = await new AxeBuilder({ page }).include("#regulasilens").analyze();
   expect(accessibility.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
+  await page.getByRole("heading", { level: 1 }).click();
+  await page.screenshot({ path: `../artifacts/ui-review/regulations-evidence-${page.viewportSize()?.width}.png`, fullPage: true });
+  await page.getByRole("button", { name: "Tutup konteks" }).click();
+  await page.getByRole("tab", { name: /Perubahan dokumen/ }).click();
+  await page.getByRole("button", { name: "Bandingkan versi" }).click();
+  await expect(page.getByText("Kalimat target untuk pengujian.")).toBeVisible();
+  await page.getByRole("button", { name: /Ditambah Pasal uji B/ }).click();
+  await expect(page.getByText("Tidak ada pada versi dasar.")).toBeVisible();
+  await page.getByRole("button", { name: /Dihapus Pasal uji C/ }).click();
+  await expect(page.getByText("Tidak ada pada versi target.")).toBeVisible();
+  await page.getByLabel("Versi dasar").selectOption(version.id);
+  await expect(page.getByRole("button", { name: "Bandingkan versi" })).toBeDisabled();
+  await page.getByLabel("Versi dasar").selectOption("older-fixture");
+  await page.getByRole("button", { name: "Bandingkan versi" }).click();
+  await expect(page.getByText("Kalimat target untuk pengujian.")).toBeVisible();
+  if ((page.viewportSize()?.width ?? 0) < 800) await page.getByRole("button", { name: "Menu", exact: true }).click();
+  await page.getByRole("button", { name: "Tema gelap" }).click();
+  if ((page.viewportSize()?.width ?? 0) < 800) await page.getByRole("button", { name: "Tutup menu", exact: true }).click();
+  const darkAxe = await new AxeBuilder({ page }).analyze();
+  expect(darkAxe.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
+  await page.getByRole("heading", { level: 1 }).click();
+  await page.screenshot({ path: `../artifacts/ui-review/regulations-compare-night-${page.viewportSize()?.width}.png`, fullPage: true });
 });

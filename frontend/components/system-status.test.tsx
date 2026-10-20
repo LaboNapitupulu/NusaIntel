@@ -12,6 +12,7 @@ describe("SystemStatus", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
+        ok: true,
         json: async () => ({
           status: "healthy",
           dependencies: { database: { status: "ready" } },
@@ -21,7 +22,7 @@ describe("SystemStatus", () => {
 
     render(<SystemStatus />);
 
-    expect(await screen.findByText("Semua fitur siap digunakan")).toBeInTheDocument();
+    expect(await screen.findByText("Layanan data tersedia")).toBeInTheDocument();
   });
 
   it("offers a retry when the backend is unavailable", async () => {

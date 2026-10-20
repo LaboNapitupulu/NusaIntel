@@ -30,6 +30,7 @@ function formatNumber(value: number | null): string {
 export function RegionalDetail({ code, year }: { code: string; year: number }) {
   const [detail, setDetail] = useState<RegionDetailResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -48,14 +49,14 @@ export function RegionalDetail({ code, year }: { code: string; year: number }) {
         if (active) setError(reason instanceof Error ? reason.message : "Detail gagal dimuat.");
       });
     return () => { active = false; };
-  }, [code, year]);
+  }, [code, year, attempt]);
 
-  if (error) return <main className="detail-page"><p role="alert">{error}</p><Link href="/regional-analytics">Kembali ke analitik</Link></main>;
-  if (!detail) return <main className="detail-page">Memuat rincian wilayah...</main>;
+  if (error) return <main className="detail-page" id="main-content"><h1>Rincian wilayah</h1><p role="alert">Rincian wilayah belum dapat dimuat.</p><button type="button" onClick={() => { setError(null); setAttempt((current) => current + 1); }}>Coba lagi</button><p><Link href="/regional-analytics">Kembali ke analisis wilayah</Link></p></main>;
+  if (!detail) return <main className="detail-page" id="main-content"><h1>Rincian wilayah</h1><p role="status">Memuat rincian wilayah…</p></main>;
 
   return (
-    <main className="detail-page">
-      <nav aria-label="Breadcrumb"><Link href="/regional-analytics">NusaIntel / Regional Analytics</Link></nav>
+    <main className="detail-page" id="main-content">
+      <nav aria-label="Jejak navigasi"><Link href="/regional-analytics">Analisis wilayah</Link> / Rincian provinsi</nav>
       <header>
         <p className="kicker">Rincian wilayah · {detail.year}</p>
         <h1>{detail.region_name}</h1>

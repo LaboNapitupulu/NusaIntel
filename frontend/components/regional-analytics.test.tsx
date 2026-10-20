@@ -76,15 +76,18 @@ describe("RegionalAnalytics", () => {
     expect(screen.getAllByText(/bukan batas wilayah administratif resmi/).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "ACEH, 1 Persen" })).toHaveAttribute("data-band", "0");
     expect(screen.getByRole("button", { name: "PROVINSI 38, Tidak tersedia Persen" })).toHaveAttribute("data-band", "-1");
+    fireEvent.click(screen.getByRole("button", { name: "PROVINSI 2, 2 Persen" }));
+    expect(screen.getByText("Indikator dipakai")).toBeInTheDocument();
     expect(screen.getByText("Alternatif tabel aksesibel (38 provinsi)")).toBeInTheDocument();
     const table = screen.getByText("Nilai yang sama dengan peta tile.").closest("table");
     expect(table).not.toBeNull();
     expect(within(table!).getAllByRole("row")).toHaveLength(39);
     fireEvent.click(screen.getByRole("tab", { name: /Wilayah serupa/ }));
+    expect(screen.getByText("Jarak profil 0,125")).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /PROVINSI 2/ })[0]).toHaveAttribute("href", "/regions/1200?year=2024");
     fireEvent.click(screen.getByRole("tab", { name: /Kelompok wilayah/ }));
     expect(screen.getByText(/Kelompok ini bersifat deskriptif/)).toBeInTheDocument();
-    expect(screen.getByText(/pola indikator yang serupa/)).toBeInTheDocument();
+    expect(screen.getByText("Relatif lebih tinggi pada HDI.")).toBeInTheDocument();
     expect(screen.queryByText(/terbaik|terburuk|tertinggal/i)).not.toBeInTheDocument();
 
   });

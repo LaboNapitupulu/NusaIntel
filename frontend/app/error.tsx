@@ -15,10 +15,10 @@ export default function ErrorPage({
   }, [error]);
 
   return (
-    <main className="route-state">
-      <p className="kicker">Unexpected route error</p>
+    <main className="route-state" id="main-content">
+      <p className="kicker">Terjadi kesalahan</p>
       <h1>Halaman tidak dapat ditampilkan.</h1>
-      <p>Data Anda tidak berubah. Coba muat ulang bagian ini atau kembali ke halaman utama.</p>
+      <p>Coba muat ulang bagian ini atau kembali ke halaman utama.</p>
       <div>
         <button type="button" onClick={reset}>Coba lagi</button>
         <Link href="/">Kembali ke beranda</Link>

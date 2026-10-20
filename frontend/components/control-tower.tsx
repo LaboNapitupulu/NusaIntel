@@ -125,6 +125,9 @@ export function ControlTower() {
   const [datasetQuery, setDatasetQuery] = useState("");
   const [healthFilter, setHealthFilter] = useState<Health | "all">("all");
   const [toast, setToast] = useState<string | null>(null);
+  const [detailError, setDetailError] = useState(false);
+  const [detailAttempt, setDetailAttempt] = useState(0);
+  const [resolving, setResolving] = useState<string | null>(null);
 
   const loadOverview = useCallback(async () => {
     try {
@@ -173,12 +176,12 @@ export function ControlTower() {
         setQuality(qualityPayload.items);
       })
       .catch(() => {
-        if (active) setDetail(null);
+        if (active) setDetailError(true);
       });
     return () => {
       active = false;
     };
-  }, [apiBaseUrl, selectedId]);
+  }, [apiBaseUrl, selectedId, detailAttempt]);
 
   const filteredQuality = useMemo(
     () =>
@@ -210,7 +213,8 @@ export function ControlTower() {
 
   const resolveIncident = async (incident: Incident) => {
     const note = resolutionNotes[incident.id]?.trim();
-    if (!note) return;
+    if (!note || resolving) return;
+    setResolving(incident.id);
     try {
       await fetchJson(`${apiBaseUrl}/api/v1/incidents/${incident.id}`, {
         method: "PATCH",
@@ -218,9 +222,12 @@ export function ControlTower() {
         body: JSON.stringify({ status: "resolved", resolution_note: note }),
       });
       await loadOverview();
+      setDetailAttempt((current) => current + 1);
       setToast(`Insiden ${incident.check_code} ditandai selesai.`);
     } catch {
       setToast("Insiden belum dapat diperbarui. Coba lagi.");
+    } finally {
+      setResolving(null);
     }
   };
 
@@ -228,8 +235,8 @@ export function ControlTower() {
     <section className="control-tower" id="control-tower" aria-labelledby="tower-title">
       <div className="tower-heading">
         <div>
-          <p className="kicker">Pusat kualitas data</p>
-          <h2 id="tower-title">Ketahui data yang siap Anda gunakan.</h2>
+          <p className="kicker">Katalog dan pemeriksaan</p>
+          <h1 id="tower-title">Kualitas data</h1>
         </div>
         <p>
           Lihat keterbaruan, hasil pemeriksaan, dan kendala pada setiap sumber data dalam satu
@@ -239,10 +246,10 @@ export function ControlTower() {
 
       {state === "ready" && (
         <section className="health-overview" aria-label="Ringkasan kesehatan data">
-          <article data-health="healthy" data-tilt data-reveal><span>Data siap</span><strong><AnimatedNumber value={healthSummary.healthy} initialFrom={0} /></strong><small>dapat digunakan</small></article>
-          <article data-health="warning" data-tilt data-reveal><span>Perlu perhatian</span><strong><AnimatedNumber value={healthSummary.warning} initialFrom={0} /></strong><small>periksa kualitas</small></article>
-          <article data-health="critical" data-tilt data-reveal><span>Belum dapat digunakan</span><strong><AnimatedNumber value={healthSummary.critical} initialFrom={0} /></strong><small>menunggu perbaikan</small></article>
-          <article data-health="incidents" data-tilt data-reveal><span>Kendala aktif</span><strong><AnimatedNumber value={incidents.filter((item) => item.status === "open").length} initialFrom={0} /></strong><small>sedang ditindaklanjuti</small></article>
+          <article data-health="healthy"><span>Data sehat</span><strong><AnimatedNumber value={healthSummary.healthy} /></strong><small>status pemeriksaan</small></article>
+          <article data-health="warning"><span>Perlu perhatian</span><strong><AnimatedNumber value={healthSummary.warning} /></strong><small>periksa kualitas</small></article>
+          <article data-health="critical"><span>Kondisi kritis</span><strong><AnimatedNumber value={healthSummary.critical} /></strong><small>periksa temuan</small></article>
+          <article data-health="incidents"><span>Kendala terbuka</span><strong><AnimatedNumber value={incidents.filter((item) => item.status === "open").length} /></strong><small>dari {incidents.length} catatan terakhir</small></article>
         </section>
       )}
 
@@ -281,6 +288,7 @@ export function ControlTower() {
                   <option value="healthy">Sehat</option>
                   <option value="warning">Perlu perhatian</option>
                   <option value="critical">Kritis</option>
+                  <option value="unknown">Belum ada data</option>
                 </select>
               </label>
             </div>
@@ -288,11 +296,13 @@ export function ControlTower() {
               {filteredDatasets.map((dataset) => (
                 <button
                   className={`dataset-row ${selectedId === dataset.id ? "dataset-active" : ""}`}
-                  data-tilt
                   key={dataset.id}
                   type="button"
                   onClick={() => {
+                    if (selectedId === dataset.id) return;
                     setDetail(null);
+                    setDetailError(false);
+                    setQuality([]);
                     setSelectedId(dataset.id);
                   }}
                   aria-pressed={selectedId === dataset.id}
@@ -327,7 +337,7 @@ export function ControlTower() {
                     <div><span>Keterbaruan</span><strong>{freshnessLabels[detail.freshness.status]}</strong></div>
                     <div><span>Periode data</span><strong>{formatTime(detail.freshness.source_reference_at)}</strong></div>
                     <div><span>Terakhir diperbarui</span><strong>{formatTime(detail.freshness.retrieved_at)}</strong></div>
-                    <div><span>Siap digunakan sejak</span><strong>{formatTime(detail.freshness.processed_at)}</strong></div>
+                    <div><span>Terakhir diproses</span><strong>{formatTime(detail.freshness.processed_at)}</strong></div>
                     <div><span>Temuan kualitas</span><strong>{detail.failed_check_count}</strong></div>
                     <div><span>Kendala aktif</span><strong>{detail.open_incident_count}</strong></div>
                   </div>
@@ -345,7 +355,7 @@ export function ControlTower() {
                 />
 
                 <div className="tower-grid" hidden={activeTab === "incidents"}>
-                  <section className="tower-panel quality-panel" aria-labelledby="quality-title" hidden={activeTab !== "quality"}>
+                  <section id="panel-quality" role="tabpanel" className="tower-panel quality-panel" aria-labelledby="tab-quality" hidden={activeTab !== "quality"}>
                     <div className="panel-title">
                       <span id="quality-title">Hasil pemeriksaan</span>
                       <strong>{filteredQuality.length}</strong>
@@ -365,7 +375,7 @@ export function ControlTower() {
                       </label>
                     </div>
                     <div className="check-list">
-                      {filteredQuality.slice(0, 12).map((check) => (
+                      {filteredQuality.map((check) => (
                         <article className="check-row" key={check.id}>
                           <span className={`check-status check-${check.status}`}>{checkStatusLabels[check.status]}</span>
                           <div><strong>{readableCheckName(check.check_code)}</strong><span>{check.severity === "critical" ? "Mendesak" : check.severity === "warning" ? "Perlu perhatian" : "Informasi"}</span></div>
@@ -375,7 +385,7 @@ export function ControlTower() {
                     </div>
                   </section>
 
-                  <section className="tower-panel tower-overview-panel" aria-labelledby="drift-title" hidden={activeTab !== "overview"}>
+                  <section id="panel-overview" role="tabpanel" className="tower-panel tower-overview-panel" aria-labelledby="tab-overview" hidden={activeTab !== "overview"}>
                     <div className="panel-title"><span id="drift-title">Konsistensi format</span><strong>{detail.schema_drift.length}</strong></div>
                     {detail.schema_drift.length
                       ? <p className="empty-copy">Ada {detail.schema_drift.length} perubahan format yang perlu diperiksa sebelum data digunakan.</p>
@@ -383,14 +393,14 @@ export function ControlTower() {
                   </section>
                 </div>
               </>
-            ) : <p className="tower-state">Memuat rincian data…</p>}
+            ) : detailError ? <div className="tower-state" role="alert"><p>Rincian data belum dapat dimuat.</p><button type="button" onClick={() => { setDetailError(false); setDetailAttempt((current) => current + 1); }}>Muat ulang rincian</button></div> : <WorkspaceSkeleton label="Memuat rincian data" />}
           </div>
         </div>
       )}
 
-      {state === "ready" && activeTab === "incidents" && (
-      <div className="operations-grid operations-focus">
-        <section className="tower-panel" aria-labelledby="incident-title" hidden={activeTab !== "incidents"}>
+      {state === "ready" && (
+      <div className="operations-grid operations-focus" hidden={activeTab !== "incidents"}>
+        <section id="panel-incidents" role="tabpanel" className="tower-panel" aria-labelledby="tab-incidents" hidden={activeTab !== "incidents"}>
           <div className="panel-title"><span id="incident-title">Kendala data</span><strong>{incidents.length}</strong></div>
           {incidents.map((incident) => (
             <article className="incident-row" key={incident.id}>
@@ -399,7 +409,7 @@ export function ControlTower() {
                 <div className="resolution-form">
                   <label htmlFor={`note-${incident.id}`}>Catatan resolusi</label>
                   <input id={`note-${incident.id}`} value={resolutionNotes[incident.id] ?? ""} onChange={(event) => setResolutionNotes((current) => ({ ...current, [incident.id]: event.target.value }))} />
-                  <button type="button" onClick={() => void resolveIncident(incident)}>Tandai selesai</button>
+                  <button type="button" disabled={Boolean(resolving) || !resolutionNotes[incident.id]?.trim()} onClick={() => void resolveIncident(incident)}>{resolving === incident.id ? "Menyimpan…" : "Tandai selesai"}</button>
                 </div>
               ) : <p>{incident.resolution_note}</p>}
             </article>

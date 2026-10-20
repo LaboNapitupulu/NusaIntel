@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { AnimatedNumber, EmptyState, WorkspaceSkeleton, WorkspaceTabs, WorkspaceToast } from "./workspace-ui";
+import { writePreference } from "./preferences";
 
 type ViewState = "loading" | "ready" | "empty" | "error";
 type AnalyticsTab = "map" | "similarity" | "cluster" | "methodology";
@@ -195,6 +196,7 @@ export function RegionalAnalytics() {
   const [configOpen, setConfigOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<AnalyticsTab>("map");
   const [focusedMapRegion, setFocusedMapRegion] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -228,13 +230,13 @@ export function RegionalAnalytics() {
       })
       .catch(() => active && setState("error"));
     return () => { active = false; };
-  }, []);
+  }, [attempt]);
 
   const years = useMemo(() => commonYears(selected, indicators), [selected, indicators]);
   const activeYear = years.includes(year) ? year : (years[0] ?? 0);
   useEffect(() => {
     if (state !== "ready" || selected.length < 2 || !target || !activeYear) return;
-    window.localStorage.setItem(
+    writePreference(
       "nusa-intel-regional-config",
       JSON.stringify({ selected, target, year: activeYear }),
     );
@@ -307,7 +309,8 @@ export function RegionalAnalytics() {
     });
     window.history.replaceState(null, "", `${window.location.pathname}?${query}`);
     try {
-      await navigator.clipboard?.writeText(window.location.href);
+      if (!navigator.clipboard) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(window.location.href);
       setMessage("Tautan konfigurasi regional disalin.");
     } catch {
       setMessage("Konfigurasi regional tersimpan pada URL.");
@@ -318,15 +321,15 @@ export function RegionalAnalytics() {
     const copy = state === "loading" ? "Memuat Regional Analytics..." : state === "empty"
       ? "Belum ada data yang cukup untuk membandingkan wilayah."
       : "Katalog analitik regional belum dapat dimuat.";
-    return <section className="analytics-shell analytics-state">{state === "loading" ? <WorkspaceSkeleton label="Memuat Regional Analytics" /> : copy}</section>;
+    return <section className="analytics-shell analytics-state"><h1>Analisis wilayah</h1>{state === "loading" ? <WorkspaceSkeleton label="Memuat analisis wilayah" /> : <p>{copy}</p>}{state === "error" && <button type="button" onClick={() => { setState("loading"); setAttempt((current) => current + 1); }}>Coba lagi</button>}</section>;
   }
 
   return (
     <section className="analytics-shell" id="regional-analytics" aria-labelledby="analytics-title">
       <header className="analytics-header">
         <div>
-          <p className="kicker">Analisis kemiripan wilayah</p>
-          <h2 id="analytics-title">Temukan wilayah dengan kondisi yang serupa.</h2>
+          <p className="kicker">Peta dan profil indikator</p>
+          <h1 id="analytics-title">Analisis wilayah</h1>
           <p>
             Pilih provinsi dan indikator yang penting bagi Anda, lalu lihat peta, wilayah terdekat,
             kelompok kondisi, serta sumber datanya.
@@ -346,13 +349,13 @@ export function RegionalAnalytics() {
         </button>
       </div>
 
-      <div className="analytics-config no-print" hidden={!configOpen}>
+      <div className="analytics-config no-print" hidden={!configOpen} inert={running}>
         <fieldset>
           <legend>Indikator pembanding (2–6)</legend>
           <div className="analytics-feature-list">
             {indicators.map((indicator) => (
               <label key={indicator.code}>
-                <input type="checkbox" checked={selected.includes(indicator.code)} onChange={() => toggleIndicator(indicator.code)} />
+                <input type="checkbox" checked={selected.includes(indicator.code)} disabled={selected.includes(indicator.code) ? selected.length <= 2 : selected.length >= 6} onChange={() => toggleIndicator(indicator.code)} />
                 <span>{indicator.name}</span>
               </label>
             ))}
@@ -381,11 +384,11 @@ export function RegionalAnalytics() {
         />
       ) : (
         <div className="analytics-report">
-          <section className="analytics-evidence" data-reveal>
-            <div data-tilt><span>Provinsi acuan</span><strong>{report.target_region.region_name}</strong></div>
-            <div data-tilt><span>Indikator dipakai</span><strong><AnimatedNumber value={report.similarity.selected_features.length} initialFrom={0} /></strong></div>
-            <div data-tilt><span>Wilayah dibandingkan</span><strong><AnimatedNumber value={38 - report.similarity.excluded_regions.length} initialFrom={0} /></strong></div>
-            <div data-tilt><span>Tahun data</span><strong>{activeYear}</strong></div>
+          <section className="analytics-evidence">
+            <div><span>Provinsi acuan</span><strong>{report.target_region.region_name}</strong></div>
+            <div><span>Indikator dipakai</span><strong><AnimatedNumber value={report.similarity.selected_features.length} /></strong></div>
+            <div><span>Wilayah dibandingkan</span><strong><AnimatedNumber value={regions.length - report.similarity.excluded_regions.length} /></strong></div>
+            <div><span>Tahun data</span><strong>{activeYear}</strong></div>
           </section>
 
           <WorkspaceTabs
@@ -400,9 +403,10 @@ export function RegionalAnalytics() {
             ]}
           />
 
-          <section className="analytics-panel map-panel" aria-labelledby="map-title" hidden={activeTab !== "map"}>
+          <section id="panel-map" role="tabpanel" className="analytics-panel map-panel" aria-labelledby="tab-map" hidden={activeTab !== "map"}>
             <div className="result-heading"><div><p className="kicker">Peta perbandingan</p><h3 id="map-title">{report.map.indicator_name}</h3></div><span>{activeYear}</span></div>
             <p className="map-disclaimer">Posisi kotak dibuat sebagai gambaran dan bukan batas wilayah administratif resmi.</p>
+            <p className="map-scroll-hint">Geser peta ke samping untuk melihat seluruh provinsi, atau buka tabel di bawahnya.</p>
             {activeMapRow && (
               <div className="map-live-inspector" aria-live="polite">
                 <span>Provinsi aktif</span>
@@ -411,8 +415,9 @@ export function RegionalAnalytics() {
                 <i data-band={valueBand(activeMapRow.value, breaks)} aria-hidden="true" />
               </div>
             )}
+            <div className="map-scroll" tabIndex={0} role="region" aria-label="Peta skematis, geser untuk melihat seluruh wilayah">
             <div className="tile-map" aria-label={`Peta tile ${report.map.indicator_name}`}>
-              {mapRows.map((row, index) => row.tile && (
+              {mapRows.map((row) => row.tile && (
                 <button
                   type="button"
                   key={row.region_code}
@@ -420,22 +425,22 @@ export function RegionalAnalytics() {
                   data-band={valueBand(row.value, breaks)}
                   data-selected={row.region_code === target}
                   data-focused={activeMapRow?.region_code === row.region_code}
-                  data-tilt
-                  style={{ gridColumn: row.tile[0], gridRow: row.tile[1], animationDelay: `${index * 18}ms` }}
+                  style={{ gridColumn: row.tile[0], gridRow: row.tile[1] }}
                   title={`${row.region_name}: ${formatNumber(row.value)} ${report.map.unit}`}
                   aria-label={`${row.region_name}, ${formatNumber(row.value)} ${report.map.unit}`}
                   onPointerEnter={() => setFocusedMapRegion(row.region_code)}
-                  onPointerLeave={() => setFocusedMapRegion(target)}
                   onFocus={() => setFocusedMapRegion(row.region_code)}
-                  onClick={() => { setTarget(row.region_code); setReport(null); }}
+                  onClick={() => setFocusedMapRegion(row.region_code)}
                 >{row.tile[2]}</button>
               ))}
             </div>
+            </div>
             <div className="map-legend" aria-label="Legenda kuantil">
-              <span data-band="0">Lebih rendah</span><span data-band="1" /><span data-band="2" /><span data-band="3" /><span data-band="4">Lebih tinggi</span><span data-band="-1">Tidak ada data</span>
+              {breaks.map((boundary, index) => <span key={index} data-band={index}>{index === 0 ? "≤" : "> " + formatNumber(breaks[index - 1]) + " hingga"} {formatNumber(boundary)}</span>)}
+              {breaks.length > 0 && <span data-band="4">&gt; {formatNumber(breaks[3])}</span>}<span data-band="-1">Tidak ada data</span>
             </div>
             <details className="map-table">
-              <summary>Alternatif tabel aksesibel (38 provinsi)</summary>
+              <summary>Alternatif tabel aksesibel ({mapRows.length} provinsi)</summary>
               <div className="table-scroll" tabIndex={0} aria-label="Tabel nilai peta dapat digulir"><table className="responsive-table"><caption>Nilai yang sama dengan peta tile.</caption><thead><tr><th>Provinsi</th><th>Nilai</th><th>Unit</th></tr></thead><tbody>
                 {mapRows.map((row) => <tr key={row.region_code}><th scope="row">{row.region_name}</th><td data-label="Nilai">{formatNumber(row.value)}</td><td data-label="Unit">{report.map.unit}</td></tr>)}
               </tbody></table></div>
@@ -443,12 +448,13 @@ export function RegionalAnalytics() {
           </section>
 
           <div className="analytics-columns analytics-columns-focus" hidden={activeTab !== "similarity" && activeTab !== "cluster"}>
-            <section className="analytics-panel" hidden={activeTab !== "similarity"}>
+            <section id="panel-similarity" role="tabpanel" aria-labelledby="tab-similarity" className="analytics-panel" hidden={activeTab !== "similarity"}>
               <div className="result-heading"><div><p className="kicker">Hasil perbandingan</p><h3>Wilayah paling mirip</h3></div></div>
+              <p>Jarak profil dihitung dari indikator yang distandardisasi. Semakin kecil jaraknya, semakin mirip profilnya. Ini bukan jarak geografis.</p>
               <ol className="similarity-list">
-                {report.similarity.results.map((row, index) => (
-                  <li key={row.region_code} data-tilt style={{ animationDelay: `${index * 70}ms` }}>
-                    <div><Link href={`/regions/${row.region_code}?year=${activeYear}`}>{row.region_name}</Link><strong>kemiripan {formatNumber(Math.max(0, (1 - row.distance) * 100), 0)}%</strong></div>
+                {report.similarity.results.map((row) => (
+                  <li key={row.region_code}>
+                    <div><Link href={`/regions/${row.region_code}?year=${activeYear}`}>{row.region_name}</Link><strong>Jarak profil {formatNumber(row.distance, 3)}</strong></div>
                     <ul>{row.drivers.slice(0, 3).map((driver) => <li key={driver.indicator_code}>{driver.indicator_name}: {formatNumber(driver.target_value)} dibanding {formatNumber(driver.candidate_value)} {driver.unit}</li>)}</ul>
                   </li>
                 ))}
@@ -456,20 +462,20 @@ export function RegionalAnalytics() {
               <Link className="detail-link" href={`/regions/${target}?year=${activeYear}`}>Buka detail {report.target_region.region_name}</Link>
             </section>
 
-            <section className="analytics-panel" hidden={activeTab !== "cluster"}>
+            <section id="panel-cluster" role="tabpanel" aria-labelledby="tab-cluster" className="analytics-panel" hidden={activeTab !== "cluster"}>
               <div className="result-heading"><div><p className="kicker">Pola kondisi wilayah</p><h3>Kelompok wilayah</h3></div></div>
               {!report.clustering.publishable ? <p className="withheld-result">Kelompok belum dapat ditampilkan karena hasilnya belum cukup stabil.</p> : <>
                 <p className="cluster-summary">Wilayah dikelompokkan berdasarkan kemiripan indikator. Kelompok ini bersifat deskriptif, bukan penilaian baik atau buruk.</p>
-                <div className="cluster-list">{report.clustering.clusters.map((cluster) => <article key={cluster.cluster_id}><strong>Kelompok {cluster.cluster_id}</strong><p>Wilayah dalam kelompok ini memiliki pola indikator yang serupa.</p><small>{cluster.regions.length} provinsi</small></article>)}</div>
+                <div className="cluster-list">{report.clustering.clusters.map((cluster) => <article key={cluster.cluster_id}><strong>Kelompok {cluster.cluster_id}</strong><p>{cluster.description}</p><small>{cluster.regions.length} provinsi: {cluster.regions.map((region) => region.name).join(", ")}</small></article>)}</div>
               </>}
             </section>
           </div>
 
-          <section className="analytics-panel methodology-panel" hidden={activeTab !== "methodology"}>
+          <section id="panel-methodology" role="tabpanel" aria-labelledby="tab-methodology" className="analytics-panel methodology-panel" hidden={activeTab !== "methodology"}>
             <div className="result-heading"><div><p className="kicker">Baca sebelum menggunakan hasil</p><h3>Sumber dan batas penggunaan</h3></div></div>
             <div className="methodology-grid">
-              <div><h4>Sumber data</h4><ul>{report.citations.map((citation) => <li key={citation.indicator_code}><a href={citation.source.url} target="_blank" rel="noreferrer">{citation.indicator_name}</a> — {citation.unit}; periode {citation.reference_period}</li>)}</ul></div>
-              <div><h4>Keterbatasan</h4><ul><li>Kemiripan kondisi tidak membuktikan hubungan sebab-akibat.</li><li>Hasil dapat berubah ketika pilihan indikator atau tahun diganti.</li><li>Peta kotak bukan batas wilayah administratif resmi.</li></ul></div>
+              <div><h4>Sumber data</h4><ul>{report.citations.map((citation) => <li key={citation.indicator_code}><a href={citation.source.url} target="_blank" rel="noreferrer">{citation.indicator_name}</a>, {citation.unit}; periode {citation.reference_period}</li>)}</ul></div>
+              <div><h4>Keterbatasan</h4><ul>{report.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul><p>{report.similarity.excluded_regions.length} wilayah dan {report.similarity.excluded_features.length} indikator dikeluarkan karena kelengkapan data.</p></div>
             </div>
           </section>
         </div>

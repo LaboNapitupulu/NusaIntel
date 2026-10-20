@@ -165,7 +165,7 @@ describe("OpportunityEngine", () => {
     ]);
 
     fireEvent.click(screen.getByRole("button", { name: "Hitung skenario" }));
-    expect(await screen.findByText("Lihat wilayah terbaik dan alasannya.")).toBeInTheDocument();
+    expect(await screen.findByText("Peringkat berdasarkan bobot Anda")).toBeInTheDocument();
     expect(screen.getAllByText("ACEH").length).toBeGreaterThan(0);
     expect(screen.getByText("80")).toBeInTheDocument();
     expect(screen.getByText("Tidak diranking")).toBeInTheDocument();
@@ -180,10 +180,12 @@ describe("OpportunityEngine", () => {
     });
     expect(screen.getByText(/Total bobot: 100%/)).toBeInTheDocument();
     await waitFor(
-      () => expect(screen.getByText(/Peringkat telah menyesuaikan/)).toBeInTheDocument(),
+      () => expect(screen.getByText(/Seluruh hasil telah menyesuaikan/)).toBeInTheDocument(),
       { timeout: 2000 },
     );
     expect(vi.mocked(global.fetch).mock.calls.filter(([input]) => String(input).endsWith("/opportunity/score"))).toHaveLength(2);
+    expect(vi.mocked(global.fetch).mock.calls.filter(([input]) => String(input).endsWith("/opportunity/compare"))).toHaveLength(2);
+    expect(vi.mocked(global.fetch).mock.calls.filter(([input]) => String(input).endsWith("/opportunity/sensitivity"))).toHaveLength(2);
 
     fireEvent.click(screen.getByRole("button", { name: "Salin skenario" }));
     await waitFor(() => expect(window.location.search).toContain("scenario="));

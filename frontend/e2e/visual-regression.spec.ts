@@ -25,7 +25,7 @@ async function openWithTheme(page: Page, path: string, theme: Theme) {
   }, theme);
   await page.goto(path);
   await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
-  await expect(page.locator("html")).toHaveAttribute("data-route-motion", "settled");
+  await expect(page.locator(".workspace-skeleton")).toHaveCount(0);
   await expect(page.locator("main, section").first()).toBeVisible();
   await page.waitForTimeout(80);
 }
@@ -33,14 +33,15 @@ async function openWithTheme(page: Page, path: string, theme: Theme) {
 const screenshotOptions = {
   animations: "disabled" as const,
   caret: "hide" as const,
-  maxDiffPixelRatio: 0.025,
+  maxDiffPixelRatio: 0.001,
+  threshold: 0.1,
   scale: "css" as const,
 };
 
 const crossPlatformLandingOptions = {
   ...screenshotOptions,
   // Fixed viewports avoid OS-specific font metrics changing full-page height.
-  maxDiffPixelRatio: 0.065,
+  maxDiffPixelRatio: 0.001,
 };
 
 test.beforeEach(async ({ page }) => {
@@ -65,14 +66,14 @@ const productRoutes = [
 ] as const;
 
 for (const [name, path] of productRoutes) {
-  test(`${name} shell remains readable in both themes`, async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "desktop-chromium", "Desktop shell baseline only.");
-    for (const theme of ["day", "night"] as const) {
+  for (const theme of ["day", "night"] as const) {
+    test(`${name} shell remains readable in ${theme} theme`, async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name !== "desktop-chromium", "Desktop shell baseline only.");
       await openWithTheme(page, path, theme);
       await expect(page).toHaveScreenshot(`${name}-${theme}.png`, {
         ...screenshotOptions,
         fullPage: false,
       });
-    }
-  });
+    });
+  }
 }

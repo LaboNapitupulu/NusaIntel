@@ -1,9 +1,10 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { EmptyState, WorkspaceSkeleton, WorkspaceTabs, WorkspaceToast } from "./workspace-ui";
+import { readPreference, writePreference } from "./preferences";
 
 type Normalization = "min_max" | "percentile";
 type Direction = "higher" | "lower";
@@ -315,7 +316,7 @@ export function OpportunityEngine() {
   const [resultTab, setResultTab] = useState<ResultTab>("ranking");
   const [previewing, setPreviewing] = useState(false);
   const [livePreview, setLivePreview] = useState(false);
-  const lastScoredFingerprint = useRef("");
+  const [lastScoredFingerprint, setLastScoredFingerprint] = useState("");
 
   const initialize = useCallback(async () => {
     setState("loading");
@@ -332,7 +333,7 @@ export function OpportunityEngine() {
       }
       const shared =
         decodeScenario(new URLSearchParams(window.location.search).get("scenario")) ??
-        decodeScenario(window.localStorage.getItem("nusa-intel-opportunity-scenario"));
+        decodeScenario(readPreference("nusa-intel-opportunity-scenario"));
       const availableCodes = new Set(indicatorPayload.items.map((item) => item.code));
       const availableRegions = new Set(regionPayload.items.map((item) => item.code));
       if (
@@ -376,7 +377,7 @@ export function OpportunityEngine() {
         }
         const shared =
           decodeScenario(new URLSearchParams(window.location.search).get("scenario")) ??
-          decodeScenario(window.localStorage.getItem("nusa-intel-opportunity-scenario"));
+          decodeScenario(readPreference("nusa-intel-opportunity-scenario"));
         const availableCodes = new Set(indicatorPayload.items.map((item) => item.code));
         const availableRegions = new Set(regionPayload.items.map((item) => item.code));
         if (
@@ -419,10 +420,10 @@ export function OpportunityEngine() {
     () => ({ ...scenario, year: activeYear }),
     [activeYear, scenario],
   );
-  const scenarioFingerprint = useMemo(() => JSON.stringify(scorePayload(activeScenario)), [activeScenario]);
+  const scenarioFingerprint = useMemo(() => JSON.stringify(activeScenario), [activeScenario]);
   useEffect(() => {
     if (state !== "ready" || !scenario.regionCodes.length || !scenario.weights.length) return;
-    window.localStorage.setItem("nusa-intel-opportunity-scenario", encodeScenario(activeScenario));
+    writePreference("nusa-intel-opportunity-scenario", encodeScenario(activeScenario));
   }, [activeScenario, scenario.regionCodes.length, scenario.weights.length, state]);
   const weightTotal = scenario.weights.reduce((total, item) => total + item.weight, 0);
   const configurationValid =
@@ -435,6 +436,7 @@ export function OpportunityEngine() {
   const runAnalysis = useCallback(async () => {
     if (!configurationValid) return;
     setRunning(true);
+    setPreviewing(false);
     setMessage(null);
     try {
       const payload = scorePayload(activeScenario);
@@ -461,7 +463,7 @@ export function OpportunityEngine() {
         }),
       ]);
       setComparison(nextComparison);
-      lastScoredFingerprint.current = scenarioFingerprint;
+      setLastScoredFingerprint(scenarioFingerprint);
       setScore(nextScore);
       setSensitivity(nextSensitivity);
       setLivePreview(false);
@@ -475,20 +477,28 @@ export function OpportunityEngine() {
   }, [activeScenario, configurationValid, scenarioFingerprint]);
 
   useEffect(() => {
-    if (!score || !configurationValid || scenarioFingerprint === lastScoredFingerprint.current) return;
+    if (!score || running || !configurationValid || scenarioFingerprint === lastScoredFingerprint) return;
     let active = true;
-    setPreviewing(true);
+    const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      void fetchJson<ScoreResponse>("/api/v1/opportunity/score", {
+      setPreviewing(true);
+      const request = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(scorePayload(activeScenario)),
-      })
-        .then((nextScore) => {
+        signal: controller.signal,
+      };
+      const payload = scorePayload(activeScenario);
+      void Promise.all([
+        fetchJson<ScoreResponse>("/api/v1/opportunity/score", { ...request, body: JSON.stringify(payload) }),
+        fetchJson<ComparisonResponse>("/api/v1/opportunity/compare", { ...request, body: JSON.stringify({ region_codes: activeScenario.regionCodes, indicator_codes: activeScenario.weights.map((item) => item.code), year: activeScenario.year, normalization: activeScenario.normalization }) }),
+        fetchJson<SensitivityResponse>("/api/v1/opportunity/sensitivity", { ...request, body: JSON.stringify({ ...payload, perturbation: activeScenario.perturbation }) }),
+      ])
+        .then(([nextScore, nextComparison, nextSensitivity]) => {
           if (!active) return;
-          lastScoredFingerprint.current = scenarioFingerprint;
+          setLastScoredFingerprint(scenarioFingerprint);
+          setComparison(nextComparison);
+          setSensitivity(nextSensitivity);
           setScore(nextScore);
-          setResultTab("ranking");
           setLivePreview(true);
         })
         .catch(() => active && setMessage("Peringkat belum dapat diperbarui. Coba lagi."))
@@ -496,9 +506,10 @@ export function OpportunityEngine() {
     }, 450);
     return () => {
       active = false;
+      controller.abort();
       window.clearTimeout(timer);
     };
-  }, [activeScenario, configurationValid, scenarioFingerprint, score]);
+  }, [activeScenario, configurationValid, lastScoredFingerprint, running, scenarioFingerprint, score]);
 
   function toggleRegion(code: string) {
     setScenario((current) => {
@@ -567,8 +578,9 @@ export function OpportunityEngine() {
     const url = `${window.location.pathname}?${parameters.toString()}`;
     window.history.replaceState(null, "", url);
     try {
-      await navigator.clipboard?.writeText(window.location.href);
-      setMessage("Tautan skenario disalin. Tidak ada identitas pengguna yang disimpan.");
+      if (!navigator.clipboard) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(window.location.href);
+      setMessage("Tautan skenario disalin.");
     } catch {
       setMessage("Skenario sudah tersimpan pada URL halaman ini.");
     }
@@ -597,11 +609,12 @@ export function OpportunityEngine() {
   }
 
   if (state === "loading") {
-    return <section className="opportunity-shell opportunity-state"><WorkspaceSkeleton label="Memuat perbandingan wilayah" /></section>;
+    return <section className="opportunity-shell opportunity-state"><h1>Perbandingan wilayah</h1><WorkspaceSkeleton label="Memuat perbandingan wilayah" /></section>;
   }
   if (state === "error") {
     return (
       <section className="opportunity-shell opportunity-state">
+        <h1>Perbandingan wilayah</h1>
         <p>Data wilayah belum dapat dimuat.</p>
         <button type="button" onClick={() => void initialize()}>
           Coba lagi
@@ -612,7 +625,8 @@ export function OpportunityEngine() {
   if (state === "empty") {
     return (
       <section className="opportunity-shell opportunity-state">
-        Belum ada data wilayah yang siap dibandingkan.
+        <h1>Perbandingan wilayah</h1>
+        <p>Belum ada data wilayah yang siap dibandingkan.</p>
       </section>
     );
   }
@@ -621,8 +635,8 @@ export function OpportunityEngine() {
     <section className="opportunity-shell" id="opportunity" aria-labelledby="opportunity-title">
       <header className="opportunity-header">
         <div>
-          <p className="kicker">Perbandingan peluang regional</p>
-          <h2 id="opportunity-title">Bandingkan wilayah tanpa menyembunyikan asumsi.</h2>
+          <p className="kicker">Skenario dan peringkat</p>
+          <h1 id="opportunity-title">Perbandingan wilayah</h1>
           <p>
             Tentukan wilayah dan prioritas Anda. Hasil menunjukkan bagaimana setiap pilihan
             memengaruhi urutan wilayah secara transparan.
@@ -632,17 +646,17 @@ export function OpportunityEngine() {
           <button type="button" className="secondary-button" onClick={() => void shareScenario()}>
             Salin skenario
           </button>
-          <button type="button" className="secondary-button" onClick={() => void exportReport()} disabled={!score}>
+          <button type="button" className="secondary-button" onClick={() => void exportReport()} disabled={!score || !configurationValid || scenarioFingerprint !== lastScoredFingerprint}>
             Unduh hasil
           </button>
-          <button type="button" className="secondary-button" onClick={() => window.print()} disabled={!score}>
+          <button type="button" className="secondary-button" onClick={() => window.print()} disabled={!score || scenarioFingerprint !== lastScoredFingerprint}>
             Cetak laporan
           </button>
         </div>
       </header>
 
       <div className="opportunity-layout">
-        <aside className="scenario-panel" aria-label="Konfigurasi skenario">
+        <aside className="scenario-panel" aria-label="Konfigurasi skenario" inert={running}>
           <div className="scenario-presets">
             <div>
               <span>Mulai cepat</span>
@@ -660,7 +674,7 @@ export function OpportunityEngine() {
                 </button>
               ))}
             </div>
-            <small>Pilihan terakhir tersimpan otomatis hanya di perangkat ini.</small>
+            <small>Pilihan terakhir disimpan jika penyimpanan browser tersedia.</small>
           </div>
           <div className="wizard-progress" aria-label="Tahapan konfigurasi">
             {([1, 2, 3, 4] as SetupStep[]).map((step) => (
@@ -888,12 +902,14 @@ export function OpportunityEngine() {
         <div className="opportunity-results" aria-live="polite">
           {running && <div className="analysis-progress" role="status"><i /><span>Menyusun peringkat dan perbandingan wilayah…</span></div>}
           {score && (
-            <div className="live-preview-status" data-active={previewing} role="status">
+            <div className="live-preview-status" data-active={previewing && configurationValid} role="status">
               <i aria-hidden="true" />
-              <span>{previewing ? "Memperbarui peringkat dari bobot terbaru…" : livePreview ? "Peringkat telah menyesuaikan pilihan terbaru" : "Geser bobot untuk melihat perubahan peringkat secara langsung"}</span>
+              <span>{previewing && configurationValid ? "Memperbarui seluruh hasil sesuai konfigurasi…" : livePreview && scenarioFingerprint === lastScoredFingerprint ? "Seluruh hasil telah menyesuaikan pilihan terbaru" : "Hasil mengikuti indikator dan bobot pilihan Anda."}</span>
             </div>
           )}
-          {!score || !comparison || !sensitivity ? (
+          {score && scenarioFingerprint !== lastScoredFingerprint ? (
+            <div className="workspace-empty" role="status"><strong>Konfigurasi berubah</strong><p>{configurationValid ? "Hasil ditampilkan kembali setelah perhitungan terbaru selesai. Jika gagal, pilih Hitung skenario untuk mencoba lagi." : "Pilih 2–5 provinsi, periode valid, dan total bobot 100% untuk memperbarui hasil."}</p></div>
+          ) : !score || !comparison || !sensitivity ? (
             <EmptyState
               eyebrow="Belum ada hasil"
               title="Bangun skenario pertama Anda"
@@ -913,35 +929,33 @@ export function OpportunityEngine() {
                   { id: "methodology", label: "Tentang hasil" },
                 ]}
               />
-              <section className="ranking-panel" aria-labelledby="ranking-title" hidden={resultTab !== "ranking"}>
+              <section id="panel-ranking" role="tabpanel" className="ranking-panel" aria-labelledby="tab-ranking" hidden={resultTab !== "ranking"}>
                 <div className="result-heading">
                   <div>
                     <p className="kicker">Peringkat pilihan Anda</p>
-                    <h3 id="ranking-title">Lihat wilayah terbaik dan alasannya.</h3>
+                    <h3 id="ranking-title">Peringkat berdasarkan bobot Anda</h3>
                   </div>
                   <span>{activeYear}</span>
                 </div>
                 <div className="ranking-grid">
-                  {score.results.map((row, index) => (
+                  {score.results.map((row) => (
                     <article
                       className="ranking-card"
                       key={`${row.region_code}-${row.rank}-${row.score}`}
                       data-eligible={row.eligible}
-                      data-tilt
                       style={{
-                        "--rank-order": index,
                         "--rank-fill": `${Math.max(0, Math.min(100, row.score ?? 0))}%`,
                       } as CSSProperties}
                     >
                       <span className="rank-mark">{row.rank ? `#${row.rank}` : "Tidak diranking"}</span>
                       <h4>{row.region_name}</h4>
-                      <strong>{row.score === null ? "—" : formatNumber(row.score)}</strong>
+                      <strong>{row.score === null ? "Tidak tersedia" : formatNumber(row.score)}</strong>
                       <small>Kelengkapan data {Math.round(row.coverage * 100)}%</small>
                       <span className="rank-meter" aria-hidden="true"><i /></span>
                     </article>
                   ))}
                 </div>
-                <div className="table-scroll">
+                <div className="table-scroll" tabIndex={0} role="region" aria-label="Tabel kontribusi nilai">
                   <table className="responsive-table">
                     <caption>Rincian pembentuk nilai setiap wilayah</caption>
                     <thead>
@@ -962,7 +976,7 @@ export function OpportunityEngine() {
                             <td data-label="Indikator">{indicators.find((indicator) => indicator.code === item.indicator_code)?.name ?? item.indicator_code}</td>
                             <td data-label="Nilai asli">{formatNumber(item.raw_value)}</td>
                             <td data-label="Skor banding">{formatNumber(item.normalized_value, 4)}</td>
-                            <td data-label="Bobot terpakai">{item.effective_weight === null ? "—" : `${formatNumber(item.effective_weight)}%`}</td>
+                            <td data-label="Bobot terpakai">{item.effective_weight === null ? "Tidak tersedia" : `${formatNumber(item.effective_weight)}%`}</td>
                             <td data-label="Sumbangan nilai">{formatNumber(item.contribution, 4)}</td>
                           </tr>
                         )),
@@ -972,7 +986,7 @@ export function OpportunityEngine() {
                 </div>
               </section>
 
-              <section className="comparison-panel" aria-labelledby="comparison-title" hidden={resultTab !== "comparison"}>
+              <section id="panel-comparison" role="tabpanel" className="comparison-panel" aria-labelledby="tab-comparison" hidden={resultTab !== "comparison"}>
                 <div className="result-heading">
                   <div>
                     <p className="kicker">Perbandingan indikator</p>
@@ -1000,7 +1014,7 @@ export function OpportunityEngine() {
                           return (
                             <div key={region.region_code}>
                               <span>{region.region_name}</span>
-                              <i style={{ width: `${Math.max(0, (value?.normalized_value ?? 0) * 100)}%` }} />
+                              <i style={{ width: `${Math.min(100, Math.max(0, (value?.normalized_value ?? 0) * 100))}%` }} />
                               <b>{formatNumber(value?.raw_value ?? null)}</b>
                             </div>
                           );
@@ -1009,7 +1023,7 @@ export function OpportunityEngine() {
                     </article>
                   );
                 })}
-                <div className="table-scroll">
+                <div className="table-scroll" tabIndex={0} role="region" aria-label="Tabel perbandingan indikator">
                   <table>
                     <caption>Alternatif data tabel untuk distribusi</caption>
                     <thead><tr><th>Wilayah</th><th>Indikator</th><th>Periode</th><th>Nilai</th><th>Skor banding</th><th>Unit</th></tr></thead>
@@ -1027,9 +1041,9 @@ export function OpportunityEngine() {
                 </div>
               </section>
 
-              <section className="trend-panel" aria-labelledby="trend-title" hidden={resultTab !== "trend"}>
+              <section id="panel-trend" role="tabpanel" className="trend-panel" aria-labelledby="tab-trend" hidden={resultTab !== "trend"}>
                 <div className="result-heading"><div><p className="kicker">Perubahan dari waktu ke waktu</p><h3 id="trend-title">Lihat arah perkembangan setiap wilayah.</h3></div></div>
-                <div className="table-scroll">
+                <div className="table-scroll" tabIndex={0} role="region" aria-label="Tabel tren wilayah">
                   <table>
                     <caption>Tren historis untuk wilayah terpilih</caption>
                     <thead><tr><th>Indikator</th><th>Wilayah</th><th>Periode</th><th>Nilai</th><th>Unit</th></tr></thead>
@@ -1038,21 +1052,21 @@ export function OpportunityEngine() {
                 </div>
               </section>
 
-              <section className="sensitivity-panel" aria-labelledby="sensitivity-title" hidden={resultTab !== "sensitivity"}>
+              <section id="panel-sensitivity" role="tabpanel" className="sensitivity-panel" aria-labelledby="tab-sensitivity" hidden={resultTab !== "sensitivity"}>
                 <div className="result-heading"><div><p className="kicker">Ketahanan hasil</p><h3 id="sensitivity-title">Apakah peringkat tetap stabil saat prioritas berubah?</h3></div><span>{sensitivity.scenario_count} percobaan</span></div>
                 <div className="stability-grid">
-                  {sensitivity.stability.map((row) => <article key={row.region_code}><h4>{row.region_name}</h4><strong>{formatNumber(row.unchanged_percent, 0)}%</strong><span>peringkat tetap</span><small>Rentang #{row.min_rank ?? "—"}–#{row.max_rank ?? "—"} · pergeseran maks {row.max_absolute_shift ?? "—"}</small></article>)}
+                  {sensitivity.stability.map((row) => <article key={row.region_code}><h4>{row.region_name}</h4><strong>{row.unchanged_percent === null ? "Tidak tersedia" : `${formatNumber(row.unchanged_percent, 0)}%`}</strong><span>peringkat tetap</span><small>Rentang #{row.min_rank ?? "n/a"}–#{row.max_rank ?? "n/a"} · pergeseran maks {row.max_absolute_shift ?? "n/a"}</small></article>)}
                 </div>
                 <p className="method-warning">Hasil ini menunjukkan seberapa mudah peringkat berubah ketika prioritas Anda sedikit digeser. Gunakan sebagai bahan pertimbangan, bukan kepastian.</p>
               </section>
 
-              <details className="methodology-drawer" open hidden={resultTab !== "methodology"}>
+              <details id="panel-methodology" role="tabpanel" aria-labelledby="tab-methodology" className="methodology-drawer" open hidden={resultTab !== "methodology"}>
                 <summary>Cara membaca hasil dan sumber data</summary>
                 <p>Nilai akhir menggabungkan hasil perbandingan tiap indikator sesuai bobot pilihan Anda. Wilayah dengan data yang tidak cukup tidak dimasukkan ke peringkat.</p>
                 <ul>
                   {scenario.weights.map((weight) => {
                     const indicator = indicators.find((item) => item.code === weight.code);
-                    return <li key={weight.code}><strong>{indicator?.name}</strong> — {indicator?.definition} <a href={indicator?.source_url} target="_blank" rel="noreferrer">Lihat sumber resmi</a></li>;
+                    return <li key={weight.code}><strong>{indicator?.name}.</strong> {indicator?.definition} <a href={indicator?.source_url} target="_blank" rel="noreferrer">Lihat sumber resmi</a></li>;
                   })}
                 </ul>
               </details>

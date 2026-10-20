@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SiteHeader } from "./site-header";
@@ -14,16 +14,18 @@ beforeEach(() => {
 });
 
 describe("SiteHeader theme switcher", () => {
-  it("keeps its label visible and persists the selected theme", () => {
+  it("keeps its label visible and persists the selected theme", async () => {
     render(<SiteHeader />);
 
-    const toggle = screen.getByRole("button", { name: "Ganti tema tampilan" });
-    expect(toggle.querySelector(".theme-toggle-label")).toBeInTheDocument();
+    const toggle = screen.getByRole("button", { name: "Tema gelap" });
+    expect(toggle).toHaveTextContent("Terang");
+    await waitFor(() => expect(toggle).toHaveAttribute("aria-pressed", "false"));
 
     fireEvent.click(toggle);
 
     expect(document.documentElement.dataset.theme).toBe("night");
     expect(window.localStorage.getItem("nusa-intel-theme")).toBe("night");
-    expect(screen.getByRole("button", { name: "Ganti tema tampilan" })).toBeInTheDocument();
+    expect(toggle).toHaveTextContent("Gelap");
+    expect(toggle).toHaveAttribute("aria-pressed", "true");
   });
 });

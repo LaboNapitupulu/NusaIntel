@@ -11,15 +11,15 @@ describe("GettingStartedGuide", () => {
   it("can be dismissed and remembers the choice locally", async () => {
     const view = render(<GettingStartedGuide />);
 
-    expect(await screen.findByText(/Tiga langkah untuk membaca hasil/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Lewati panduan" }));
-    expect(screen.queryByText(/Tiga langkah untuk membaca hasil/)).not.toBeInTheDocument();
+    expect(await screen.findByText("Sebelum membandingkan data")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Tutup panduan" }));
+    expect(screen.queryByText("Sebelum membandingkan data")).not.toBeInTheDocument();
     expect(window.localStorage.getItem("nusa-intel-onboarding-complete")).toBe("true");
 
     view.unmount();
     render(<GettingStartedGuide />);
     await waitFor(() =>
-      expect(screen.queryByText(/Tiga langkah untuk membaca hasil/)).not.toBeInTheDocument(),
+      expect(screen.queryByText("Sebelum membandingkan data")).not.toBeInTheDocument(),
     );
   });
 });

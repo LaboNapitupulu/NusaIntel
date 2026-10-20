@@ -165,12 +165,14 @@ test.beforeEach(async ({ page }) => {
 
 test("regional report is usable, responsive, and has no serious accessibility violations", async ({ page }) => {
   await page.goto("/regional-analytics");
-  await expect(page.getByRole("heading", { name: /Temukan wilayah dengan kondisi/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Analisis wilayah", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Jalankan analisis" }).click();
 
   await expect(page.getByText("Wilayah dibandingkan")).toBeVisible();
   await expect(page.locator(".province-tile")).toHaveCount(38);
   await expect(page.getByRole("button", { name: "ACEH, 3 Persen" })).toBeVisible();
+  await page.getByRole("button", { name: "ACEH, 3 Persen" }).click();
+  await expect(page.locator(".province-tile")).toHaveCount(38);
   await expect(page.locator(".map-disclaimer")).toContainText("bukan batas wilayah administratif resmi");
 
   await page.getByText("Alternatif tabel aksesibel (38 provinsi)").click();
@@ -188,6 +190,26 @@ test("regional report is usable, responsive, and has no serious accessibility vi
 
   const accessibility = await new AxeBuilder({ page }).include("#regional-analytics").analyze();
   expect(accessibility.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
+  await page.getByRole("heading", { level: 1 }).click();
+  await page.getByText("Alternatif tabel aksesibel (38 provinsi)").click();
+  await page.getByRole("button", { name: "Tutup notifikasi" }).click();
+  await page.screenshot({ path: `../artifacts/ui-review/regional-day-${page.viewportSize()?.width}.png`, fullPage: true });
+  if ((page.viewportSize()?.width ?? 0) < 800) await page.getByRole("button", { name: "Menu", exact: true }).click();
+  await page.getByRole("button", { name: "Tema gelap" }).click();
+  if ((page.viewportSize()?.width ?? 0) < 800) await page.getByRole("button", { name: "Tutup menu", exact: true }).click();
+  const darkAxe = await new AxeBuilder({ page }).analyze();
+  expect(darkAxe.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
+  await page.getByRole("heading", { level: 1 }).click();
+  await page.screenshot({ path: `../artifacts/ui-review/regional-night-${page.viewportSize()?.width}.png`, fullPage: true });
+  for (const tab of ["Wilayah serupa", "Kelompok wilayah", "Sumber & batasan"]) {
+    await page.getByRole("tab", { name: new RegExp(`^${tab}`) }).click();
+    await expect(page.getByRole("tabpanel")).toBeVisible();
+  }
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Unduh hasil" }).click();
+  expect((await download).suggestedFilename()).toBe("nusa-intel-regional-1100-2024.json");
+  await page.getByRole("button", { name: "Salin konfigurasi" }).click();
+  await expect(page).toHaveURL(/target=1100/);
 });
 
 test("regional report links to a source-aware regional detail page", async ({ page }) => {
